@@ -1,0 +1,19 @@
+[package]
+name = "engine_4"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+color-eyre = "0.6.5"
+egui_glium = "0.31.1"
+env_logger = "0.11.8"
+fps_ticker = "1.0.0"
+glam = "0.30.9"
+glium = "0.36.0"
+log = "0.4.28"
+palette = "0.7.6"
+winit_input_helper = "0.17.0"
+
+[features]
+debugging = []

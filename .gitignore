@@ -1,0 +1,5 @@
+/target
+*/target
+assets/scripts/.venv
+output.txt
+Cargo.lock

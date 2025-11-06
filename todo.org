@@ -1,0 +1,185 @@
+#+title: Todo
+
+- [X] OPTIMIZATION: do all the draws at the same time. requires adding back vertex
+ colors and a bit of refactoring.
+  - [X] draw queue with consecutive poly and circle draw calls grouped together so
+    that they can be batch drawn together. use instancing for grouped circles
+- [X] poly circles as new function / optional
+- [X] cache projection matrix
+- [X] cull off screen world draws
+
+* Performance Optimizations
+
+** Rendering
+
+ - [ ] Persistent vertex/index buffers: Reuse buffers across frames instead of recreating them
+ - [ ] Buffer orphaning: Use glBufferData(NULL) pattern to avoid GPU stalls
+ - [ ] Texture atlasing: If you add textures, pack them into atlases to reduce state changes
+ - [ ] Occlusion culling: Don't even add shapes to draw queue if they're completely outside view
+ - [ ] Level of Detail (LOD): Reduce polygon count for distant objects (fewer sides on distant polygons)
+ - [ ] Depth buffer usage: Instead of draw order, use actual depth testing
+ - [ ] Shader hot-reloading: Automatically reload shaders when files change during development
+ - [ ] Multi-threaded draw queue building: Build draw queues on separate threads
+ - [ ] GPU instancing for more shapes: Instance rectangles, triangles, polygons too
+ - [ ] Uniform buffer objects (UBOs): Share projection matrices across draw calls more efficiently
+
+** Memory
+
+ - [ ] Object pooling: Reuse allocations for vertices/indices instead of creating new vectors
+ - [ ] Arena allocators: Use bump allocators for per-frame data that gets cleared
+ - [ ] Shape capacity hints: Let users reserve capacity if they know they'll draw many shapes
+ - [ ] Sparse storage: For world objects, use spatial hash or quadtree instead of linear storage
+
+** Camera
+
+ - [ ] Camera projection caching: Only recalculate when camera actually changes
+ - [ ] Frustum culling optimization: Use SIMD for bounds checking
+ - [ ] Chunk-based culling: Group world objects into chunks for faster culling
+
+* New Features
+** Graphics Features
+
+ - [ ] Textures: Load and render textured quads/sprites
+ - [ ] Sprite batching: Automatically batch sprites from same texture
+ - [ ] 9-slice scaling: For UI elements
+ - [ ] Gradient fills: Linear/radial gradients for shapes
+ - [ ] Stroke styles: Dashed lines, rounded caps, different join styles
+ - [ ] Anti-aliasing: MSAA or FXAA support
+ - [ ] Post-processing effects: Bloom, blur, color grading
+ - [ ] Particle systems: Efficient batched particle rendering
+ - [ ] Custom shaders: Let users provide their own shaders
+ - [ ] Render targets: Draw to textures for off-screen rendering
+ - [ ] Layers/render passes: Explicit control over draw order
+ - [ ] Blend modes: Additive, multiply, etc.
+ - [ ] Clipping/masking: Clip drawing to regions
+ - [ ] Shadows: Simple drop shadows or more complex shadow mapping
+
+** Shapes & Primitives
+
+ - [ ] Bezier curves: Quadratic and cubic curves
+ - [ ] Arcs and pie slices: Partial circles
+ - [ ] Rounded rectangles: With configurable corner radii
+ - [ ] Ellipses: Non-circular ellipses
+ - [ ] Polylines: Connected line segments with joins
+ - [ ] Splines: Smooth curves through points
+ - [ ] Grid helpers: Draw coordinate grids
+ - [ ] Axes helpers: Visual coordinate axes
+ - [ ] Filled polygons with holes: For complex shapes
+
+** Text Rendering
+
+ - [ ] Text drawing: Integrate a text rendering library (e.g., glyph_brush)
+ - [ ] Font loading: TTF/OTF support
+ - [ ] Text alignment: Left/center/right, top/middle/bottom
+ - [ ] Text wrapping: Automatic line breaking
+ - [ ] Rich text: Multiple fonts/colors in one string
+ - [ ] Text measurement: Get bounds before rendering
+ - [ ] SDF text rendering: For crisp text at any scale
+
+** Input Handling
+
+ - [ ] Touch support: Multi-touch gestures
+ - [ ] Gamepad support: Controller input
+ - [ ] Input mapping: Rebindable controls
+ - [ ] Input recording/playback: For debugging and demos
+ - [ ] Mouse cursor customization: Custom cursor images
+ - [ ] Drag and drop: File/object drag and drop support
+
+** Camera Enhancements
+
+ - [ ] Camera presets: Orthographic, perspective, isometric
+ - [ ] Camera shake: For game effects
+ - [ ] Camera smoothing/easing: Smooth movement and zoom
+ - [ ] Follow target: Camera that smoothly follows an object
+ - [ ] Camera bounds: Constrain camera to specific world area
+ - [ ] Split-screen: Multiple cameras/viewports
+ - [ ] Minimap: Picture-in-picture camera view
+
+** Scene Management
+
+ - [ ] Scene graph: Hierarchical object transforms
+ - [ ] Entity-Component-System: Proper ECS architecture
+ - [ ] Object tags/layers: Group and filter objects
+ - [ ] Spatial partitioning: Quadtree/octree for world objects
+ - [ ] Serialization: Save/load scenes to/from files
+
+** Animation
+
+ - [ ] Tweening: Smooth interpolation between values
+ - [ ] Animation curves: Easing functions
+ - [ ] Keyframe animation: Timeline-based animations
+ - [ ] Sprite animation: Frame-based sprite sheets
+ - [ ] Skeletal animation: For complex character animation
+
+** UI System
+
+ - [ ] Immediate mode UI improvements: Better layouts, more widgets
+ - [ ] Docking: Dock windows like an IDE
+ - [ ] Themes: Customizable UI appearance
+ - [ ] Charts/graphs: Built-in data visualization
+ - [ ] Custom widgets: Easy widget creation API
+
+** Audio
+
+ - [ ] Audio playback: Sound effects and music
+ - [ ] 3D audio: Positional audio based on camera
+ - [ ] Audio mixing: Volume control, fading
+ - [ ] Streaming: Stream large audio files
+
+** Physics
+
+ - [ ] 2D physics integration: Integrate rapier2d or similar
+ - [ ] Collision detection: AABB, circle, polygon collisions
+ - [ ] Raycasting: Ray-shape intersection tests
+ - [ ] Trigger volumes: Detect object overlaps
+
+** Debugging & Profiling
+
+ - [ ] Performance overlay: FPS, draw calls, vertex count, etc.
+ - [ ] Shape bounds visualization: Show AABBs
+ - [ ] Wireframe mode: Render only outlines
+ - [ ] Debug drawing: Persistent debug lines/shapes
+ - [ ] Memory profiler: Track allocations
+ - [ ] GPU profiler integration: Use graphics debuggers
+ - [ ] Screenshot/video capture: Built-in capture functionality
+ - [ ] Inspector panel: Select and inspect objects at runtime
+
+** File I/O
+
+ - [ ] Image loading: PNG, JPG, etc.
+ - [ ] SVG support: Vector graphics import
+ - [ ] Asset hot-reloading: Auto-reload changed assets
+ - [ ] Asset packing: Bundle assets into single files
+ - [ ] Save/load game state: Serialization utilities
+
+** Networking
+
+ - [ ] Network sync: Multiplayer support
+ - [ ] Replay system: Record and playback sessions
+ - [ ] Cloud saves: Save game state to cloud
+
+** Build & Distribution
+
+ - [ ] Web target: Compile to WebAssembly
+ - [ ] Mobile support: Android/iOS targets
+ - [ ] Asset bundling: Package assets with executable
+ - [ ] Automatic builds: CI/CD integration
+
+** Quality of Life
+
+ - [ ] Error recovery: Graceful handling of GPU errors
+ - [ ] Asset validation: Check assets at load time
+ - [ ] Performance warnings: Warn about inefficient usage
+ - [ ] API documentation: Comprehensive docs with examples
+ - [ ] Example projects: Gallery of demo projects
+ - [ ] Benchmarking suite: Performance regression tests
+ - [ ] Undo/redo system: For editor-like applications
+
+** Advanced Graphics
+
+ - [ ] Normal mapping: For pseudo-3D effects
+ - [ ] Lighting system: 2D dynamic lighting
+ - [ ] Deferred rendering: More complex lighting scenarios
+ - [ ] Compute shaders: GPU-accelerated processing
+ - [ ] Signed distance fields: For complex 2D effects
+ - [ ] Metaballs: Fluid-like shapes
