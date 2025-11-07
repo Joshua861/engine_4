@@ -8,6 +8,13 @@
 - [X] cache projection matrix
 - [X] cull off screen world draws
 
+* Lucas
+- [ ] Raycasting
+- [ ] Collision boxes / area 2D (AABB / circle / polygon)
+- [ ] Rigid bodies (rapier)
+- [ ] Custom polygons from shapes
+- [ ] physics system needs retained state. let the user retain it wherever they want. just put it all in a struct.
+
 * Performance Optimizations
 
 ** Rendering
@@ -15,7 +22,7 @@
  - [ ] Persistent vertex/index buffers: Reuse buffers across frames instead of recreating them
  - [ ] Buffer orphaning: Use glBufferData(NULL) pattern to avoid GPU stalls
  - [ ] Texture atlasing: If you add textures, pack them into atlases to reduce state changes
- - [ ] Occlusion culling: Don't even add shapes to draw queue if they're completely outside view
+ - [X] Occlusion culling: Don't even add shapes to draw queue if they're completely outside view
  - [ ] Level of Detail (LOD): Reduce polygon count for distant objects (fewer sides on distant polygons)
  - [ ] Depth buffer usage: Instead of draw order, use actual depth testing
  - [ ] Shader hot-reloading: Automatically reload shaders when files change during development
@@ -37,9 +44,8 @@
  - [ ] Chunk-based culling: Group world objects into chunks for faster culling
 
 * New Features
-** Graphics Features
-
- - [ ] Textures: Load and render textured quads/sprites
+** Graphics Features [1/15]
+ - [X] Textures: Load and render textured quads/sprites
  - [ ] Sprite batching: Automatically batch sprites from same texture
  - [ ] 9-slice scaling: For UI elements
  - [ ] Gradient fills: Linear/radial gradients for shapes
@@ -53,8 +59,9 @@
  - [ ] Blend modes: Additive, multiply, etc.
  - [ ] Clipping/masking: Clip drawing to regions
  - [ ] Shadows: Simple drop shadows or more complex shadow mapping
+ - [ ] Lower resolution support like the software renderer
 
-** Shapes & Primitives
+** Shapes & Primitives [/]
 
  - [ ] Bezier curves: Quadratic and cubic curves
  - [ ] Arcs and pie slices: Partial circles
@@ -66,7 +73,7 @@
  - [ ] Axes helpers: Visual coordinate axes
  - [ ] Filled polygons with holes: For complex shapes
 
-** Text Rendering
+** Text Rendering [/]
 
  - [ ] Text drawing: Integrate a text rendering library (e.g., glyph_brush)
  - [ ] Font loading: TTF/OTF support
@@ -76,7 +83,7 @@
  - [ ] Text measurement: Get bounds before rendering
  - [ ] SDF text rendering: For crisp text at any scale
 
-** Input Handling
+** Input Handling [/]
 
  - [ ] Touch support: Multi-touch gestures
  - [ ] Gamepad support: Controller input
@@ -85,7 +92,7 @@
  - [ ] Mouse cursor customization: Custom cursor images
  - [ ] Drag and drop: File/object drag and drop support
 
-** Camera Enhancements
+** Camera Enhancements [/]
 
  - [ ] Camera presets: Orthographic, perspective, isometric
  - [ ] Camera shake: For game effects
@@ -95,7 +102,7 @@
  - [ ] Split-screen: Multiple cameras/viewports
  - [ ] Minimap: Picture-in-picture camera view
 
-** Scene Management
+** Scene Management [/]
 
  - [ ] Scene graph: Hierarchical object transforms
  - [ ] Entity-Component-System: Proper ECS architecture
@@ -103,7 +110,7 @@
  - [ ] Spatial partitioning: Quadtree/octree for world objects
  - [ ] Serialization: Save/load scenes to/from files
 
-** Animation
+** Animation [/]
 
  - [ ] Tweening: Smooth interpolation between values
  - [ ] Animation curves: Easing functions
@@ -111,7 +118,7 @@
  - [ ] Sprite animation: Frame-based sprite sheets
  - [ ] Skeletal animation: For complex character animation
 
-** UI System
+** UI System [/]
 
  - [ ] Immediate mode UI improvements: Better layouts, more widgets
  - [ ] Docking: Dock windows like an IDE
@@ -119,23 +126,23 @@
  - [ ] Charts/graphs: Built-in data visualization
  - [ ] Custom widgets: Easy widget creation API
 
-** Audio
+** Audio [/]
 
  - [ ] Audio playback: Sound effects and music
  - [ ] 3D audio: Positional audio based on camera
  - [ ] Audio mixing: Volume control, fading
  - [ ] Streaming: Stream large audio files
 
-** Physics
+** Physics [/]
 
  - [ ] 2D physics integration: Integrate rapier2d or similar
  - [ ] Collision detection: AABB, circle, polygon collisions
  - [ ] Raycasting: Ray-shape intersection tests
  - [ ] Trigger volumes: Detect object overlaps
 
-** Debugging & Profiling
+** Debugging & Profiling [/]
 
- - [ ] Performance overlay: FPS, draw calls, vertex count, etc.
+ - [X] Performance overlay: FPS, draw calls, vertex count, etc.
  - [ ] Shape bounds visualization: Show AABBs
  - [ ] Wireframe mode: Render only outlines
  - [ ] Debug drawing: Persistent debug lines/shapes
@@ -144,28 +151,28 @@
  - [ ] Screenshot/video capture: Built-in capture functionality
  - [ ] Inspector panel: Select and inspect objects at runtime
 
-** File I/O
+** File I/O [/]
 
- - [ ] Image loading: PNG, JPG, etc.
+ # - [ ] Image loading: PNG, JPG, etc.
  - [ ] SVG support: Vector graphics import
  - [ ] Asset hot-reloading: Auto-reload changed assets
  - [ ] Asset packing: Bundle assets into single files
  - [ ] Save/load game state: Serialization utilities
 
-** Networking
+** Networking [/]
 
  - [ ] Network sync: Multiplayer support
  - [ ] Replay system: Record and playback sessions
  - [ ] Cloud saves: Save game state to cloud
 
-** Build & Distribution
+** Build & Distribution [/]
 
  - [ ] Web target: Compile to WebAssembly
  - [ ] Mobile support: Android/iOS targets
  - [ ] Asset bundling: Package assets with executable
  - [ ] Automatic builds: CI/CD integration
 
-** Quality of Life
+** Quality of Life [/]
 
  - [ ] Error recovery: Graceful handling of GPU errors
  - [ ] Asset validation: Check assets at load time
@@ -175,7 +182,7 @@
  - [ ] Benchmarking suite: Performance regression tests
  - [ ] Undo/redo system: For editor-like applications
 
-** Advanced Graphics
+** Advanced Graphics [/]
 
  - [ ] Normal mapping: For pseudo-3D effects
  - [ ] Lighting system: 2D dynamic lighting

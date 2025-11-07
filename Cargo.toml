@@ -5,15 +5,21 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.100"
+bumpalo = { version = "3.19.0", features = ["collections"] }
 color-eyre = "0.6.5"
 egui_glium = "0.31.1"
+egui_plot = {version = "0.31", optional = true}
 env_logger = "0.11.8"
 fps_ticker = "1.0.0"
 glam = "0.30.9"
 glium = "0.36.0"
+image = "0.25.8"
+include_folder = "0.3.0"
 log = "0.4.28"
 palette = "0.7.6"
+uuid = { version = "1.18.1", features = ["v4"] }
 winit_input_helper = "0.17.0"
 
 [features]
-debugging = []
+default = ["debugging"]
+debugging = ["dep:egui_plot"]

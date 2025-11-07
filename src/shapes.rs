@@ -1,11 +1,8 @@
-use crate::{EngineDisplay, Vertex, color::Color, get_state, programs::Programs};
-use glam::{Mat4, Vec2};
-use glium::{
-    Blend, DrawParameters, Frame, IndexBuffer, Surface, VertexBuffer, implement_vertex, uniform,
-};
+use crate::{Vertex, color::Color, get_state};
+use glam::Vec2;
+use glium::implement_vertex;
 use std::f32::consts::TAU;
 
-// Instance data for circles
 #[derive(Copy, Clone, Debug)]
 pub struct CircleInstance {
     pub center: [f32; 2],
@@ -16,7 +13,7 @@ pub struct CircleInstance {
 implement_vertex!(CircleInstance, center, radius, color);
 
 impl CircleInstance {
-    fn new(center: Vec2, radius: f32, color: Color) -> Self {
+    pub fn new(center: Vec2, radius: f32, color: Color) -> Self {
         Self {
             center: [center.x, center.y],
             radius,
@@ -25,7 +22,6 @@ impl CircleInstance {
     }
 }
 
-// AABB for culling
 #[derive(Debug, Clone, Copy)]
 pub struct AABB {
     pub min: Vec2,
@@ -62,8 +58,7 @@ impl AABB {
 
 pub(crate) const QUAD_INDICES: [u32; 6] = [0, 1, 2, 1, 2, 3];
 
-// Unit quad for instancing (will be scaled by shader)
-const UNIT_QUAD: [Vertex; 4] = [
+pub(crate) const UNIT_QUAD: [Vertex; 4] = [
     Vertex {
         position: [-1.0, -1.0],
         color: [1.0, 1.0, 1.0, 1.0],
@@ -246,74 +241,6 @@ impl Shape for Poly {
     }
 }
 
-// Represents a batch of draw calls that should be executed together
-#[derive(Debug)]
-enum DrawBatch {
-    Shapes {
-        vertices: Vec<Vertex>,
-        indices: Vec<u32>,
-    },
-    Circles {
-        instances: Vec<CircleInstance>,
-    },
-}
-
-pub struct DrawQueue {
-    batches: Vec<DrawBatch>,
-    current_shape_vertices: Vec<Vertex>,
-    current_shape_indices: Vec<u32>,
-    current_shape_max_index: u32,
-    current_circles: Vec<CircleInstance>,
-}
-
-impl DrawQueue {
-    pub fn empty() -> Self {
-        Self {
-            batches: vec![],
-            current_shape_vertices: vec![],
-            current_shape_indices: vec![],
-            current_shape_max_index: 0,
-            current_circles: vec![],
-        }
-    }
-
-    fn flush_shapes(&mut self) {
-        if !self.current_shape_vertices.is_empty() {
-            self.batches.push(DrawBatch::Shapes {
-                vertices: std::mem::take(&mut self.current_shape_vertices),
-                indices: std::mem::take(&mut self.current_shape_indices),
-            });
-            self.current_shape_max_index = 0;
-        }
-    }
-
-    fn flush_circles(&mut self) {
-        if !self.current_circles.is_empty() {
-            self.batches.push(DrawBatch::Circles {
-                instances: std::mem::take(&mut self.current_circles),
-            });
-        }
-    }
-
-    pub fn add_shape(&mut self, shape: impl Shape) {
-        // If we have pending circles, flush them first to maintain draw order
-        self.flush_circles();
-
-        let (mut indices, mut vertices) = shape.points(self.current_shape_max_index);
-        self.current_shape_max_index += vertices.len() as u32;
-        self.current_shape_vertices.append(&mut vertices);
-        self.current_shape_indices.append(&mut indices);
-    }
-
-    pub fn add_circle(&mut self, center: Vec2, radius: f32, color: Color) {
-        // If we have pending shapes, flush them first to maintain draw order
-        self.flush_shapes();
-
-        self.current_circles
-            .push(CircleInstance::new(center, radius, color));
-    }
-}
-
 pub fn is_world_shape_visible(bounds: AABB) -> bool {
     let camera = &mut get_state().camera;
     let (view_min, view_max) = camera.visible_bounds();
@@ -341,85 +268,4 @@ pub fn draw_circle_world_internal(center: Vec2, radius: f32, color: Color) {
     get_state()
         .world_draw_queue
         .add_circle(center, radius, color);
-}
-
-impl DrawQueue {
-    pub fn draw(
-        &mut self,
-        frame: &mut Frame,
-        display: &EngineDisplay,
-        programs: &Programs,
-        projection: &Mat4,
-    ) {
-        // Flush any remaining batches
-        self.flush_shapes();
-        self.flush_circles();
-
-        // Draw all batches in order
-        for batch in &self.batches {
-            match batch {
-                DrawBatch::Shapes { vertices, indices } => {
-                    let vertex_buffer = VertexBuffer::new(display, vertices).unwrap();
-                    let index_buffer = IndexBuffer::new(
-                        display,
-                        glium::index::PrimitiveType::TrianglesList,
-                        indices,
-                    )
-                    .unwrap();
-
-                    let uniforms = uniform! {
-                        transform: projection.to_cols_array_2d(),
-                    };
-
-                    let params = DrawParameters {
-                        blend: Blend::alpha_blending(),
-                        ..Default::default()
-                    };
-
-                    frame
-                        .draw(
-                            &vertex_buffer,
-                            &index_buffer,
-                            &programs.flat,
-                            &uniforms,
-                            &params,
-                        )
-                        .unwrap();
-                }
-                DrawBatch::Circles { instances } => {
-                    let quad_buffer = VertexBuffer::new(display, &UNIT_QUAD).unwrap();
-                    let instance_buffer = VertexBuffer::dynamic(display, instances).unwrap();
-                    let index_buffer = IndexBuffer::new(
-                        display,
-                        glium::index::PrimitiveType::TrianglesList,
-                        &QUAD_INDICES,
-                    )
-                    .unwrap();
-
-                    let uniforms = uniform! {
-                        transform: projection.to_cols_array_2d(),
-                    };
-
-                    let params = DrawParameters {
-                        blend: Blend::alpha_blending(),
-                        ..Default::default()
-                    };
-
-                    frame
-                        .draw(
-                            (&quad_buffer, instance_buffer.per_instance().unwrap()),
-                            &index_buffer,
-                            &programs.circle,
-                            &uniforms,
-                            &params,
-                        )
-                        .unwrap();
-                }
-            }
-        }
-    }
-
-    pub fn clear(&mut self) {
-        *self = Self::empty()
-    }
 }

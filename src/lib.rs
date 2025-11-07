@@ -1,14 +1,18 @@
 #![allow(static_mut_refs)]
 
+use buffers::Buffers;
 use camera::Camera;
 use color::Color;
+#[cfg(feature = "debugging")]
+use debugging::DebugInfo;
+use draw_queue::DrawQueue;
 use egui_glium::{EguiGlium, egui_winit::egui::ViewportId};
 use fps_ticker::Fps;
 use glam::Mat4;
 use glium::{
     Frame, Program,
     backend::glutin::{Display, SimpleWindowBuilder},
-    glutin::{self, surface::WindowSurface},
+    glutin::surface::WindowSurface,
     implement_vertex,
     winit::{
         event::Event, event_loop::EventLoop, platform::pump_events::EventLoopExtPumpEvents,
@@ -16,17 +20,21 @@ use glium::{
     },
 };
 use programs::Programs;
-use shapes::DrawQueue;
+use textures::EngineTextureStore;
 use winit_input_helper::WinitInputHelper;
 
 mod api;
+mod buffers;
 mod camera;
+pub mod collisions;
 mod color;
-#[feature(debugging)]
+#[cfg(feature = "debugging")]
 mod debugging;
+mod draw_queue;
 pub mod prelude;
 mod programs;
 mod shapes;
+mod textures;
 mod utils;
 
 pub(crate) static mut ENGINE_STATE: Option<EngineState> = None;
@@ -68,11 +76,14 @@ struct EngineState {
     input: WinitInputHelper,
     frame: Option<Frame>,
     projection: Mat4,
-    fps: Fps,
     camera: Camera,
     gui: EguiGlium,
     draw_queue: DrawQueue,
     world_draw_queue: DrawQueue,
+    #[cfg(feature = "debugging")]
+    debug_info: debugging::DebugInfo,
+    textures: EngineTextureStore,
+    buffers: Buffers,
 }
 
 unsafe impl Sync for EngineState {}
@@ -89,28 +100,17 @@ pub fn init(title: &str) -> anyhow::Result<()> {
     let input = WinitInputHelper::new();
     window.request_redraw();
 
-    let vertex_shader_src = include_str!("../assets/shaders/flat/vertex.glsl");
-    let fragment_shader_src = include_str!("../assets/shaders/flat/fragment.glsl");
-    let flat_program =
-        Program::from_source(&display, vertex_shader_src, fragment_shader_src, None)?;
-
-    let vertex_shader_src = include_str!("../assets/shaders/circle/vertex.glsl");
-    let fragment_shader_src = include_str!("../assets/shaders/circle/fragment.glsl");
-    let circle_program =
-        Program::from_source(&display, vertex_shader_src, fragment_shader_src, None)?;
-
-    let programs = Programs {
-        circle: circle_program,
-        flat: flat_program,
-    };
-
     let frame = Some(display.draw());
     let projection = projection(&window);
-    let fps = Fps::default();
     let camera = Camera::from_window(&window);
     let gui = EguiGlium::new(ViewportId::ROOT, &display, &window, &event_loop);
     let draw_queue = DrawQueue::empty();
     let world_draw_queue = DrawQueue::empty();
+    #[cfg(feature = "debugging")]
+    let debug_info = DebugInfo::new();
+    let textures = EngineTextureStore::new();
+    let buffers = Buffers::new(&display)?;
+    let programs = Programs::new(&display)?;
 
     unsafe {
         ENGINE_STATE = Some(EngineState {
@@ -121,11 +121,13 @@ pub fn init(title: &str) -> anyhow::Result<()> {
             event_loop,
             frame,
             projection,
-            fps,
             camera,
             gui,
             draw_queue,
             world_draw_queue,
+            debug_info,
+            buffers,
+            textures,
         });
     }
 
@@ -137,7 +139,7 @@ pub fn init(title: &str) -> anyhow::Result<()> {
 pub fn next_frame() {
     let state = get_state();
 
-    state.fps.tick();
+    state.debug_info.next_frame();
 
     #[allow(deprecated)]
     state
@@ -178,12 +180,14 @@ pub fn next_frame() {
         &state.display,
         &state.programs,
         &state.camera.projection_matrix(),
+        &state.buffers,
     );
     state.draw_queue.draw(
         &mut frame,
         &state.display,
         &state.programs,
         &state.projection,
+        &state.buffers,
     );
 
     state.draw_queue.clear();

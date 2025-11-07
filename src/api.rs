@@ -8,9 +8,10 @@ use crate::{
     color::Color,
     get_frame, get_state,
     shapes::{
-        AABB, Circle, Line, Poly, Rect, Shape, Triangle, draw_circle_internal,
-        draw_circle_world_internal, draw_shape, draw_shape_world, is_world_shape_visible,
+        AABB, Line, Poly, Rect, Triangle, draw_circle_internal, draw_circle_world_internal,
+        draw_shape, draw_shape_world, is_world_shape_visible,
     },
+    textures::TextureRef,
 };
 
 pub fn clear_screen(color: Color) {
@@ -113,18 +114,6 @@ pub fn draw_tri_world(a: Vec2, b: Vec2, c: Vec2, color: Color) {
 
 pub fn should_quit() -> bool {
     get_state().input.close_requested()
-}
-
-pub fn avg_fps() -> f64 {
-    get_state().fps.avg()
-}
-
-pub fn min_fps() -> f64 {
-    get_state().fps.min()
-}
-
-pub fn max_fps() -> f64 {
-    get_state().fps.max()
 }
 
 pub fn get_input() -> &'static WinitInputHelper {
@@ -347,7 +336,52 @@ pub fn draw_poly_outline_world(
     }
 }
 
-pub fn run_ui(f: impl FnMut(&Context)) {
+pub fn run_ui(mut f: impl FnMut(&Context)) {
     let state = get_state();
-    state.gui.run(&state.window, f);
+    state.gui.run(&state.window, |ctx| {
+        state.debug_info.draw_debug_info(ctx);
+
+        f(ctx);
+    });
+}
+
+pub fn draw_sprite(sprite_ref: TextureRef, position: Vec2, scale: f32) {
+    let sprite = sprite_ref.get();
+    draw_sprite_scaled(sprite_ref, position, sprite.normalized_dimensions * scale);
+}
+
+pub fn draw_sprite_scaled(sprite: TextureRef, position: Vec2, scale: Vec2) {
+    let texture = sprite.get();
+    let size = scale;
+    get_state().draw_queue.add_sprite(sprite, position, size);
+}
+
+pub fn draw_sprite_world(sprite_ref: TextureRef, position: Vec2, scale: f32) {
+    let sprite = sprite_ref.get();
+    draw_sprite_scaled_world(sprite_ref, position, sprite.normalized_dimensions * scale);
+}
+
+pub fn draw_sprite_scaled_world(sprite: TextureRef, position: Vec2, scale: Vec2) {
+    let texture = sprite.get();
+    let size = scale;
+
+    // UNIT_SQUARE is [-1, 1], so after transformation the bounds are:
+    // [position - size, position + size]
+    let bounds = AABB::new(position - size, position + size);
+
+    if !is_world_shape_visible(bounds) {
+        return;
+    }
+
+    get_state()
+        .world_draw_queue
+        .add_sprite(sprite, position, size);
+}
+
+pub fn screen_to_world(screen_pos: Vec2) -> Vec2 {
+    get_state().camera.screen_to_world(screen_pos)
+}
+
+pub fn world_to_screen(world_pos: Vec2) -> Vec2 {
+    get_state().camera.world_to_screen(world_pos)
 }
