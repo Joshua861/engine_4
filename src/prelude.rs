@@ -6,6 +6,7 @@ pub use crate::color::Color;
 pub use crate::debugging::*;
 pub use crate::init;
 pub use crate::next_frame;
+pub use crate::shapes::*;
 pub use crate::textures::load_texture;
 pub use anyhow;
 pub use egui_glium::egui_winit::egui;

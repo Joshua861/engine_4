@@ -1,4 +1,9 @@
-use crate::{Vertex, color::Color, get_state};
+use crate::{
+    Vertex,
+    collisions::{AABB, HasBounds},
+    color::Color,
+    get_state,
+};
 use glam::Vec2;
 use glium::implement_vertex;
 use std::f32::consts::TAU;
@@ -22,63 +27,11 @@ impl CircleInstance {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct AABB {
-    pub min: Vec2,
-    pub max: Vec2,
-}
-
-impl AABB {
-    pub fn new(min: Vec2, max: Vec2) -> Self {
-        Self { min, max }
-    }
-
-    pub fn from_center_size(center: Vec2, size: Vec2) -> Self {
-        let half_size = size * 0.5;
-        Self {
-            min: center - half_size,
-            max: center + half_size,
-        }
-    }
-
-    pub fn intersects(&self, other: &AABB) -> bool {
-        self.min.x <= other.max.x
-            && self.max.x >= other.min.x
-            && self.min.y <= other.max.y
-            && self.max.y >= other.min.y
-    }
-
-    pub fn expand(self, amount: f32) -> Self {
-        Self {
-            min: self.min - Vec2::splat(amount),
-            max: self.max + Vec2::splat(amount),
-        }
-    }
-}
-
-pub(crate) const QUAD_INDICES: [u32; 6] = [0, 1, 2, 1, 2, 3];
-
-pub(crate) const UNIT_QUAD: [Vertex; 4] = [
-    Vertex {
-        position: [-1.0, -1.0],
-        color: [1.0, 1.0, 1.0, 1.0],
-    },
-    Vertex {
-        position: [1.0, -1.0],
-        color: [1.0, 1.0, 1.0, 1.0],
-    },
-    Vertex {
-        position: [-1.0, 1.0],
-        color: [1.0, 1.0, 1.0, 1.0],
-    },
-    Vertex {
-        position: [1.0, 1.0],
-        color: [1.0, 1.0, 1.0, 1.0],
-    },
-];
-
-pub trait Shape {
+pub trait Shape: HasBounds {
     fn points(&self, starting_index: u32) -> (Vec<u32>, Vec<Vertex>);
+    fn is_visible_in_world(&self) -> bool {
+        self.bounds().is_visible_in_world()
+    }
 }
 
 pub(crate) struct Circle {
@@ -87,8 +40,8 @@ pub(crate) struct Circle {
     pub color: Color,
 }
 
-impl Circle {
-    pub fn bounds(&self) -> AABB {
+impl HasBounds for Circle {
+    fn bounds(&self) -> AABB {
         AABB::from_center_size(self.center, Vec2::splat(self.radius * 2.0))
     }
 }
@@ -103,6 +56,12 @@ pub(crate) struct Rect {
     pub top_left: Vec2,
     pub size: Vec2,
     pub color: Color,
+}
+
+impl HasBounds for Rect {
+    fn bounds(&self) -> AABB {
+        AABB::new(self.top_left, self.top_left + self.size)
+    }
 }
 
 impl Rect {
@@ -132,6 +91,14 @@ pub struct Triangle {
     pub color: Color,
 }
 
+impl HasBounds for Triangle {
+    fn bounds(&self) -> AABB {
+        let min = self.points[0].min(self.points[1]).min(self.points[2]);
+        let max = self.points[0].max(self.points[1]).max(self.points[2]);
+        AABB::new(min, max)
+    }
+}
+
 impl Shape for Triangle {
     fn points(&self, starting_index: u32) -> (Vec<u32>, Vec<Vertex>) {
         let tri = self.points.map(|p| Vertex::new(p.x, p.y, self.color));
@@ -145,6 +112,16 @@ pub struct Line {
     pub end: Vec2,
     pub thickness: f32,
     pub color: Color,
+}
+
+impl HasBounds for Line {
+    fn bounds(&self) -> AABB {
+        let half_thick = self.thickness * 0.5;
+        AABB::new(
+            self.start.min(self.end) - Vec2::splat(half_thick),
+            self.start.max(self.end) + Vec2::splat(half_thick),
+        )
+    }
 }
 
 impl Line {
@@ -202,6 +179,12 @@ pub struct Poly {
     pub color: Color,
 }
 
+impl HasBounds for Poly {
+    fn bounds(&self) -> AABB {
+        AABB::from_center_size(self.center, Vec2::splat(self.radius * 2.0))
+    }
+}
+
 impl Poly {
     pub fn gen_points(&self) -> Vec<Vec2> {
         let mut points = Vec::with_capacity(self.sides);
@@ -236,6 +219,24 @@ pub struct CustomShape {
     pub color: Color,
 }
 
+impl HasBounds for CustomShape {
+    fn bounds(&self) -> AABB {
+        if self.points.is_empty() {
+            return AABB::new(Vec2::ZERO, Vec2::ZERO);
+        }
+
+        let mut min = self.points[0];
+        let mut max = self.points[0];
+
+        for point in &self.points[1..] {
+            min = min.min(*point);
+            max = max.max(*point);
+        }
+
+        AABB::new(min, max)
+    }
+}
+
 impl Shape for CustomShape {
     fn points(&self, starting_index: u32) -> (Vec<u32>, Vec<Vertex>) {
         let (vertices, indices) = gen_mesh_from_points(&self.points, self.color);
@@ -244,11 +245,61 @@ impl Shape for CustomShape {
     }
 }
 
-pub fn is_world_shape_visible(bounds: AABB) -> bool {
-    let camera = &mut get_state().camera;
-    let (view_min, view_max) = camera.visible_bounds();
-    let view_bounds = AABB::new(view_min, view_max);
-    bounds.intersects(&view_bounds)
+pub(crate) const QUAD_INDICES: [u32; 6] = [0, 1, 2, 1, 2, 3];
+
+pub(crate) const UNIT_QUAD: [Vertex; 4] = [
+    Vertex {
+        position: [-1.0, -1.0],
+        color: [1.0, 1.0, 1.0, 1.0],
+    },
+    Vertex {
+        position: [1.0, -1.0],
+        color: [1.0, 1.0, 1.0, 1.0],
+    },
+    Vertex {
+        position: [-1.0, 1.0],
+        color: [1.0, 1.0, 1.0, 1.0],
+    },
+    Vertex {
+        position: [1.0, 1.0],
+        color: [1.0, 1.0, 1.0, 1.0],
+    },
+];
+
+macro_rules! define_draw_functions {
+    ($($name:ident: $($param:ident: $ptype:ty),* => $constructor:expr),*) => {
+        $(
+            pub fn $name($($param: $ptype),*) {
+                let shape = $constructor;
+                draw_shape(shape);
+            }
+
+            paste::item! {
+                pub fn [<$name _world>]($($param: $ptype),*) {
+                    let shape = $constructor;
+                    draw_shape_world(shape);
+                }
+            }
+        )*
+    };
+}
+
+#[rustfmt::skip]
+define_draw_functions!(
+    draw_rect: top_left: Vec2, size: Vec2, color: Color => Rect { top_left, size, color },
+    draw_square: top_left: Vec2, size: f32, color: Color => Rect { top_left, size: Vec2::splat(size), color },
+    draw_tri: a: Vec2, b: Vec2, c: Vec2, color: Color => Triangle { points: [a, b, c], color },
+    draw_line: start: Vec2, end: Vec2, thickness: f32, color: Color => Line { start, end, thickness, color },
+    draw_poly: center: Vec2, sides: usize, radius: f32, rotation: f32, color: Color => Poly { center, sides, radius, rotation, color },
+    draw_custom_shape: points: Vec<Vec2>, color: Color => CustomShape { points, color }
+);
+
+pub fn draw_circle(center: Vec2, radius: f32, color: Color) {
+    draw_circle_internal(center, radius, color);
+}
+
+pub fn draw_circle_world(center: Vec2, radius: f32, color: Color) {
+    draw_circle_world_internal(center, radius, color);
 }
 
 pub fn draw_shape(shape: impl Shape) {
@@ -256,7 +307,9 @@ pub fn draw_shape(shape: impl Shape) {
 }
 
 pub fn draw_shape_world(shape: impl Shape) {
-    get_state().world_draw_queue.add_shape(shape);
+    if shape.is_visible_in_world() {
+        get_state().world_draw_queue.add_shape(shape);
+    }
 }
 
 pub fn draw_circle_internal(center: Vec2, radius: f32, color: Color) {
@@ -264,13 +317,16 @@ pub fn draw_circle_internal(center: Vec2, radius: f32, color: Color) {
 }
 
 pub fn draw_circle_world_internal(center: Vec2, radius: f32, color: Color) {
-    let bounds = AABB::from_center_size(center, Vec2::splat(radius * 2.0));
-    if !is_world_shape_visible(bounds) {
-        return;
+    let circle = Circle {
+        center,
+        radius,
+        color,
+    };
+    if circle.is_visible_in_world() {
+        get_state()
+            .world_draw_queue
+            .add_circle(center, radius, color);
     }
-    get_state()
-        .world_draw_queue
-        .add_circle(center, radius, color);
 }
 
 fn gen_mesh_from_points(points: &[Vec2], color: Color) -> (Vec<Vertex>, Vec<u32>) {

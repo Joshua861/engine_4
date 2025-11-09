@@ -32,6 +32,7 @@ mod color;
 #[cfg(feature = "debugging")]
 mod debugging;
 mod draw_queue;
+mod post_processing;
 pub mod prelude;
 mod programs;
 mod shapes;

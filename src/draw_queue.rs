@@ -1,4 +1,5 @@
 use crate::buffers::Buffers;
+use crate::post_processing::PostProcessingEffect;
 use crate::shapes::{QUAD_INDICES, Shape, UNIT_QUAD};
 use crate::utils::extend_vec2;
 use crate::{Color, EngineDisplay, Frame, Programs};
@@ -13,6 +14,7 @@ pub struct DrawQueue {
     current_shape_indices: Vec<u32>,
     current_shape_max_index: u32,
     current_circles: Vec<CircleInstance>,
+    current_effects: Vec<PostProcessingEffect>,
 }
 
 impl DrawQueue {
@@ -23,6 +25,7 @@ impl DrawQueue {
             current_shape_indices: vec![],
             current_shape_max_index: 0,
             current_circles: vec![],
+            current_effects: vec![],
         }
     }
 
@@ -44,6 +47,14 @@ impl DrawQueue {
         }
     }
 
+    fn flush_effects(&mut self) {
+        if !self.current_effects.is_empty() {
+            self.batches.push(DrawBatch::PostProcessing(std::mem::take(
+                &mut self.current_effects,
+            )));
+        }
+    }
+
     pub fn add_shape(&mut self, shape: impl Shape) {
         #[cfg(feature = "debugging")]
         {
@@ -55,6 +66,7 @@ impl DrawQueue {
         }
 
         self.flush_circles();
+        self.flush_effects();
 
         let (mut indices, mut vertices) = shape.points(self.current_shape_max_index);
         self.current_shape_max_index += vertices.len() as u32;
@@ -73,6 +85,7 @@ impl DrawQueue {
         }
 
         self.flush_shapes();
+        self.flush_effects();
 
         self.current_circles
             .push(CircleInstance::new(center, radius, color));
@@ -90,12 +103,20 @@ impl DrawQueue {
 
         self.flush_shapes();
         self.flush_circles();
+        self.flush_effects();
 
         self.batches.push(DrawBatch::Sprite {
             texture,
             position,
             size,
         });
+    }
+
+    pub fn add_effect(&mut self, effect: PostProcessingEffect) {
+        self.flush_shapes();
+        self.flush_circles();
+
+        self.current_effects.push(effect);
     }
 
     pub fn draw(
@@ -230,6 +251,9 @@ impl DrawQueue {
                         )
                         .unwrap();
                 }
+                DrawBatch::PostProcessing(effects) => {
+
+                }
             }
         }
     }
@@ -252,4 +276,5 @@ enum DrawBatch {
         position: Vec2,
         size: Vec2,
     },
+    PostProcessing(Vec<PostProcessingEffect>),
 }

@@ -151,3 +151,57 @@ impl Camera {
         self.projection_matrix
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_screen_to_world() {
+        let mut camera = Camera::new(800, 600);
+
+        // Test with default camera
+        assert_eq!(
+            camera.screen_to_world(Vec2::new(400.0, 300.0)),
+            Vec2::new(0.0, 0.0)
+        );
+        assert_eq!(
+            camera.screen_to_world(Vec2::new(500.0, 400.0)),
+            Vec2::new(100.0, 100.0)
+        );
+
+        // Test with translation
+        camera.translation = Vec2::new(10.0, 20.0);
+        assert_eq!(
+            camera.screen_to_world(Vec2::new(400.0, 300.0)),
+            Vec2::new(10.0, 20.0)
+        );
+
+        // Test with scale
+        camera.translation = Vec2::ZERO;
+        camera.scale = 2.0;
+        assert_eq!(
+            camera.screen_to_world(Vec2::new(500.0, 400.0)),
+            Vec2::new(50.0, 50.0)
+        );
+    }
+
+    #[test]
+    fn test_zoom_at() {
+        let mut camera = Camera::new(800, 600);
+
+        // Test zooming in at the center
+        camera.zoom_at(Vec2::new(400.0, 300.0), 2.0);
+        assert_eq!(camera.scale, 2.0);
+        assert_eq!(camera.translation, Vec2::ZERO);
+
+        // Test zooming in at a different point
+        camera = Camera::new(800, 600);
+        camera.zoom_at(Vec2::new(500.0, 400.0), 2.0);
+        assert_eq!(camera.scale, 2.0);
+        assert_eq!(
+            camera.screen_to_world(Vec2::new(500.0, 400.0)),
+            Vec2::new(100.0, 100.0)
+        );
+    }
+}
