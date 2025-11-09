@@ -219,23 +219,26 @@ impl Poly {
 
     pub fn gen_mesh(&self) -> (Vec<Vertex>, Vec<u32>) {
         let points = self.gen_points();
-        let vertices: Vec<_> = points
-            .iter()
-            .map(|p| Vertex::new(p.x, p.y, self.color))
-            .collect();
-
-        let mut indices = Vec::new();
-        for i in 1..(self.sides - 1) as u32 {
-            indices.extend_from_slice(&[0, i, i + 1]);
-        }
-
-        (vertices, indices)
+        gen_mesh_from_points(&points, self.color)
     }
 }
 
 impl Shape for Poly {
     fn points(&self, starting_index: u32) -> (Vec<u32>, Vec<Vertex>) {
         let (vertices, indices) = self.gen_mesh();
+        let indices = indices.iter().map(|n| n + starting_index).collect();
+        (indices, vertices)
+    }
+}
+
+pub struct CustomShape {
+    pub points: Vec<Vec2>,
+    pub color: Color,
+}
+
+impl Shape for CustomShape {
+    fn points(&self, starting_index: u32) -> (Vec<u32>, Vec<Vertex>) {
+        let (vertices, indices) = gen_mesh_from_points(&self.points, self.color);
         let indices = indices.iter().map(|n| n + starting_index).collect();
         (indices, vertices)
     }
@@ -268,4 +271,19 @@ pub fn draw_circle_world_internal(center: Vec2, radius: f32, color: Color) {
     get_state()
         .world_draw_queue
         .add_circle(center, radius, color);
+}
+
+fn gen_mesh_from_points(points: &[Vec2], color: Color) -> (Vec<Vertex>, Vec<u32>) {
+    let num_points = points.len();
+    let vertices: Vec<_> = points
+        .iter()
+        .map(|p| Vertex::new(p.x, p.y, color))
+        .collect();
+
+    let mut indices = Vec::new();
+    for i in 1..(num_points - 1) as u32 {
+        indices.extend_from_slice(&[0, i, i + 1]);
+    }
+
+    (vertices, indices)
 }

@@ -10,9 +10,9 @@
 
 * Lucas
 - [ ] Raycasting
-- [ ] Collision boxes / area 2D (AABB / circle / polygon)
+- [X] Collision boxes / area 2D (AABB / circle / polygon)
 - [ ] Rigid bodies (rapier)
-- [ ] Custom polygons from shapes
+- [X] Custom polygons from shapes
 - [ ] physics system needs retained state. let the user retain it wherever they want. just put it all in a struct.
 
 * Performance Optimizations
@@ -61,19 +61,19 @@
  - [ ] Shadows: Simple drop shadows or more complex shadow mapping
  - [ ] Lower resolution support like the software renderer
 
-** Shapes & Primitives [/]
+** Shapes & Primitives [1/9]
 
  - [ ] Bezier curves: Quadratic and cubic curves
  - [ ] Arcs and pie slices: Partial circles
  - [ ] Rounded rectangles: With configurable corner radii
  - [ ] Ellipses: Non-circular ellipses
- - [ ] Polylines: Connected line segments with joins
+ - [X] Polylines: Connected line segments with joins
  - [ ] Splines: Smooth curves through points
  - [ ] Grid helpers: Draw coordinate grids
  - [ ] Axes helpers: Visual coordinate axes
  - [ ] Filled polygons with holes: For complex shapes
 
-** Text Rendering [/]
+** Text Rendering [0/7]
 
  - [ ] Text drawing: Integrate a text rendering library (e.g., glyph_brush)
  - [ ] Font loading: TTF/OTF support
@@ -83,7 +83,7 @@
  - [ ] Text measurement: Get bounds before rendering
  - [ ] SDF text rendering: For crisp text at any scale
 
-** Input Handling [/]
+** Input Handling [0/6]
 
  - [ ] Touch support: Multi-touch gestures
  - [ ] Gamepad support: Controller input
@@ -92,7 +92,7 @@
  - [ ] Mouse cursor customization: Custom cursor images
  - [ ] Drag and drop: File/object drag and drop support
 
-** Camera Enhancements [/]
+** Camera Enhancements [0/7]
 
  - [ ] Camera presets: Orthographic, perspective, isometric
  - [ ] Camera shake: For game effects
@@ -102,7 +102,7 @@
  - [ ] Split-screen: Multiple cameras/viewports
  - [ ] Minimap: Picture-in-picture camera view
 
-** Scene Management [/]
+** Scene Management [0/5]
 
  - [ ] Scene graph: Hierarchical object transforms
  - [ ] Entity-Component-System: Proper ECS architecture
@@ -110,7 +110,7 @@
  - [ ] Spatial partitioning: Quadtree/octree for world objects
  - [ ] Serialization: Save/load scenes to/from files
 
-** Animation [/]
+** Animation [0/5]
 
  - [ ] Tweening: Smooth interpolation between values
  - [ ] Animation curves: Easing functions
@@ -118,7 +118,7 @@
  - [ ] Sprite animation: Frame-based sprite sheets
  - [ ] Skeletal animation: For complex character animation
 
-** UI System [/]
+** UI System [0/5]
 
  - [ ] Immediate mode UI improvements: Better layouts, more widgets
  - [ ] Docking: Dock windows like an IDE
@@ -126,21 +126,21 @@
  - [ ] Charts/graphs: Built-in data visualization
  - [ ] Custom widgets: Easy widget creation API
 
-** Audio [/]
+** Audio [0/4]
 
  - [ ] Audio playback: Sound effects and music
  - [ ] 3D audio: Positional audio based on camera
  - [ ] Audio mixing: Volume control, fading
  - [ ] Streaming: Stream large audio files
 
-** Physics [/]
+** Physics [0/4]
 
  - [ ] 2D physics integration: Integrate rapier2d or similar
  - [ ] Collision detection: AABB, circle, polygon collisions
  - [ ] Raycasting: Ray-shape intersection tests
  - [ ] Trigger volumes: Detect object overlaps
 
-** Debugging & Profiling [/]
+** Debugging & Profiling [1/8]
 
  - [X] Performance overlay: FPS, draw calls, vertex count, etc.
  - [ ] Shape bounds visualization: Show AABBs
@@ -151,7 +151,7 @@
  - [ ] Screenshot/video capture: Built-in capture functionality
  - [ ] Inspector panel: Select and inspect objects at runtime
 
-** File I/O [/]
+** File I/O [0/4]
 
  # - [ ] Image loading: PNG, JPG, etc.
  - [ ] SVG support: Vector graphics import
@@ -159,20 +159,20 @@
  - [ ] Asset packing: Bundle assets into single files
  - [ ] Save/load game state: Serialization utilities
 
-** Networking [/]
+** Networking [0/3]
 
  - [ ] Network sync: Multiplayer support
  - [ ] Replay system: Record and playback sessions
  - [ ] Cloud saves: Save game state to cloud
 
-** Build & Distribution [/]
+** Build & Distribution [0/4]
 
  - [ ] Web target: Compile to WebAssembly
  - [ ] Mobile support: Android/iOS targets
  - [ ] Asset bundling: Package assets with executable
  - [ ] Automatic builds: CI/CD integration
 
-** Quality of Life [/]
+** Quality of Life [0/7]
 
  - [ ] Error recovery: Graceful handling of GPU errors
  - [ ] Asset validation: Check assets at load time
@@ -182,7 +182,7 @@
  - [ ] Benchmarking suite: Performance regression tests
  - [ ] Undo/redo system: For editor-like applications
 
-** Advanced Graphics [/]
+** Advanced Graphics [0/6]
 
  - [ ] Normal mapping: For pseudo-3D effects
  - [ ] Lighting system: 2D dynamic lighting

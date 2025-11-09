@@ -1,6 +1,10 @@
 use egui_glium::egui_winit::egui::Context;
 use glam::Vec2;
 use glium::Surface;
+use rand::{
+    Rng,
+    distr::{Distribution, StandardUniform},
+};
 use winit_input_helper::WinitInputHelper;
 
 use crate::{
@@ -8,8 +12,8 @@ use crate::{
     color::Color,
     get_frame, get_state,
     shapes::{
-        AABB, Line, Poly, Rect, Triangle, draw_circle_internal, draw_circle_world_internal,
-        draw_shape, draw_shape_world, is_world_shape_visible,
+        AABB, CustomShape, Line, Poly, Rect, Triangle, draw_circle_internal,
+        draw_circle_world_internal, draw_shape, draw_shape_world, is_world_shape_visible,
     },
     textures::TextureRef,
 };
@@ -24,6 +28,34 @@ pub fn draw_circle(center: Vec2, radius: f32, color: Color) {
 
 pub fn draw_circle_world(center: Vec2, radius: f32, color: Color) {
     draw_circle_world_internal(center, radius, color);
+}
+
+pub fn draw_custom_shape(points: Vec<Vec2>, color: Color) {
+    let shape = CustomShape { points, color };
+    draw_shape(shape);
+}
+
+pub fn draw_custom_shape_world(points: Vec<Vec2>, color: Color) {
+    if points.is_empty() {
+        return;
+    }
+
+    // Calculate bounding box for culling
+    let mut min = points[0];
+    let mut max = points[0];
+
+    for point in &points[1..] {
+        min = min.min(*point);
+        max = max.max(*point);
+    }
+
+    let bounds = AABB::new(min, max);
+    if !is_world_shape_visible(bounds) {
+        return;
+    }
+
+    let shape = CustomShape { points, color };
+    draw_shape_world(shape);
 }
 
 pub fn draw_line(start: Vec2, end: Vec2, thickness: f32, color: Color) {
@@ -351,9 +383,7 @@ pub fn draw_sprite(sprite_ref: TextureRef, position: Vec2, scale: f32) {
 }
 
 pub fn draw_sprite_scaled(sprite: TextureRef, position: Vec2, scale: Vec2) {
-    let texture = sprite.get();
-    let size = scale;
-    get_state().draw_queue.add_sprite(sprite, position, size);
+    get_state().draw_queue.add_sprite(sprite, position, scale);
 }
 
 pub fn draw_sprite_world(sprite_ref: TextureRef, position: Vec2, scale: f32) {
@@ -362,12 +392,7 @@ pub fn draw_sprite_world(sprite_ref: TextureRef, position: Vec2, scale: f32) {
 }
 
 pub fn draw_sprite_scaled_world(sprite: TextureRef, position: Vec2, scale: Vec2) {
-    let texture = sprite.get();
-    let size = scale;
-
-    // UNIT_SQUARE is [-1, 1], so after transformation the bounds are:
-    // [position - size, position + size]
-    let bounds = AABB::new(position - size, position + size);
+    let bounds = AABB::new(position - scale, position + scale);
 
     if !is_world_shape_visible(bounds) {
         return;
@@ -375,7 +400,7 @@ pub fn draw_sprite_scaled_world(sprite: TextureRef, position: Vec2, scale: Vec2)
 
     get_state()
         .world_draw_queue
-        .add_sprite(sprite, position, size);
+        .add_sprite(sprite, position, scale);
 }
 
 pub fn screen_to_world(screen_pos: Vec2) -> Vec2 {
@@ -384,4 +409,11 @@ pub fn screen_to_world(screen_pos: Vec2) -> Vec2 {
 
 pub fn world_to_screen(world_pos: Vec2) -> Vec2 {
     get_state().camera.world_to_screen(world_pos)
+}
+
+pub fn rand<T>() -> T
+where
+    StandardUniform: Distribution<T>,
+{
+    get_state().rng.random()
 }

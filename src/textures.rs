@@ -1,9 +1,8 @@
 use std::io::Cursor;
 
-use glam::{USizeVec2, UVec2, Vec2};
-use glium::{Texture2d, glutin::api::glx::display, implement_vertex, texture::RawImage2d};
+use glam::{UVec2, Vec2};
+use glium::{Texture2d, implement_vertex, texture::RawImage2d};
 use image::ImageFormat;
-use uuid::Uuid;
 
 use crate::get_state;
 
@@ -53,22 +52,10 @@ pub fn load_texture(bytes: &[u8], format: ImageFormat) -> anyhow::Result<Texture
         },
     };
 
-    dbg!(texture.normalized_dimensions);
-
-    let id = state.textures.textures.len();
-    state.textures.textures.push(texture);
+    let id = state.storage.textures.len();
+    state.storage.textures.push(texture);
 
     Ok(TextureRef { id })
-}
-
-pub(crate) struct EngineTextureStore {
-    textures: Vec<EngineTexture>,
-}
-
-impl EngineTextureStore {
-    pub fn new() -> Self {
-        Self { textures: vec![] }
-    }
 }
 
 #[derive(Clone, Copy)]
@@ -84,11 +71,11 @@ pub struct EngineTexture {
 
 impl TextureRef {
     pub(crate) fn get(&self) -> &'static EngineTexture {
-        &get_state().textures.textures[self.id]
+        &get_state().storage.textures[self.id]
     }
 
     pub(crate) fn get_mut(&self) -> &'static mut EngineTexture {
-        &mut get_state().textures.textures[self.id]
+        &mut get_state().storage.textures[self.id]
     }
 
     pub fn dimensions(&self) -> UVec2 {

@@ -10,7 +10,7 @@ use egui_glium::{EguiGlium, egui_winit::egui::ViewportId};
 use fps_ticker::Fps;
 use glam::Mat4;
 use glium::{
-    Frame, Program,
+    Frame,
     backend::glutin::{Display, SimpleWindowBuilder},
     glutin::surface::WindowSurface,
     implement_vertex,
@@ -20,7 +20,8 @@ use glium::{
     },
 };
 use programs::Programs;
-use textures::EngineTextureStore;
+use rand::rngs::ThreadRng;
+use textures::EngineTexture;
 use winit_input_helper::WinitInputHelper;
 
 mod api;
@@ -34,6 +35,7 @@ mod draw_queue;
 pub mod prelude;
 mod programs;
 mod shapes;
+mod text_rendering;
 mod textures;
 mod utils;
 
@@ -82,12 +84,23 @@ struct EngineState {
     world_draw_queue: DrawQueue,
     #[cfg(feature = "debugging")]
     debug_info: debugging::DebugInfo,
-    textures: EngineTextureStore,
+    storage: EngineStorage,
     buffers: Buffers,
+    rng: ThreadRng,
 }
 
 unsafe impl Sync for EngineState {}
 unsafe impl Send for EngineState {}
+
+pub(crate) struct EngineStorage {
+    textures: Vec<EngineTexture>,
+}
+
+impl EngineStorage {
+    pub fn new() -> Self {
+        Self { textures: vec![] }
+    }
+}
 
 pub fn init(title: &str) -> anyhow::Result<()> {
     env_logger::init();
@@ -108,9 +121,10 @@ pub fn init(title: &str) -> anyhow::Result<()> {
     let world_draw_queue = DrawQueue::empty();
     #[cfg(feature = "debugging")]
     let debug_info = DebugInfo::new();
-    let textures = EngineTextureStore::new();
+    let textures = EngineStorage::new();
     let buffers = Buffers::new(&display)?;
     let programs = Programs::new(&display)?;
+    let rng = rand::rng();
 
     unsafe {
         ENGINE_STATE = Some(EngineState {
@@ -127,7 +141,8 @@ pub fn init(title: &str) -> anyhow::Result<()> {
             world_draw_queue,
             debug_info,
             buffers,
-            textures,
+            storage: textures,
+            rng,
         });
     }
 

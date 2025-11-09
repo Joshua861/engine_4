@@ -103,6 +103,13 @@ fn main() -> anyhow::Result<()> {
 
         draw_sprite_world(guy_texture, Vec2::new(0.0, 0.0), 50.0);
 
+        {
+            let points: Vec<Vec2> = (0..10)
+                .map(|_| Vec2::new(rand::<f32>() * 300.0 + 400.0, rand::<f32>() * 300.0 + 100.0))
+                .collect();
+            draw_custom_shape(points, Color::YELLOW_500);
+        }
+
         run_ui(|ctx| {
             egui::Window::new("Hello, world").show(ctx, |ui| {
                 ui.label("This is a perfect engine");

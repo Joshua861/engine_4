@@ -1,5 +1,7 @@
 use glam::Vec2;
 
+pub mod ray;
+
 pub trait IntersectsWith<T> {
     fn intersects_with(&self, other: &T) -> bool;
 }
@@ -597,4 +599,35 @@ fn circle_intersects_line_segment(circle: &Circle, v1: Vec2, v2: Vec2) -> bool {
     let closest = closest_point_on_segment(circle.center, v1, v2);
     let distance_squared = circle.center.distance_squared(closest);
     distance_squared <= circle.radius * circle.radius
+}
+
+use crate::shapes;
+
+pub trait ToCollider<T> {
+    fn to_collider(&self) -> T;
+}
+
+impl ToCollider<Circle> for shapes::Circle {
+    fn to_collider(&self) -> Circle {
+        Circle {
+            center: self.center,
+            radius: self.radius,
+        }
+    }
+}
+
+impl ToCollider<Polygon> for shapes::Poly {
+    fn to_collider(&self) -> Polygon {
+        Polygon {
+            vertices: self.gen_points(),
+        }
+    }
+}
+
+impl ToCollider<Polygon> for shapes::CustomShape {
+    fn to_collider(&self) -> Polygon {
+        Polygon {
+            vertices: self.points.clone(),
+        }
+    }
 }
