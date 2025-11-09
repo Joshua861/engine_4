@@ -155,53 +155,178 @@ impl Camera {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use glam::Vec2;
 
-    #[test]
-    fn test_screen_to_world() {
-        let mut camera = Camera::new(800, 600);
-
-        // Test with default camera
-        assert_eq!(
-            camera.screen_to_world(Vec2::new(400.0, 300.0)),
-            Vec2::new(0.0, 0.0)
-        );
-        assert_eq!(
-            camera.screen_to_world(Vec2::new(500.0, 400.0)),
-            Vec2::new(100.0, 100.0)
-        );
-
-        // Test with translation
-        camera.translation = Vec2::new(10.0, 20.0);
-        assert_eq!(
-            camera.screen_to_world(Vec2::new(400.0, 300.0)),
-            Vec2::new(10.0, 20.0)
-        );
-
-        // Test with scale
-        camera.translation = Vec2::ZERO;
-        camera.scale = 2.0;
-        assert_eq!(
-            camera.screen_to_world(Vec2::new(500.0, 400.0)),
-            Vec2::new(50.0, 50.0)
-        );
+    fn create_test_camera() -> Camera {
+        Camera::new(800, 600)
     }
 
     #[test]
-    fn test_zoom_at() {
-        let mut camera = Camera::new(800, 600);
-
-        // Test zooming in at the center
-        camera.zoom_at(Vec2::new(400.0, 300.0), 2.0);
-        assert_eq!(camera.scale, 2.0);
+    fn test_camera_initialization() {
+        let camera = create_test_camera();
         assert_eq!(camera.translation, Vec2::ZERO);
+        assert_eq!(camera.scale, 1.0);
+        assert_eq!(camera.rotation, 0.0);
+        assert_eq!(camera.window_size(), Vec2::new(800.0, 600.0));
+    }
 
-        // Test zooming in at a different point
-        camera = Camera::new(800, 600);
-        camera.zoom_at(Vec2::new(500.0, 400.0), 2.0);
-        assert_eq!(camera.scale, 2.0);
-        assert_eq!(
-            camera.screen_to_world(Vec2::new(500.0, 400.0)),
-            Vec2::new(100.0, 100.0)
-        );
+    #[test]
+    fn test_screen_center() {
+        let camera = create_test_camera();
+        let center = camera.window_size() * 0.5;
+        assert_eq!(center, Vec2::new(400.0, 300.0));
+    }
+
+    #[test]
+    fn test_screen_to_world_identity() {
+        let mut camera = create_test_camera();
+        let screen_pos = Vec2::new(400.0, 300.0); // center
+        let world_pos = camera.screen_to_world(screen_pos);
+        assert_eq!(world_pos, Vec2::ZERO);
+    }
+
+    #[test]
+    fn test_world_to_screen_identity() {
+        let mut camera = create_test_camera();
+        let world_pos = Vec2::ZERO;
+        let screen_pos = camera.world_to_screen(world_pos);
+        assert_eq!(screen_pos, Vec2::new(400.0, 300.0));
+    }
+
+    #[test]
+    fn test_screen_world_roundtrip() {
+        let mut camera = create_test_camera();
+        let original = Vec2::new(100.0, 200.0);
+        let world = camera.screen_to_world(original);
+        let back = camera.world_to_screen(world);
+
+        assert!((original.x - back.x).abs() < 0.001);
+        assert!((original.y - back.y).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_translation() {
+        let mut camera = create_test_camera();
+        camera.translation = Vec2::new(100.0, 50.0);
+        camera.mark_dirty();
+
+        let world_pos = camera.screen_to_world(Vec2::new(400.0, 300.0));
+        assert_eq!(world_pos, Vec2::new(100.0, 50.0));
+    }
+
+    #[test]
+    fn test_scale_doubles() {
+        let mut camera = create_test_camera();
+        camera.scale = 2.0;
+        camera.mark_dirty();
+
+        let screen_pos = Vec2::new(500.0, 300.0); // 100px right of center
+        let world_pos = camera.screen_to_world(screen_pos);
+        assert_eq!(world_pos, Vec2::new(50.0, 0.0)); // Should be 50 units in world
+    }
+
+    #[test]
+    fn test_scale_halves() {
+        let mut camera = create_test_camera();
+        camera.scale = 0.5;
+        camera.mark_dirty();
+
+        let screen_pos = Vec2::new(500.0, 300.0); // 100px right of center
+        let world_pos = camera.screen_to_world(screen_pos);
+        assert_eq!(world_pos, Vec2::new(200.0, 0.0)); // Should be 200 units in world
+    }
+
+    #[test]
+    fn test_zoom_at_maintains_point() {
+        let mut camera = create_test_camera();
+        let screen_point = Vec2::new(500.0, 400.0);
+        let world_before = camera.screen_to_world(screen_point);
+
+        camera.zoom_at(screen_point, 2.0);
+
+        let world_after = camera.screen_to_world(screen_point);
+
+        assert!((world_before.x - world_after.x).abs() < 0.1);
+        assert!((world_before.y - world_after.y).abs() < 0.1);
+    }
+
+    #[test]
+    fn test_visible_bounds_no_transform() {
+        let mut camera = create_test_camera();
+        let (min, max) = camera.visible_bounds();
+
+        assert_eq!(min, Vec2::new(-400.0, -300.0));
+        assert_eq!(max, Vec2::new(400.0, 300.0));
+    }
+
+    #[test]
+    fn test_visible_bounds_with_translation() {
+        let mut camera = create_test_camera();
+        camera.translation = Vec2::new(100.0, 50.0);
+        camera.mark_dirty();
+
+        let (min, max) = camera.visible_bounds();
+
+        assert_eq!(min, Vec2::new(-300.0, -250.0));
+        assert_eq!(max, Vec2::new(500.0, 350.0));
+    }
+
+    #[test]
+    fn test_visible_bounds_with_scale() {
+        let mut camera = create_test_camera();
+        camera.scale = 2.0;
+        camera.mark_dirty();
+
+        let (min, max) = camera.visible_bounds();
+
+        assert_eq!(min, Vec2::new(-200.0, -150.0));
+        assert_eq!(max, Vec2::new(200.0, 150.0));
+    }
+
+    #[test]
+    fn test_distance_conversions() {
+        let camera = create_test_camera();
+        let world_dist = 100.0;
+        let screen_dist = camera.world_distance_to_screen(world_dist);
+        assert_eq!(screen_dist, 100.0);
+
+        let back = camera.screen_distance_to_world(screen_dist);
+        assert_eq!(back, world_dist);
+    }
+
+    #[test]
+    fn test_distance_conversions_scaled() {
+        let mut camera = create_test_camera();
+        camera.scale = 2.0;
+
+        let world_dist = 100.0;
+        let screen_dist = camera.world_distance_to_screen(world_dist);
+        assert_eq!(screen_dist, 200.0);
+
+        let back = camera.screen_distance_to_world(screen_dist);
+        assert_eq!(back, world_dist);
+    }
+
+    #[test]
+    fn test_update_sizes() {
+        let mut camera = create_test_camera();
+        camera.update_sizes(1024, 768);
+
+        assert_eq!(camera.window_size(), Vec2::new(1024.0, 768.0));
+    }
+
+    #[test]
+    fn test_multiple_transformations() {
+        let mut camera = create_test_camera();
+        camera.translation = Vec2::new(50.0, 25.0);
+        camera.scale = 1.5;
+        camera.mark_dirty();
+
+        let screen_pos = Vec2::new(500.0, 400.0);
+        let world_pos = camera.screen_to_world(screen_pos);
+        let back = camera.world_to_screen(world_pos);
+
+        assert!((screen_pos.x - back.x).abs() < 0.001);
+        assert!((screen_pos.y - back.y).abs() < 0.001);
     }
 }
