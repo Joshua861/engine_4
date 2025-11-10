@@ -497,7 +497,7 @@ mod tests {
 
     // Circle-Circle tests
     #[test]
-    fn test_circle_circle_intersect() {
+    fn circle_circle_intersect() {
         let c1 = Circle {
             center: Vec2::ZERO,
             radius: 5.0,
@@ -510,7 +510,7 @@ mod tests {
     }
 
     #[test]
-    fn test_circle_circle_touching() {
+    fn circle_circle_touching() {
         let c1 = Circle {
             center: Vec2::ZERO,
             radius: 5.0,
@@ -523,7 +523,7 @@ mod tests {
     }
 
     #[test]
-    fn test_circle_circle_no_intersect() {
+    fn circle_circle_no_intersect() {
         let c1 = Circle {
             center: Vec2::ZERO,
             radius: 5.0,
@@ -536,7 +536,7 @@ mod tests {
     }
 
     #[test]
-    fn test_circle_circle_contained() {
+    fn circle_circle_contained() {
         let c1 = Circle {
             center: Vec2::ZERO,
             radius: 10.0,
@@ -550,7 +550,7 @@ mod tests {
 
     // Circle-Square tests
     #[test]
-    fn test_circle_square_intersect() {
+    fn circle_square_intersect() {
         let circle = Circle {
             center: Vec2::ZERO,
             radius: 5.0,
@@ -563,7 +563,7 @@ mod tests {
     }
 
     #[test]
-    fn test_circle_square_corner_intersect() {
+    fn circle_square_corner_intersect() {
         let circle = Circle {
             center: Vec2::ZERO,
             radius: 5.0,
@@ -576,7 +576,7 @@ mod tests {
     }
 
     #[test]
-    fn test_circle_square_no_intersect() {
+    fn circle_square_no_intersect() {
         let circle = Circle {
             center: Vec2::ZERO,
             radius: 5.0,
@@ -589,7 +589,7 @@ mod tests {
     }
 
     #[test]
-    fn test_circle_inside_square() {
+    fn circle_inside_square() {
         let circle = Circle {
             center: Vec2::ZERO,
             radius: 2.0,
@@ -603,7 +603,7 @@ mod tests {
 
     // Square-Square tests
     #[test]
-    fn test_square_square_intersect() {
+    fn square_square_intersect() {
         let s1 = Square {
             center: Vec2::ZERO,
             half_size: 5.0,
@@ -616,7 +616,7 @@ mod tests {
     }
 
     #[test]
-    fn test_square_square_touching() {
+    fn square_square_touching() {
         let s1 = Square {
             center: Vec2::ZERO,
             half_size: 5.0,
@@ -629,7 +629,7 @@ mod tests {
     }
 
     #[test]
-    fn test_square_square_no_intersect() {
+    fn square_square_no_intersect() {
         let s1 = Square {
             center: Vec2::ZERO,
             half_size: 5.0,
@@ -643,7 +643,7 @@ mod tests {
 
     // Point tests
     #[test]
-    fn test_point_in_circle() {
+    fn point_in_circle() {
         let circle = Circle {
             center: Vec2::ZERO,
             radius: 5.0,
@@ -653,7 +653,7 @@ mod tests {
     }
 
     #[test]
-    fn test_point_outside_circle() {
+    fn point_outside_circle() {
         let circle = Circle {
             center: Vec2::ZERO,
             radius: 5.0,
@@ -663,7 +663,7 @@ mod tests {
     }
 
     #[test]
-    fn test_point_in_square() {
+    fn point_in_square() {
         let square = Square {
             center: Vec2::ZERO,
             half_size: 5.0,
@@ -673,7 +673,7 @@ mod tests {
     }
 
     #[test]
-    fn test_point_outside_square() {
+    fn point_outside_square() {
         let square = Square {
             center: Vec2::ZERO,
             half_size: 5.0,
@@ -684,7 +684,7 @@ mod tests {
 
     // Polygon tests
     #[test]
-    fn test_triangle_contains_point() {
+    fn triangle_contains_point() {
         let polygon = Polygon {
             vertices: vec![
                 Vec2::new(0.0, 0.0),
@@ -696,7 +696,7 @@ mod tests {
     }
 
     #[test]
-    fn test_triangle_does_not_contain_point() {
+    fn triangle_does_not_contain_point() {
         let polygon = Polygon {
             vertices: vec![
                 Vec2::new(0.0, 0.0),
@@ -708,7 +708,7 @@ mod tests {
     }
 
     #[test]
-    fn test_polygon_circle_intersect() {
+    fn polygon_circle_intersect() {
         let polygon = Polygon {
             vertices: vec![
                 Vec2::new(0.0, 0.0),
@@ -725,7 +725,7 @@ mod tests {
     }
 
     #[test]
-    fn test_polygon_circle_edge_intersect() {
+    fn polygon_circle_edge_intersect() {
         let polygon = Polygon {
             vertices: vec![
                 Vec2::new(0.0, 0.0),
@@ -742,7 +742,7 @@ mod tests {
     }
 
     #[test]
-    fn test_polygon_polygon_intersect() {
+    fn polygon_polygon_intersect() {
         let poly1 = Polygon {
             vertices: vec![
                 Vec2::new(0.0, 0.0),
@@ -764,28 +764,28 @@ mod tests {
 
     // AABB tests
     #[test]
-    fn test_aabb_intersect() {
+    fn aabb_intersect() {
         let aabb1 = AABB::new(Vec2::ZERO, Vec2::new(10.0, 10.0));
         let aabb2 = AABB::new(Vec2::new(5.0, 5.0), Vec2::new(15.0, 15.0));
         assert!(aabb1.intersects(&aabb2));
     }
 
     #[test]
-    fn test_aabb_no_intersect() {
+    fn aabb_no_intersect() {
         let aabb1 = AABB::new(Vec2::ZERO, Vec2::new(10.0, 10.0));
         let aabb2 = AABB::new(Vec2::new(20.0, 20.0), Vec2::new(30.0, 30.0));
         assert!(!aabb1.intersects(&aabb2));
     }
 
     #[test]
-    fn test_aabb_from_center_size() {
+    fn aabb_from_center_size() {
         let aabb = AABB::from_center_size(Vec2::new(5.0, 5.0), Vec2::new(10.0, 10.0));
         assert_eq!(aabb.min, Vec2::ZERO);
         assert_eq!(aabb.max, Vec2::new(10.0, 10.0));
     }
 
     #[test]
-    fn test_aabb_expand() {
+    fn aabb_expand() {
         let aabb = AABB::new(Vec2::new(5.0, 5.0), Vec2::new(10.0, 10.0));
         let expanded = aabb.expand(2.0);
         assert_eq!(expanded.min, Vec2::new(3.0, 3.0));
@@ -794,7 +794,7 @@ mod tests {
 
     // HasBounds tests
     #[test]
-    fn test_circle_bounds() {
+    fn circle_bounds() {
         let circle = Circle {
             center: Vec2::new(5.0, 5.0),
             radius: 3.0,
@@ -805,7 +805,7 @@ mod tests {
     }
 
     #[test]
-    fn test_square_bounds() {
+    fn square_bounds() {
         let square = Square {
             center: Vec2::new(5.0, 5.0),
             half_size: 3.0,
@@ -816,7 +816,7 @@ mod tests {
     }
 
     #[test]
-    fn test_polygon_bounds() {
+    fn polygon_bounds() {
         let polygon = Polygon {
             vertices: vec![
                 Vec2::new(1.0, 2.0),
@@ -832,7 +832,7 @@ mod tests {
 
     // Symmetry tests
     #[test]
-    fn test_intersection_symmetry() {
+    fn intersection_symmetry() {
         let circle = Circle {
             center: Vec2::ZERO,
             radius: 5.0,
@@ -848,7 +848,7 @@ mod tests {
     }
 
     #[test]
-    fn test_collision_then_raycast() {
+    fn collision_then_raycast() {
         let circle1 = Circle {
             center: Vec2::ZERO,
             radius: 5.0,
@@ -867,7 +867,7 @@ mod tests {
     }
 
     #[test]
-    fn test_aabb_contains_shapes() {
+    fn aabb_contains_shapes() {
         let circle = Circle {
             center: Vec2::new(5.0, 5.0),
             radius: 2.0,
@@ -885,7 +885,7 @@ mod tests {
     }
 
     #[test]
-    fn test_point_in_all_overlapping_shapes() {
+    fn point_in_all_overlapping_shapes() {
         let point = Point::new(Vec2::new(5.0, 5.0));
 
         let circle = Circle {
@@ -911,7 +911,7 @@ mod tests {
     }
 
     #[test]
-    fn test_raycast_through_overlapping_shapes() {
+    fn raycast_through_overlapping_shapes() {
         let circle = Circle {
             center: Vec2::new(10.0, 0.0),
             radius: 3.0,
@@ -930,7 +930,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bounds_after_collision() {
+    fn bounds_after_collision() {
         let mut shapes: Vec<Box<dyn HasBounds>> = vec![
             Box::new(Circle {
                 center: Vec2::new(0.0, 0.0),
@@ -959,7 +959,7 @@ mod tests {
     }
 
     #[test]
-    fn test_complex_scene() {
+    fn complex_scene() {
         // Create a scene with multiple shapes
         let shapes = vec![
             Circle {
@@ -993,7 +993,7 @@ mod tests {
     }
 
     #[test]
-    fn test_spatial_partitioning_scenario() {
+    fn spatial_partitioning_scenario() {
         // Simulate a grid-based collision system
         let grid_size = 10.0;
         let shapes = vec![
@@ -1036,7 +1036,7 @@ mod tests {
     }
 
     #[test]
-    fn test_raycast_returns_closest_hit() {
+    fn raycast_returns_closest_hit() {
         let shapes = vec![
             Circle {
                 center: Vec2::new(10.0, 0.0),
@@ -1068,7 +1068,7 @@ mod tests {
     }
 
     #[test]
-    fn test_collision_filtering_by_bounds() {
+    fn collision_filtering_by_bounds() {
         let shapes = vec![
             Circle {
                 center: Vec2::new(0.0, 0.0),
@@ -1103,7 +1103,7 @@ mod performance_tests {
     use glam::Vec2;
 
     #[test]
-    fn test_many_circle_collisions() {
+    fn many_circle_collisions() {
         let circles: Vec<Circle> = (0..100)
             .map(|i| Circle {
                 center: Vec2::new((i % 10) as f32 * 10.0, (i / 10) as f32 * 10.0),
@@ -1127,7 +1127,7 @@ mod performance_tests {
     }
 
     #[test]
-    fn test_many_raycasts() {
+    fn many_raycasts() {
         let shapes: Vec<Circle> = (0..50)
             .map(|i| Circle {
                 center: Vec2::new((i as f32) * 20.0, 0.0),
@@ -1148,7 +1148,7 @@ mod performance_tests {
     }
 
     #[test]
-    fn test_aabb_broadphase_effectiveness() {
+    fn aabb_broadphase_effectiveness() {
         let shapes: Vec<Square> = (0..100)
             .map(|i| Square {
                 center: Vec2::new((i % 10) as f32 * 100.0, (i / 10) as f32 * 100.0),

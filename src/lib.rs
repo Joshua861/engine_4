@@ -32,6 +32,7 @@ mod color;
 #[cfg(feature = "debugging")]
 mod debugging;
 mod draw_queue;
+mod physics;
 mod post_processing;
 pub mod prelude;
 mod programs;
@@ -81,6 +82,7 @@ struct EngineState {
     projection: Mat4,
     camera: Camera,
     gui: EguiGlium,
+    gui_initialized: bool,
     draw_queue: DrawQueue,
     world_draw_queue: DrawQueue,
     #[cfg(feature = "debugging")]
@@ -126,6 +128,7 @@ pub fn init(title: &str) -> anyhow::Result<()> {
     let buffers = Buffers::new(&display)?;
     let programs = Programs::new(&display)?;
     let rng = rand::rng();
+    let gui_initialized = false;
 
     unsafe {
         ENGINE_STATE = Some(EngineState {
@@ -138,6 +141,7 @@ pub fn init(title: &str) -> anyhow::Result<()> {
             projection,
             camera,
             gui,
+            gui_initialized,
             draw_queue,
             world_draw_queue,
             debug_info,
@@ -209,7 +213,9 @@ pub fn next_frame() {
     state.draw_queue.clear();
     state.world_draw_queue.clear();
 
-    state.gui.paint(&state.display, &mut frame);
+    if state.gui_initialized {
+        state.gui.paint(&state.display, &mut frame);
+    }
 
     frame.finish().unwrap();
     state.window.request_redraw();

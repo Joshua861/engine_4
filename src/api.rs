@@ -195,6 +195,7 @@ pub fn camera_zoom_at(screen_pos: Vec2, zoom_factor: f32) {
 
 pub fn run_ui(mut f: impl FnMut(&Context)) {
     let state = get_state();
+    state.gui_initialized = true;
     state.gui.run(&state.window, |ctx| {
         state.debug_info.draw_debug_info(ctx);
 
