@@ -1,3 +1,4 @@
+// ./examples/physics.rs
 use engine_4::prelude::*;
 
 const BOUNDS_SIZE: Vec2 = Vec2::new(1000.0, 1000.0);
@@ -72,16 +73,12 @@ fn create_boundary_walls(world: &mut PhysicsWorld) -> [[Vec2; 2]; 4] {
         let center = a.midpoint(*b);
         let size = *b - *a;
 
-        let body =
-            world.insert_rigid_body(RigidBodyBuilder::fixed().translation(center.into()).build());
+        let rigid_body = RigidBodyBuilder::fixed().translation(center.into()).build();
+        let collider = ColliderBuilder::cuboid(size.x / 2.0, size.y / 2.0)
+            .restitution(1.0)
+            .build();
 
-        world.collider_set.insert_with_parent(
-            ColliderBuilder::cuboid(size.x / 2.0, size.y / 2.0)
-                .restitution(1.0)
-                .build(),
-            body,
-            &mut world.rigid_body_set,
-        );
+        world.insert_rigid_body_with_collider(rigid_body, collider);
     }
 
     walls
@@ -93,20 +90,14 @@ fn spawn_object(
     velocity: nalgebra::Vector2<f32>,
     shape_type: ShapeType,
 ) -> (physics::RigidBodyHandle, physics::ColliderHandle) {
-    let body = world.insert_rigid_body(
-        RigidBodyBuilder::dynamic()
-            .translation(pos.into())
-            .linvel(velocity)
-            .build(),
-    );
+    let rigid_body = RigidBodyBuilder::dynamic()
+        .translation(pos.into())
+        .linvel(velocity)
+        .build();
 
-    let collider = world.collider_set.insert_with_parent(
-        shape_type.create_collider().build(),
-        body,
-        &mut world.rigid_body_set,
-    );
+    let collider = shape_type.create_collider().build();
 
-    (body, collider)
+    world.insert_rigid_body_with_collider(rigid_body, collider)
 }
 
 fn main() -> anyhow::Result<()> {
@@ -119,7 +110,7 @@ fn main() -> anyhow::Result<()> {
 
     let walls = create_boundary_walls(&mut world);
 
-    for i in 0..500 {
+    for i in 0..100 {
         let pos = Vec2::new(
             rand::<f32>() * (BOUNDS_SIZE.x - BOUNDS_THICKNESS * 2.0) + BOUNDS_THICKNESS,
             rand::<f32>() * (BOUNDS_SIZE.y - BOUNDS_THICKNESS * 2.0) + BOUNDS_THICKNESS,

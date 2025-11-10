@@ -9,11 +9,11 @@
 - [X] cull off screen world draws
 
 * Lucas
-- [ ] Raycasting
+- [X] Raycasting
 - [X] Collision boxes / area 2D (AABB / circle / polygon)
-- [ ] Rigid bodies (rapier)
+- [X] Rigid bodies (rapier)
 - [X] Custom polygons from shapes
-- [ ] physics system needs retained state. let the user retain it wherever they want. just put it all in a struct.
+- [X] physics system needs retained state. let the user retain it wherever they want. just put it all in a struct.
 
 * Performance Optimizations
 

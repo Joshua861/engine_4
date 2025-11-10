@@ -3,13 +3,13 @@ use bevy_math::Vec2;
 use rapier2d::{
     na::{Vector2, vector},
     prelude::{
-        CCDSolver, Collider, ColliderHandle, ColliderSet, DefaultBroadPhase, ImpulseJointSet,
-        IntegrationParameters, IslandManager, MultibodyJointSet, NarrowPhase, PhysicsPipeline,
-        RigidBody, RigidBodyHandle, RigidBodySet,
+        CCDSolver, Collider, ColliderHandle, ColliderSet, DefaultBroadPhase, EventHandler,
+        ImpulseJointSet, IntegrationParameters, IslandManager, MultibodyJointSet, NarrowPhase,
+        PhysicsHooks, PhysicsPipeline, RigidBody, RigidBodyHandle, RigidBodySet,
     },
 };
 
-pub struct World {
+pub struct World<H = (), E = ()> {
     pub gravity: Vector2<f32>,
     pub integration_parameters: IntegrationParameters,
     pub physics_pipeline: PhysicsPipeline,
@@ -21,11 +21,47 @@ pub struct World {
     pub ccd_solver: CCDSolver,
     pub rigid_body_set: RigidBodySet,
     pub collider_set: ColliderSet,
-    pub physics_hooks: (),
-    pub event_handler: (),
+    pub physics_hooks: H,
+    pub event_handler: E,
 }
 
-impl World {
+impl World<(), ()> {
+    pub fn new() -> Self {
+        Self::with_hooks_and_event_handler((), ())
+    }
+}
+
+impl<H: PhysicsHooks, E: EventHandler> World<H, E> {
+    pub fn with_hooks_and_event_handler(hooks: H, event_handler: E) -> Self {
+        let rigid_body_set = RigidBodySet::new();
+        let collider_set = ColliderSet::new();
+        let gravity = vector![0.0, -9.81];
+        let integration_parameters = IntegrationParameters::default();
+        let physics_pipeline = PhysicsPipeline::new();
+        let island_manager = IslandManager::new();
+        let broad_phase = DefaultBroadPhase::new();
+        let narrow_phase = NarrowPhase::new();
+        let impulse_joint_set = ImpulseJointSet::new();
+        let multibody_joint_set = MultibodyJointSet::new();
+        let ccd_solver = CCDSolver::new();
+
+        Self {
+            gravity,
+            integration_parameters,
+            physics_pipeline,
+            island_manager,
+            broad_phase,
+            narrow_phase,
+            impulse_joint_set,
+            multibody_joint_set,
+            ccd_solver,
+            rigid_body_set,
+            collider_set,
+            physics_hooks: hooks,
+            event_handler,
+        }
+    }
+
     pub fn step(&mut self) {
         self.physics_pipeline.step(
             &self.gravity,
@@ -41,38 +77,6 @@ impl World {
             &self.physics_hooks,
             &self.event_handler,
         );
-    }
-
-    pub fn new() -> Self {
-        let rigid_body_set = RigidBodySet::new();
-        let collider_set = ColliderSet::new();
-        let gravity = vector![0.0, -9.81];
-        let integration_parameters = IntegrationParameters::default();
-        let physics_pipeline = PhysicsPipeline::new();
-        let island_manager = IslandManager::new();
-        let broad_phase = DefaultBroadPhase::new();
-        let narrow_phase = NarrowPhase::new();
-        let impulse_joint_set = ImpulseJointSet::new();
-        let multibody_joint_set = MultibodyJointSet::new();
-        let ccd_solver = CCDSolver::new();
-        let physics_hooks = ();
-        let event_handler = ();
-
-        Self {
-            gravity,
-            integration_parameters,
-            physics_pipeline,
-            island_manager,
-            broad_phase,
-            narrow_phase,
-            impulse_joint_set,
-            multibody_joint_set,
-            ccd_solver,
-            rigid_body_set,
-            collider_set,
-            physics_hooks,
-            event_handler,
-        }
     }
 
     pub fn with_custom_gravity(mut self, gravity: Vec2) -> Self {
@@ -91,6 +95,18 @@ impl World {
 
     pub fn insert_collider(&mut self, collider: Collider) -> ColliderHandle {
         self.collider_set.insert(collider)
+    }
+
+    pub fn insert_rigid_body_with_collider(
+        &mut self,
+        rigid_body: RigidBody,
+        collider: Collider,
+    ) -> (RigidBodyHandle, ColliderHandle) {
+        let body_handle = self.rigid_body_set.insert(rigid_body);
+        let collider_handle =
+            self.collider_set
+                .insert_with_parent(collider, body_handle, &mut self.rigid_body_set);
+        (body_handle, collider_handle)
     }
 
     pub fn get_rigid_body(&self, handle: RigidBodyHandle) -> Option<&RigidBody> {
