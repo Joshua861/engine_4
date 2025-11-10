@@ -1,4 +1,4 @@
-use glam::Vec2;
+use bevy_math::Vec2;
 
 pub mod ray;
 
@@ -493,7 +493,7 @@ pub fn square(x: f32, y: f32, size: f32) -> Square {
 mod tests {
     use super::*;
     use crate::collisions::ray::*;
-    use glam::Vec2;
+    use bevy_math::Vec2;
 
     // Circle-Circle tests
     #[test]
@@ -1100,7 +1100,7 @@ mod tests {
 mod performance_tests {
     use super::*;
     use crate::collisions::ray::*;
-    use glam::Vec2;
+    use bevy_math::Vec2;
 
     #[test]
     fn many_circle_collisions() {

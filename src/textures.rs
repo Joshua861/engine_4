@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use glam::{UVec2, Vec2};
+use bevy_math::{UVec2, Vec2};
 use glium::{Texture2d, implement_vertex, texture::RawImage2d};
 use image::ImageFormat;
 

@@ -1,4 +1,4 @@
-use glam::Vec2;
+use bevy_math::Vec2;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Ray {
@@ -217,7 +217,7 @@ fn cross_2d(v1: Vec2, v2: Vec2) -> f32 {
 mod raycast_tests {
     use super::*;
     use crate::collisions::*;
-    use glam::Vec2;
+    use bevy_math::Vec2;
 
     // Basic ray tests
     #[test]

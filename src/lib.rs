@@ -8,7 +8,7 @@ use debugging::DebugInfo;
 use draw_queue::DrawQueue;
 use egui_glium::{EguiGlium, egui_winit::egui::ViewportId};
 use fps_ticker::Fps;
-use glam::Mat4;
+use bevy_math::Mat4;
 use glium::{
     Frame,
     backend::glutin::{Display, SimpleWindowBuilder},

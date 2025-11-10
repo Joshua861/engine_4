@@ -1,6 +1,6 @@
 use crate::{collisions::AABB, shapes::*};
 use egui_glium::egui_winit::egui::Context;
-use glam::Vec2;
+use bevy_math::Vec2;
 use glium::Surface;
 use rand::{
     Rng,

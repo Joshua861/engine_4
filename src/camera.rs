@@ -1,4 +1,4 @@
-use glam::{Mat3, Mat4, Vec2, Vec4};
+use bevy_math::{Mat3, Mat4, Vec2, Vec4};
 use glium::winit::window::Window;
 
 #[derive(Clone, Debug)]
@@ -155,7 +155,7 @@ impl Camera {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use glam::Vec2;
+    use bevy_math::Vec2;
 
     fn create_test_camera() -> Camera {
         Camera::new(800, 600)

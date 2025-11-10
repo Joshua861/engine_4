@@ -1,5 +1,5 @@
 pub use World as PhysicsWorld;
-use glam::Vec2;
+use bevy_math::Vec2;
 use rapier2d::{
     na::{Vector2, vector},
     prelude::{

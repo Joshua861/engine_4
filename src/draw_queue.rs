@@ -3,7 +3,7 @@ use crate::post_processing::PostProcessingEffect;
 use crate::shapes::{QUAD_INDICES, Shape, UNIT_QUAD};
 use crate::utils::extend_vec2;
 use crate::{Color, EngineDisplay, Frame, Programs};
-use glam::{Mat4, Quat, Vec2};
+use bevy_math::{Mat4, Quat, Vec2};
 use glium::{Blend, DrawParameters, IndexBuffer, Surface, VertexBuffer, uniform};
 
 use crate::{Vertex, shapes::CircleInstance, textures::TextureRef};

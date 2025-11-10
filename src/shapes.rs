@@ -4,7 +4,7 @@ use crate::{
     color::Color,
     get_state,
 };
-use glam::Vec2;
+use bevy_math::Vec2;
 use glium::implement_vertex;
 use std::f32::consts::TAU;
 

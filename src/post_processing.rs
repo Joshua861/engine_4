@@ -1,4 +1,4 @@
-use glam::Vec2;
+use bevy_math::Vec2;
 use glium::framebuffer::SimpleFrameBuffer;
 
 pub enum PostProcessingEffect {
