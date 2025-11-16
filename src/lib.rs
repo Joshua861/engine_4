@@ -1,5 +1,6 @@
 #![allow(static_mut_refs)]
 
+use bevy_math::Mat4;
 use buffers::Buffers;
 use camera::Camera;
 use color::Color;
@@ -8,7 +9,6 @@ use debugging::DebugInfo;
 use draw_queue::DrawQueue;
 use egui_glium::{EguiGlium, egui_winit::egui::ViewportId};
 use fps_ticker::Fps;
-use bevy_math::Mat4;
 use glium::{
     Frame,
     backend::glutin::{Display, SimpleWindowBuilder},
@@ -21,6 +21,7 @@ use glium::{
 };
 use programs::Programs;
 use rand::rngs::ThreadRng;
+use sound::{Sound, SoundState};
 use textures::EngineTexture;
 use winit_input_helper::WinitInputHelper;
 
@@ -37,6 +38,7 @@ mod post_processing;
 pub mod prelude;
 mod programs;
 mod shapes;
+mod sound;
 mod text_rendering;
 mod textures;
 mod utils;
@@ -90,6 +92,7 @@ struct EngineState {
     storage: EngineStorage,
     buffers: Buffers,
     rng: ThreadRng,
+    sound: SoundState,
 }
 
 unsafe impl Sync for EngineState {}
@@ -97,11 +100,15 @@ unsafe impl Send for EngineState {}
 
 pub(crate) struct EngineStorage {
     textures: Vec<EngineTexture>,
+    sounds: Vec<Sound>,
 }
 
 impl EngineStorage {
     pub fn new() -> Self {
-        Self { textures: vec![] }
+        Self {
+            textures: vec![],
+            sounds: vec![],
+        }
     }
 }
 
@@ -129,6 +136,7 @@ pub fn init(title: &str) -> anyhow::Result<()> {
     let programs = Programs::new(&display)?;
     let rng = rand::rng();
     let gui_initialized = false;
+    let sound = SoundState::new()?;
 
     unsafe {
         ENGINE_STATE = Some(EngineState {
@@ -148,6 +156,7 @@ pub fn init(title: &str) -> anyhow::Result<()> {
             buffers,
             storage: textures,
             rng,
+            sound,
         });
     }
 

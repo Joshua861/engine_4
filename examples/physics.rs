@@ -4,7 +4,7 @@ use engine_4::prelude::*;
 const BOUNDS_SIZE: Vec2 = Vec2::new(1000.0, 1000.0);
 const BOUNDS_THICKNESS: f32 = 50.0;
 const FORCE_RADIUS: f32 = 250.0;
-const FORCE_STRENGTH: f32 = 50.0;
+const FORCE_STRENGTH: f32 = 100.0;
 
 #[derive(Clone, Copy)]
 enum ShapeType {
@@ -149,7 +149,8 @@ fn main() -> anyhow::Result<()> {
                     let distance = to_cursor.norm();
 
                     if distance < FORCE_RADIUS {
-                        let strength = (1.0 - distance / FORCE_RADIUS) * FORCE_STRENGTH;
+                        let strength =
+                            (1.0 - distance.powi(2) / FORCE_RADIUS.powi(2)) * FORCE_STRENGTH;
                         let mut vel = *body.linvel();
                         vel += to_cursor.normalize() * strength;
                         body.set_linvel(vel, true);

@@ -7,6 +7,24 @@
 - [X] poly circles as new function / optional
 - [X] cache projection matrix
 - [X] cull off screen world draws
+- [ ] SI Unit system
+- [ ] Signed distance field / https://raytracing.github.io/books/RayTracingInOneWeekend.html
+- [ ] Custom materials/shaders
+- [ ] Post processing
+- [ ] Compute shaders
+- [ ] Convert 2D Primitives to use Z-indexing so batching isnt a problem
+- [ ] 3D
+  - [ ] Camera
+  - [ ] Primitives
+  - [ ] Drawing
+  - [ ] Culling
+  - [ ] Importing OBJs
+  - [ ] SDFs
+  - [ ] Ray tracing
+  - [ ] Lights
+  - [ ] 3D Sound
+  - [ ] LOD
+  - [ ] Culling
 
 * Lucas
 - [X] Raycasting
@@ -16,7 +34,6 @@
 - [X] physics system needs retained state. let the user retain it wherever they want. just put it all in a struct.
 
 * Performance Optimizations
-
 ** Rendering
 
  - [ ] Persistent vertex/index buffers: Reuse buffers across frames instead of recreating them

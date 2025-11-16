@@ -1,3 +1,5 @@
+use palette::{Hsl, IntoColor, LinSrgb, rgb::channels::Rgba};
+
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct Color {
@@ -61,6 +63,12 @@ impl Color {
     /// Ignores and erases alpha
     pub fn mix_with(self, b: Self, fac: f32) -> Self {
         Self::mix_two(self, b, fac)
+    }
+
+    pub fn hsl(hue: f32, saturation: f32, lightness: f32) -> Self {
+        let hsl = Hsl::new(hue, saturation, lightness);
+        let rgb: LinSrgb = hsl.into_color();
+        Self::new(rgb.red, rgb.green, rgb.blue)
     }
 
     pub const BLACK: Self = Self::new(0.0, 0.0, 0.0);

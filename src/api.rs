@@ -1,10 +1,13 @@
-use crate::{collisions::AABB, shapes::*};
-use egui_glium::egui_winit::egui::Context;
+use crate::{collisions::AABB, shapes::*, sound::SoundRef};
 use bevy_math::Vec2;
+use egui_glium::egui_winit::egui::Context;
 use glium::Surface;
 use rand::{
     Rng,
-    distr::{Distribution, StandardUniform},
+    distr::{
+        Distribution, StandardUniform,
+        uniform::{SampleRange, SampleUniform},
+    },
 };
 use winit_input_helper::WinitInputHelper;
 
@@ -242,4 +245,23 @@ where
     StandardUniform: Distribution<T>,
 {
     get_state().rng.random()
+}
+
+/// Return a bool with a probability `p` of being true.
+pub fn random_bool(p: f64) -> bool {
+    get_state().rng.random_bool(p)
+}
+
+pub fn random_range<T, R>(range: R) -> T
+where
+    T: SampleUniform,
+    R: SampleRange<T>,
+{
+    get_state().rng.random_range(range)
+}
+
+/// Return a bool with a probability of `numerator/denominator` of being
+/// true.
+pub fn random_ratio(numerator: u32, denominator: u32) -> bool {
+    get_state().rng.random_ratio(numerator, denominator)
 }

@@ -330,16 +330,42 @@ pub fn draw_circle_world_internal(center: Vec2, radius: f32, color: Color) {
 }
 
 fn gen_mesh_from_points(points: &[Vec2], color: Color) -> (Vec<Vertex>, Vec<u32>) {
-    let num_points = points.len();
-    let vertices: Vec<_> = points
-        .iter()
-        .map(|p| Vertex::new(p.x, p.y, color))
-        .collect();
-
-    let mut indices = Vec::new();
-    for i in 1..(num_points - 1) as u32 {
-        indices.extend_from_slice(&[0, i, i + 1]);
+    if points.len() < 3 {
+        return (vec![], vec![]);
     }
+
+    let mut polygon_builder = lyon::tessellation::path::Path::builder();
+    polygon_builder.begin(lyon::math::point(points[0].x, points[0].y));
+    for point in &points[1..] {
+        polygon_builder.line_to(lyon::math::point(point.x, point.y));
+    }
+    polygon_builder.end(false);
+    let polygon = polygon_builder.build();
+
+    struct VertexConstructor {
+        color: Color,
+    }
+
+    impl lyon::tessellation::FillVertexConstructor<Vertex> for VertexConstructor {
+        fn new_vertex(&mut self, vertex: lyon::tessellation::FillVertex) -> Vertex {
+            let pos = vertex.position();
+            Vertex::new(pos.x, pos.y, self.color)
+        }
+    }
+
+    let mut tessellator = lyon::tessellation::FillTessellator::new();
+    let mut buffers = lyon::tessellation::VertexBuffers::<Vertex, u32>::new();
+
+    tessellator
+        .tessellate_path(
+            &polygon,
+            &lyon::tessellation::FillOptions::non_zero(),
+            &mut lyon::tessellation::BuffersBuilder::new(&mut buffers, VertexConstructor { color }),
+        )
+        .unwrap();
+
+    let vertices = buffers.vertices;
+    let indices = buffers.indices;
 
     (vertices, indices)
 }
