@@ -1,4 +1,4 @@
-use palette::{Hsl, IntoColor, LinSrgb, rgb::channels::Rgba};
+use palette::{Hsl, IntoColor, LinSrgb};
 
 #[repr(C)]
 #[derive(Copy, Clone)]

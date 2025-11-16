@@ -11,6 +11,8 @@ fn main() -> anyhow::Result<()> {
     )?;
 
     loop {
+        let (min, max) = get_camera().visible_bounds();
+
         let input = get_input();
 
         if input.key_pressed(KeyCode::Space) {

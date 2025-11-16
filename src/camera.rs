@@ -1,6 +1,8 @@
 use bevy_math::{Mat3, Mat4, Vec2, Vec4};
 use glium::winit::window::Window;
 
+use crate::BIGGER_NUMBER;
+
 #[derive(Clone, Debug)]
 pub struct Camera {
     pub translation: Vec2,
@@ -131,8 +133,8 @@ impl Camera {
             half_width,
             half_height,
             -half_height,
-            -1.0,
-            1.0,
+            -BIGGER_NUMBER,
+            BIGGER_NUMBER,
         );
 
         let view_mat4 = Mat4::from_cols(
@@ -329,4 +331,9 @@ mod tests {
         assert!((screen_pos.x - back.x).abs() < 0.001);
         assert!((screen_pos.y - back.y).abs() < 0.001);
     }
+}
+
+pub fn projection(window: &Window) -> Mat4 {
+    let size = window.inner_size();
+    Mat4::orthographic_rh(0.0, size.width as f32, size.height as f32, 0.0, -1.0, 1.0)
 }

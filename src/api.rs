@@ -1,20 +1,23 @@
-use crate::{collisions::AABB, shapes::*, sound::SoundRef};
+use crate::{collisions::AABB2D, shapes_2d::*};
 use bevy_math::Vec2;
 use egui_glium::egui_winit::egui::Context;
-use glium::Surface;
+use glium::{
+    uniforms::{MagnifySamplerFilter, MinifySamplerFilter},
+    Surface,
+};
 use rand::{
-    Rng,
     distr::{
-        Distribution, StandardUniform,
         uniform::{SampleRange, SampleUniform},
+        Distribution, StandardUniform,
     },
+    Rng,
 };
 use winit_input_helper::WinitInputHelper;
 
 use crate::{camera::Camera, color::Color, get_frame, get_state, textures::TextureRef};
 
 pub fn clear_screen(color: Color) {
-    get_frame().clear_color(color.r, color.g, color.b, color.a);
+    get_state().clear_color = Some(color);
 }
 
 pub fn draw_tri_outline(a: Vec2, b: Vec2, c: Vec2, thickness: f32, color: Color) {
@@ -183,8 +186,8 @@ pub fn get_input() -> &'static WinitInputHelper {
     &get_state().input
 }
 
-pub fn get_camera() -> &'static Camera {
-    &get_state().camera
+pub fn get_camera() -> &'static mut Camera {
+    &mut get_state().camera
 }
 
 pub fn mutate_camera<T: FnOnce(&'static mut Camera)>(f: T) {
@@ -221,7 +224,7 @@ pub fn draw_sprite_world(sprite_ref: TextureRef, position: Vec2, scale: f32) {
 }
 
 pub fn draw_sprite_scaled_world(sprite: TextureRef, position: Vec2, scale: Vec2) {
-    let bounds = AABB::new(position - scale, position + scale);
+    let bounds = AABB2D::new(position - scale, position + scale);
 
     if !bounds.is_visible_in_world() {
         return;
@@ -264,4 +267,36 @@ where
 /// true.
 pub fn random_ratio(numerator: u32, denominator: u32) -> bool {
     get_state().rng.random_ratio(numerator, denominator)
+}
+
+// applies when loading a texture, not drawing
+//
+// setting this to true will make textures look better (less horrible and pixelated) from afer
+//
+// setting this to false will sometimes make images look crisper
+pub fn use_mipmaps(use_mipmaps: bool) {
+    get_state().config.use_mipmaps = use_mipmaps;
+}
+
+pub fn use_linear_filtering() {
+    get_state().config.default_magnify_filter = MagnifySamplerFilter::Linear;
+    get_state().config.default_minify_filter = MinifySamplerFilter::Linear;
+}
+
+pub fn use_default_filtering() {
+    get_state().config.default_magnify_filter = MagnifySamplerFilter::Linear;
+    get_state().config.default_minify_filter = MinifySamplerFilter::LinearMipmapLinear;
+}
+
+pub fn use_nearest_filtering() {
+    get_state().config.default_magnify_filter = MagnifySamplerFilter::Nearest;
+    get_state().config.default_minify_filter = MinifySamplerFilter::Nearest;
+}
+
+pub fn set_minify_filter(filtering: MinifySamplerFilter) {
+    get_state().config.default_minify_filter = filtering;
+}
+
+pub fn set_magnify_filter(filtering: MagnifySamplerFilter) {
+    get_state().config.default_magnify_filter = filtering;
 }

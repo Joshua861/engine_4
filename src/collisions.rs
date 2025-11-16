@@ -35,12 +35,12 @@ impl Point {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct AABB {
+pub struct AABB2D {
     pub min: Vec2,
     pub max: Vec2,
 }
 
-impl AABB {
+impl AABB2D {
     pub fn new(min: Vec2, max: Vec2) -> Self {
         Self { min, max }
     }
@@ -53,7 +53,7 @@ impl AABB {
         }
     }
 
-    pub fn intersects(&self, other: &AABB) -> bool {
+    pub fn intersects(&self, other: &AABB2D) -> bool {
         self.min.x <= other.max.x
             && self.max.x >= other.min.x
             && self.min.y <= other.max.y
@@ -70,31 +70,31 @@ impl AABB {
     pub fn is_visible_in_world(&self) -> bool {
         let camera = &mut get_state().camera;
         let (view_min, view_max) = camera.visible_bounds();
-        let view_bounds = AABB::new(view_min, view_max);
+        let view_bounds = AABB2D::new(view_min, view_max);
         self.intersects(&view_bounds)
     }
 }
 
-pub trait HasBounds {
-    fn bounds(&self) -> AABB;
+pub trait HasBounds2D {
+    fn bounds(&self) -> AABB2D;
 }
 
-impl HasBounds for Circle {
-    fn bounds(&self) -> AABB {
-        AABB::from_center_size(self.center, Vec2::splat(self.radius * 2.0))
+impl HasBounds2D for Circle {
+    fn bounds(&self) -> AABB2D {
+        AABB2D::from_center_size(self.center, Vec2::splat(self.radius * 2.0))
     }
 }
 
-impl HasBounds for Square {
-    fn bounds(&self) -> AABB {
-        AABB::from_center_size(self.center, Vec2::splat(self.half_size * 2.0))
+impl HasBounds2D for Square {
+    fn bounds(&self) -> AABB2D {
+        AABB2D::from_center_size(self.center, Vec2::splat(self.half_size * 2.0))
     }
 }
 
-impl HasBounds for Polygon {
-    fn bounds(&self) -> AABB {
+impl HasBounds2D for Polygon {
+    fn bounds(&self) -> AABB2D {
         if self.vertices.is_empty() {
-            return AABB::new(Vec2::ZERO, Vec2::ZERO);
+            return AABB2D::new(Vec2::ZERO, Vec2::ZERO);
         }
 
         let mut min = self.vertices[0];
@@ -105,13 +105,13 @@ impl HasBounds for Polygon {
             max = max.max(*vertex);
         }
 
-        AABB::new(min, max)
+        AABB2D::new(min, max)
     }
 }
 
-impl HasBounds for Point {
-    fn bounds(&self) -> AABB {
-        AABB::from_center_size(self.position, Vec2::ZERO)
+impl HasBounds2D for Point {
+    fn bounds(&self) -> AABB2D {
+        AABB2D::from_center_size(self.position, Vec2::ZERO)
     }
 }
 
@@ -435,13 +435,13 @@ fn on_segment(p: Vec2, q: Vec2, r: Vec2) -> bool {
     q.x <= p.x.max(r.x) && q.x >= p.x.min(r.x) && q.y <= p.y.max(r.y) && q.y >= p.y.min(r.y)
 }
 
-use crate::{get_state, shapes};
+use crate::{get_state, shapes_2d};
 
 pub trait ToCollider<T> {
     fn to_collider(&self) -> T;
 }
 
-impl ToCollider<Circle> for shapes::Circle {
+impl ToCollider<Circle> for shapes_2d::Circle {
     fn to_collider(&self) -> Circle {
         Circle {
             center: self.center,
@@ -450,7 +450,7 @@ impl ToCollider<Circle> for shapes::Circle {
     }
 }
 
-impl ToCollider<Polygon> for shapes::Poly {
+impl ToCollider<Polygon> for shapes_2d::Poly {
     fn to_collider(&self) -> Polygon {
         Polygon {
             vertices: self.gen_points(),
@@ -458,7 +458,7 @@ impl ToCollider<Polygon> for shapes::Poly {
     }
 }
 
-impl ToCollider<Polygon> for shapes::CustomShape {
+impl ToCollider<Polygon> for shapes_2d::CustomShape {
     fn to_collider(&self) -> Polygon {
         Polygon {
             vertices: self.points.clone(),
@@ -473,10 +473,10 @@ pub fn circle(x: f32, y: f32, r: f32) -> Circle {
     }
 }
 
-pub fn rect(x: f32, y: f32, w: f32, h: f32) -> AABB {
+pub fn rect(x: f32, y: f32, w: f32, h: f32) -> AABB2D {
     let min = Vec2::new(x, y);
     let size = Vec2::new(w, h);
-    AABB {
+    AABB2D {
         min,
         max: min + size,
     }
@@ -765,28 +765,28 @@ mod tests {
     // AABB tests
     #[test]
     fn aabb_intersect() {
-        let aabb1 = AABB::new(Vec2::ZERO, Vec2::new(10.0, 10.0));
-        let aabb2 = AABB::new(Vec2::new(5.0, 5.0), Vec2::new(15.0, 15.0));
+        let aabb1 = AABB2D::new(Vec2::ZERO, Vec2::new(10.0, 10.0));
+        let aabb2 = AABB2D::new(Vec2::new(5.0, 5.0), Vec2::new(15.0, 15.0));
         assert!(aabb1.intersects(&aabb2));
     }
 
     #[test]
     fn aabb_no_intersect() {
-        let aabb1 = AABB::new(Vec2::ZERO, Vec2::new(10.0, 10.0));
-        let aabb2 = AABB::new(Vec2::new(20.0, 20.0), Vec2::new(30.0, 30.0));
+        let aabb1 = AABB2D::new(Vec2::ZERO, Vec2::new(10.0, 10.0));
+        let aabb2 = AABB2D::new(Vec2::new(20.0, 20.0), Vec2::new(30.0, 30.0));
         assert!(!aabb1.intersects(&aabb2));
     }
 
     #[test]
     fn aabb_from_center_size() {
-        let aabb = AABB::from_center_size(Vec2::new(5.0, 5.0), Vec2::new(10.0, 10.0));
+        let aabb = AABB2D::from_center_size(Vec2::new(5.0, 5.0), Vec2::new(10.0, 10.0));
         assert_eq!(aabb.min, Vec2::ZERO);
         assert_eq!(aabb.max, Vec2::new(10.0, 10.0));
     }
 
     #[test]
     fn aabb_expand() {
-        let aabb = AABB::new(Vec2::new(5.0, 5.0), Vec2::new(10.0, 10.0));
+        let aabb = AABB2D::new(Vec2::new(5.0, 5.0), Vec2::new(10.0, 10.0));
         let expanded = aabb.expand(2.0);
         assert_eq!(expanded.min, Vec2::new(3.0, 3.0));
         assert_eq!(expanded.max, Vec2::new(12.0, 12.0));
@@ -931,7 +931,7 @@ mod tests {
 
     #[test]
     fn bounds_after_collision() {
-        let mut shapes: Vec<Box<dyn HasBounds>> = vec![
+        let mut shapes: Vec<Box<dyn HasBounds2D>> = vec![
             Box::new(Circle {
                 center: Vec2::new(0.0, 0.0),
                 radius: 5.0,
@@ -943,7 +943,7 @@ mod tests {
         ];
 
         // Get all bounds
-        let bounds: Vec<AABB> = shapes.iter().map(|s| s.bounds()).collect();
+        let bounds: Vec<AABB2D> = shapes.iter().map(|s| s.bounds()).collect();
 
         // Check if any bounds intersect
         let mut intersections = 0;
@@ -1084,7 +1084,7 @@ mod tests {
             },
         ];
 
-        let query_bounds = AABB::new(Vec2::new(-10.0, -10.0), Vec2::new(10.0, 10.0));
+        let query_bounds = AABB2D::new(Vec2::new(-10.0, -10.0), Vec2::new(10.0, 10.0));
 
         // Filter shapes by bounds first
         let nearby: Vec<_> = shapes
@@ -1156,7 +1156,7 @@ mod performance_tests {
             })
             .collect();
 
-        let test_aabb = AABB::new(Vec2::new(0.0, 0.0), Vec2::new(50.0, 50.0));
+        let test_aabb = AABB2D::new(Vec2::new(0.0, 0.0), Vec2::new(50.0, 50.0));
 
         let mut potential_collisions = 0;
         for shape in &shapes {

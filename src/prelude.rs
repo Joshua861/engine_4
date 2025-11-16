@@ -7,7 +7,7 @@ pub use crate::debugging::*;
 pub use crate::init;
 pub use crate::next_frame;
 pub use crate::physics::PhysicsWorld;
-pub use crate::shapes::*;
+pub use crate::shapes_2d::*;
 pub use crate::textures::load_texture;
 pub use anyhow;
 pub use bevy_math::ops::*;

@@ -2,7 +2,7 @@ use glium::{IndexBuffer, VertexBuffer};
 
 use crate::{
     EngineDisplay,
-    shapes::QUAD_INDICES,
+    shapes_2d::QUAD_INDICES,
     textures::{TexturedVertex, UNIT_SQUARE},
 };
 

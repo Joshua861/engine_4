@@ -125,7 +125,7 @@ impl DebugInfo {
             ] {
                 Plot::new(id)
                     .height(100.0)
-                    .include_y(max as f64 * 1.1)
+                    .include_y(max as f64 * 1.5)
                     .include_y(0.0)
                     .allow_scroll(false)
                     .allow_drag(false)

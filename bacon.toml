@@ -1,0 +1,5 @@
+[jobs.build]
+command = [
+    "cargo", "build",
+]
+need_stdout = false

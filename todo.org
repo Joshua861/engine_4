@@ -11,18 +11,21 @@
 - [ ] Signed distance field / https://raytracing.github.io/books/RayTracingInOneWeekend.html
 - [ ] Custom materials/shaders
 - [ ] Post processing
+- [ ] Batch textures
+- [ ] Sound
+  - [ ] 3D sound
 - [ ] Compute shaders
-- [ ] Convert 2D Primitives to use Z-indexing so batching isnt a problem
+- [X] Convert 2D Primitives to use Z-indexing so batching isnt a problem
 - [ ] 3D
   - [ ] Camera
   - [ ] Primitives
   - [ ] Drawing
   - [ ] Culling
   - [ ] Importing OBJs
+    - [ ] Importing more complex objects that have materials (glTF?)
   - [ ] SDFs
   - [ ] Ray tracing
   - [ ] Lights
-  - [ ] 3D Sound
   - [ ] LOD
   - [ ] Culling
 
