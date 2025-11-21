@@ -9,25 +9,35 @@
 - [X] cull off screen world draws
 - [ ] SI Unit system
 - [ ] Signed distance field / https://raytracing.github.io/books/RayTracingInOneWeekend.html
-- [ ] Custom materials/shaders
+- [X] Custom materials
+- [ ] Custom programs
 - [ ] Post processing
-- [ ] Batch textures
+- [ ] Circle outlines
+- [ ] Custom keybind/action map struct generic over action enum/struct
+- [ ] 2D custom materials
+- [ ] Custom 3D material example
+- [X] Batch textures
+- [ ] Arbritrary transform of 2D shapes
+  - [ ] Transform2D struct
 - [ ] Sound
   - [ ] 3D sound
 - [ ] Compute shaders
 - [X] Convert 2D Primitives to use Z-indexing so batching isnt a problem
-- [ ] 3D
-  - [ ] Camera
+- [-] 3D
+  - [X] Camera
   - [ ] Primitives
-  - [ ] Drawing
+  - [X] Drawing
   - [ ] Culling
-  - [ ] Importing OBJs
-    - [ ] Importing more complex objects that have materials (glTF?)
+  - [X] Importing OBJs
+  - [ ] Importing more complex objects that have materials (glTF?)
   - [ ] SDFs
   - [ ] Ray tracing
+  - [ ] Instanced ~draw_many~.
   - [ ] Lights
+  - [X] Import from blender like godot does (why cant i be more like godot)
+  - [ ] add mirror BVec3 to transform3d
   - [ ] LOD
-  - [ ] Culling
+- [ ] include_(texture|object|model|sound) macros (macro crate)
 
 * Lucas
 - [X] Raycasting

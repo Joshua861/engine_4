@@ -1,20 +1,20 @@
-use crate::{collisions::AABB2D, shapes_2d::*};
+use crate::{camera::Camera3D, collisions::AABB2D, shapes_2d::*};
 use bevy_math::Vec2;
 use egui_glium::egui_winit::egui::Context;
 use glium::{
-    uniforms::{MagnifySamplerFilter, MinifySamplerFilter},
     Surface,
+    uniforms::{MagnifySamplerFilter, MinifySamplerFilter},
 };
 use rand::{
-    distr::{
-        uniform::{SampleRange, SampleUniform},
-        Distribution, StandardUniform,
-    },
     Rng,
+    distr::{
+        Distribution, StandardUniform,
+        uniform::{SampleRange, SampleUniform},
+    },
 };
 use winit_input_helper::WinitInputHelper;
 
-use crate::{camera::Camera, color::Color, get_frame, get_state, textures::TextureRef};
+use crate::{camera::Camera2D, color::Color, get_frame, get_state, textures::TextureRef};
 
 pub fn clear_screen(color: Color) {
     get_state().clear_color = Some(color);
@@ -186,17 +186,22 @@ pub fn get_input() -> &'static WinitInputHelper {
     &get_state().input
 }
 
-pub fn get_camera() -> &'static mut Camera {
-    &mut get_state().camera
+pub fn get_camera2d() -> &'static mut Camera2D {
+    &mut get_state().camera_2d
 }
 
-pub fn mutate_camera<T: FnOnce(&'static mut Camera)>(f: T) {
-    f(&mut get_state().camera);
-    get_state().camera.mark_dirty();
+pub fn mutate_camera_2d<T: FnOnce(&'static mut Camera2D)>(f: T) {
+    f(&mut get_state().camera_2d);
+    get_state().camera_2d.mark_dirty();
 }
 
-pub fn camera_zoom_at(screen_pos: Vec2, zoom_factor: f32) {
-    get_state().camera.zoom_at(screen_pos, zoom_factor);
+pub fn mutate_camera_3d<T: FnOnce(&'static mut Camera3D)>(f: T) {
+    f(&mut get_state().camera_3d);
+    get_state().camera_3d.mark_dirty();
+}
+
+pub fn camera2d_zoom_at(screen_pos: Vec2, zoom_factor: f32) {
+    get_state().camera_2d.zoom_at(screen_pos, zoom_factor);
 }
 
 pub fn run_ui(mut f: impl FnMut(&Context)) {
@@ -236,11 +241,11 @@ pub fn draw_sprite_scaled_world(sprite: TextureRef, position: Vec2, scale: Vec2)
 }
 
 pub fn screen_to_world(screen_pos: Vec2) -> Vec2 {
-    get_state().camera.screen_to_world(screen_pos)
+    get_state().camera_2d.screen_to_world(screen_pos)
 }
 
 pub fn world_to_screen(world_pos: Vec2) -> Vec2 {
-    get_state().camera.world_to_screen(world_pos)
+    get_state().camera_2d.world_to_screen(world_pos)
 }
 
 pub fn rand<T>() -> T

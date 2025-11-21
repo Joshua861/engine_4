@@ -177,7 +177,7 @@ impl Lizard {
 
     fn update_camera(&self) {
         let pos = screen_to_world(self.vertices[0]);
-        mutate_camera(|camera| {
+        mutate_camera_2d(|camera| {
             camera.translation = pos;
         });
     }
@@ -218,7 +218,7 @@ fn main() -> anyhow::Result<()> {
             let diff = input.scroll_diff().1;
             let diff = (diff * 0.1) + 1.0;
 
-            camera_zoom_at(mouse_pos, diff);
+            camera2d_zoom_at(mouse_pos, diff);
         }
 
         if should_quit() {

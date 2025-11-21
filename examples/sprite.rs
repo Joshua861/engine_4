@@ -39,7 +39,7 @@ fn main() -> anyhow::Result<()> {
         if input.mouse_held(MouseButton::Left) {
             let diff: Vec2 = input.mouse_diff().into();
 
-            mutate_camera(|camera| {
+            mutate_camera_2d(|camera| {
                 camera.translation -= diff / camera.scale;
             });
         }
@@ -48,7 +48,7 @@ fn main() -> anyhow::Result<()> {
             let diff = input.scroll_diff().1;
             let diff = (diff * 0.1) + 1.0;
 
-            camera_zoom_at(cursor_pos, diff);
+            camera2d_zoom_at(cursor_pos, diff);
         }
 
         let dimensions = Vec2::new(100.0, 100.0);

@@ -1,7 +1,8 @@
+use bevy_math::Vec4;
 use palette::{Hsl, IntoColor, LinSrgb};
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct Color {
     /// Red component of the color
     pub r: f32,
@@ -38,6 +39,10 @@ impl Color {
 
     pub const fn for_gpu(&self) -> [f32; 4] {
         [self.r, self.g, self.b, self.a]
+    }
+
+    pub const fn to_vec4(&self) -> Vec4 {
+        Vec4::new(self.r, self.g, self.b, self.a)
     }
 
     pub fn splat(v: f32) -> Self {

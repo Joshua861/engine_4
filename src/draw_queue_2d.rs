@@ -2,14 +2,15 @@ use std::collections::HashMap;
 
 use crate::buffers::Buffers;
 use crate::post_processing::PostProcessingEffect;
-use crate::shapes_2d::{Shape2D, QUAD_INDICES, UNIT_QUAD};
+use crate::programs::{CIRCLE_PROGRAM, FLAT_PROGRAM, TEXTURED_PROGRAM};
+use crate::shapes_2d::{QUAD_INDICES, Shape2D, UNIT_QUAD};
 use crate::textures::TextureRef;
-use crate::{Color, EngineDisplay, Frame, Programs};
+use crate::{Color, EngineDisplay, Frame, get_state};
 use bevy_math::{Mat4, Quat, Vec2, Vec3};
-use glium::{implement_vertex, Depth, DepthTest};
-use glium::{uniform, Blend, DrawParameters, IndexBuffer, Surface, VertexBuffer};
+use glium::{Blend, DrawParameters, IndexBuffer, Surface, VertexBuffer, uniform};
+use glium::{Depth, DepthTest, implement_vertex};
 
-pub struct DrawQueue {
+pub struct DrawQueue2D {
     shape_vertices: Vec<Vertex3D>,
     shape_indices: Vec<u32>,
     current_max_index: u32,
@@ -39,29 +40,21 @@ pub struct CircleInstance {
     pub color: [f32; 4],
 }
 
+implement_vertex!(Vertex3D, position, color);
 #[derive(Copy, Clone, Debug)]
 pub struct Vertex3D {
     pub position: [f32; 3],
     pub color: [f32; 4],
 }
 
-impl Vertex3D {
-    pub fn new(x: f32, y: f32, c: Color) -> Self {
-        Self {
-            position: [x, y, 0.0],
-            color: c.for_gpu(),
-        }
-    }
-
-    pub fn new_3d(x: f32, y: f32, z: f32, c: Color) -> Self {
-        Self {
-            position: [x, y, z],
-            color: c.for_gpu(),
-        }
-    }
+implement_vertex!(MaterialVertex3D, position, normal, tex_coords);
+#[derive(Copy, Clone, Debug)]
+pub struct MaterialVertex3D {
+    pub position: [f32; 3],
+    pub normal: [f32; 3],
+    pub tex_coords: [f32; 2],
+    // pub color: [f32; 3],
 }
-
-implement_vertex!(Vertex3D, position, color);
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vertex2D {
@@ -97,7 +90,7 @@ impl CircleInstance {
     }
 }
 
-impl DrawQueue {
+impl DrawQueue2D {
     pub fn empty() -> Self {
         Self {
             shape_vertices: vec![],
@@ -215,14 +208,10 @@ impl DrawQueue {
         self.post_processing_effects.push(effect);
     }
 
-    pub fn draw(
-        &mut self,
-        frame: &mut Frame,
-        display: &EngineDisplay,
-        programs: &Programs,
-        projection: &Mat4,
-        buffers: &Buffers,
-    ) {
+    pub fn draw(&mut self, frame: &mut Frame, projection: &Mat4) {
+        let state = get_state();
+        let display = &state.display;
+
         let params = DrawParameters {
             blend: Blend::alpha_blending(),
             depth: Depth {
@@ -261,7 +250,7 @@ impl DrawQueue {
                 .draw(
                     &vertex_buffer,
                     &index_buffer,
-                    &programs.flat,
+                    FLAT_PROGRAM.get(),
                     &uniforms,
                     &params,
                 )
@@ -297,7 +286,7 @@ impl DrawQueue {
                 .draw(
                     (&quad_buffer, instance_buffer.per_instance().unwrap()),
                     &index_buffer,
-                    &programs.circle,
+                    CIRCLE_PROGRAM.get(),
                     &uniforms,
                     &params,
                 )
@@ -307,15 +296,7 @@ impl DrawQueue {
         for texture_ref in self.sprite_draws.keys() {
             let instances = self.sprite_draws.get(texture_ref).unwrap();
 
-            self.draw_sprite_batch(
-                frame,
-                display,
-                programs,
-                projection,
-                buffers,
-                *texture_ref,
-                &instances,
-            );
+            self.draw_sprite_batch(frame, projection, *texture_ref, &instances);
         }
 
         for effect in &self.post_processing_effects {
@@ -326,13 +307,14 @@ impl DrawQueue {
     fn draw_sprite_batch(
         &self,
         frame: &mut Frame,
-        display: &EngineDisplay,
-        programs: &Programs,
         projection: &Mat4,
-        buffers: &Buffers,
         texture: TextureRef,
         instances: &[SpriteInstance],
     ) {
+        let state = get_state();
+        let buffers = &state.buffers;
+        let display = &state.display;
+
         let texture = texture.get();
         let instance_buffer = VertexBuffer::new(display, instances).unwrap();
 
@@ -368,7 +350,7 @@ impl DrawQueue {
                     instance_buffer.per_instance().unwrap(),
                 ),
                 &buffers.unit_indices_tex,
-                &programs.textured,
+                TEXTURED_PROGRAM.get(),
                 &uniforms,
                 &params,
             )

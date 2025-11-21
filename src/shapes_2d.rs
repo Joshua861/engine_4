@@ -1,7 +1,7 @@
 use crate::{
     collisions::{AABB2D, HasBounds2D},
     color::Color,
-    draw_queue::Vertex2D,
+    draw_queue_2d::Vertex2D,
     get_state,
 };
 use bevy_math::Vec2;

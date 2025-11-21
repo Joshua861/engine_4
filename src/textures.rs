@@ -8,33 +8,54 @@ use glium::{
 };
 use image::ImageFormat;
 
-use crate::get_state;
+use crate::{EngineDisplay, EngineStorage, get_state};
+
+pub const DUMMY_TEXTURE: TextureRef = TextureRef(0);
 
 #[derive(Clone, Copy)]
-pub struct TexturedVertex {
+pub struct TexturedVertex2D {
     position: [f32; 2],
     tex_coords: [f32; 2],
 }
-implement_vertex!(TexturedVertex, position, tex_coords);
+implement_vertex!(TexturedVertex2D, position, tex_coords);
 
-pub(crate) const UNIT_SQUARE: [TexturedVertex; 4] = [
-    TexturedVertex {
+pub(crate) const UNIT_SQUARE: [TexturedVertex2D; 4] = [
+    TexturedVertex2D {
         position: [-1.0, -1.0],
         tex_coords: [0.0, 0.0],
     },
-    TexturedVertex {
+    TexturedVertex2D {
         position: [1.0, -1.0],
         tex_coords: [1.0, 0.0],
     },
-    TexturedVertex {
+    TexturedVertex2D {
         position: [-1.0, 1.0],
         tex_coords: [0.0, 1.0],
     },
-    TexturedVertex {
+    TexturedVertex2D {
         position: [1.0, 1.0],
         tex_coords: [1.0, 1.0],
     },
 ];
+
+pub fn init_textures(storage: &mut EngineStorage, display: &EngineDisplay) {
+    let dummy_image = RawImage2d::from_raw_rgb(vec![255u8, 255u8, 255u8], (1, 1));
+    let dummy_texture = Texture2d::with_format(
+        display,
+        dummy_image,
+        glium::texture::UncompressedFloatFormat::U8U8U8U8,
+        glium::texture::MipmapsOption::NoMipmap,
+    )
+    .unwrap();
+    let dummy = EngineTexture {
+        dimensions: UVec2::ONE,
+        normalized_dimensions: Vec2::ONE,
+        gl_texture: dummy_texture,
+        magnify_filter: MagnifySamplerFilter::Nearest,
+        minify_filter: MinifySamplerFilter::Nearest,
+    };
+    storage.textures.push(dummy);
+}
 
 pub fn load_texture(bytes: &[u8], format: ImageFormat) -> anyhow::Result<TextureRef> {
     let state = get_state();
@@ -71,13 +92,11 @@ pub fn load_texture(bytes: &[u8], format: ImageFormat) -> anyhow::Result<Texture
     let id = state.storage.textures.len();
     state.storage.textures.push(texture);
 
-    Ok(TextureRef { id })
+    Ok(TextureRef(id))
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
-pub struct TextureRef {
-    id: usize,
-}
+pub struct TextureRef(pub usize);
 
 pub struct EngineTexture {
     pub dimensions: UVec2,
@@ -87,13 +106,19 @@ pub struct EngineTexture {
     pub minify_filter: MinifySamplerFilter,
 }
 
+impl EngineTexture {
+    pub fn static_gl_texture(&'static self) -> &'static Texture2d {
+        &self.gl_texture
+    }
+}
+
 impl TextureRef {
     pub(crate) fn get(&self) -> &'static EngineTexture {
-        &get_state().storage.textures[self.id]
+        &get_state().storage.textures[self.0]
     }
 
     pub fn get_mut(&self) -> &'static mut EngineTexture {
-        &mut get_state().storage.textures[self.id]
+        &mut get_state().storage.textures[self.0]
     }
 
     pub fn dimensions(&self) -> UVec2 {

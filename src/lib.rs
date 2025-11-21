@@ -1,18 +1,25 @@
 #![allow(static_mut_refs)]
 #![allow(unused)]
 
+use std::time::Duration;
+use std::time::Instant;
+
 use bevy_math::Mat4;
+use bevy_math::Vec2;
 use buffers::Buffers;
-use camera::Camera;
+use camera::Camera2D;
+use camera::Camera3D;
 use camera::projection;
 use color::Color;
 use config::EngineConfig;
 #[cfg(feature = "debugging")]
 use debugging::DebugInfo;
-use draw_queue::DrawQueue;
-pub use draw_queue::Vertex3D;
+use draw_queue_2d::DrawQueue2D;
+pub use draw_queue_2d::Vertex3D;
+use draw_queue_3d::DrawQueue3D;
 use egui_glium::{EguiGlium, egui_winit::egui::ViewportId};
 use fps_ticker::Fps;
+use glium::Program;
 use glium::Surface;
 use glium::{
     Frame,
@@ -23,10 +30,13 @@ use glium::{
         window::Window,
     },
 };
-use programs::Programs;
+use materials::Material;
+use object_3d::Object3D;
+use programs::init_programs;
 use rand::rngs::ThreadRng;
 use sound::{Sound, SoundState};
 use textures::EngineTexture;
+use textures::init_textures;
 use winit_input_helper::WinitInputHelper;
 
 const BIG_NUMBER: f32 = 9999.9;
@@ -41,13 +51,17 @@ mod color;
 mod config;
 #[cfg(feature = "debugging")]
 mod debugging;
-mod draw_queue;
+mod draw_queue_2d;
+mod draw_queue_3d;
+mod materials;
+mod object_3d;
 mod physics;
 mod post_processing;
 pub mod prelude;
 mod programs;
 mod shapes_2d;
 mod shapes_3d;
+mod slop;
 mod sound;
 mod text_rendering;
 mod textures;
@@ -68,19 +82,20 @@ fn get_frame() -> &'static mut Frame {
 type EngineDisplay = Display<WindowSurface>;
 
 struct EngineState {
-    programs: Programs,
     window: Window,
     display: EngineDisplay,
     event_loop: EventLoop<()>,
     input: WinitInputHelper,
     frame: Option<Frame>,
-    projection: Mat4,
-    camera: Camera,
+    /// used for screen-space rendering
+    flat_projection: Mat4,
+    camera_2d: Camera2D,
+    camera_3d: Camera3D,
     gui: EguiGlium,
     gui_initialized: bool,
-    draw_queue: DrawQueue,
-    world_draw_queue: DrawQueue,
-    draw_queue_3d: DrawQueue,
+    draw_queue: DrawQueue2D,
+    world_draw_queue: DrawQueue2D,
+    draw_queue_3d: DrawQueue3D,
     #[cfg(feature = "debugging")]
     debug_info: debugging::DebugInfo,
     storage: EngineStorage,
@@ -89,6 +104,9 @@ struct EngineState {
     sound: SoundState,
     clear_color: Option<Color>,
     config: EngineConfig,
+    time: f32,
+    delta_time: f32,
+    last_frame_end_time: Instant,
 }
 
 unsafe impl Sync for EngineState {}
@@ -97,6 +115,9 @@ unsafe impl Send for EngineState {}
 pub(crate) struct EngineStorage {
     textures: Vec<EngineTexture>,
     sounds: Vec<Sound>,
+    programs: Vec<Program>,
+    materials: Vec<Material>,
+    objects: Vec<Object3D>,
 }
 
 impl EngineStorage {
@@ -104,6 +125,9 @@ impl EngineStorage {
         Self {
             textures: vec![],
             sounds: vec![],
+            programs: vec![],
+            materials: vec![],
+            objects: vec![],
         }
     }
 }
@@ -121,33 +145,38 @@ pub fn init(title: &str) -> anyhow::Result<()> {
 
     let frame = None;
 
-    let projection = projection(&window);
-    let camera = Camera::from_window(&window);
+    let flat_projection = projection(&window);
+    let camera_2d = Camera2D::from_window(&window);
+    let camera_3d = Camera3D::from_window(&window);
     let gui = EguiGlium::new(ViewportId::ROOT, &display, &window, &event_loop);
-    let draw_queue = DrawQueue::empty();
-    let world_draw_queue = DrawQueue::with_z_config(-BIG_NUMBER, 0.01);
-    let draw_queue_3d = DrawQueue::empty();
+    let draw_queue = DrawQueue2D::empty();
+    let world_draw_queue = DrawQueue2D::with_z_config(-BIG_NUMBER, 0.01);
+    let draw_queue_3d = DrawQueue3D::empty();
     #[cfg(feature = "debugging")]
     let debug_info = DebugInfo::new();
-    let textures = EngineStorage::new();
+    let mut storage = EngineStorage::new();
+    init_programs(&display, &mut storage)?;
+    init_textures(&mut storage, &display);
     let buffers = Buffers::new(&display)?;
-    let programs = Programs::new(&display)?;
     let rng = rand::rng();
     let gui_initialized = false;
     let sound = SoundState::new()?;
     let config = EngineConfig::default();
+    let time = 0.0;
+    let delta_time = 0.0;
+    let last_frame_end_time = Instant::now();
 
     unsafe {
         ENGINE_STATE = Some(EngineState {
-            programs,
             window,
             display,
             event_loop,
             input,
             frame,
             clear_color: None,
-            projection,
-            camera,
+            flat_projection,
+            camera_2d,
+            camera_3d,
             gui,
             gui_initialized,
             draw_queue,
@@ -155,10 +184,13 @@ pub fn init(title: &str) -> anyhow::Result<()> {
             draw_queue_3d,
             debug_info,
             buffers,
-            storage: textures,
+            storage,
             rng,
             sound,
             config,
+            time,
+            delta_time,
+            last_frame_end_time,
         });
     }
 
@@ -190,9 +222,10 @@ pub fn next_frame() {
 
                 if let Some(size) = state.input.window_resized() {
                     state.display.resize(size.into());
-                    state.projection = projection(&state.window);
+                    state.flat_projection = projection(&state.window);
                     let size = state.window.inner_size();
-                    state.camera.update_sizes(size.width, size.height);
+                    state.camera_2d.update_sizes(size.width, size.height);
+                    state.camera_3d.update_sizes(size.width, size.height);
                 }
             }
             Event::DeviceEvent { event, .. } => {
@@ -211,20 +244,13 @@ pub fn next_frame() {
         frame.clear_depth(1.0);
     }
 
-    state.world_draw_queue.draw(
-        &mut frame,
-        &state.display,
-        &state.programs,
-        &state.camera.projection_matrix(),
-        &state.buffers,
-    );
-    state.draw_queue.draw(
-        &mut frame,
-        &state.display,
-        &state.programs,
-        &state.projection,
-        &state.buffers,
-    );
+    let view_proj = state.camera_3d.view_proj();
+    state.draw_queue_3d.draw(&mut frame, &view_proj);
+
+    state
+        .world_draw_queue
+        .draw(&mut frame, &state.camera_2d.projection_matrix());
+    state.draw_queue.draw(&mut frame, &state.flat_projection);
 
     state.draw_queue.clear();
     state.world_draw_queue.clear();
@@ -233,12 +259,15 @@ pub fn next_frame() {
         state.gui.paint(&state.display, &mut frame);
     }
 
-    // Finish the frame
     frame.finish().unwrap();
     state.window.request_redraw();
 
-    // Create a new frame for the next iteration
     state.frame = Some(state.display.draw());
+
+    let now = Instant::now();
+    let delta_time = state.last_frame_end_time.elapsed().as_secs_f32();
+    state.delta_time = delta_time;
+    state.time += delta_time;
 }
 
 pub(crate) mod thread_assert {
@@ -266,5 +295,12 @@ impl Drop for EngineState {
         if let Some(frame) = self.frame.take() {
             let _ = frame.finish();
         }
+    }
+}
+
+impl EngineState {
+    pub(crate) fn window_size(&self) -> Vec2 {
+        let size = self.window.inner_size();
+        Vec2::new(size.width as f32, size.height as f32)
     }
 }

@@ -3,11 +3,11 @@ use glium::{IndexBuffer, VertexBuffer};
 use crate::{
     EngineDisplay,
     shapes_2d::QUAD_INDICES,
-    textures::{TexturedVertex, UNIT_SQUARE},
+    textures::{TexturedVertex2D, UNIT_SQUARE},
 };
 
 pub struct Buffers {
-    pub unit_square_tex: VertexBuffer<TexturedVertex>,
+    pub unit_square_tex: VertexBuffer<TexturedVertex2D>,
     pub unit_indices_tex: IndexBuffer<u32>,
 }
 

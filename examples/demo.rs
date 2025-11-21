@@ -11,7 +11,7 @@ fn main() -> anyhow::Result<()> {
     )?;
 
     loop {
-        let (min, max) = get_camera().visible_bounds();
+        let (min, max) = get_camera2d().visible_bounds();
 
         let input = get_input();
 
@@ -61,7 +61,7 @@ fn main() -> anyhow::Result<()> {
         if input.mouse_held(MouseButton::Left) {
             let diff: Vec2 = input.mouse_diff().into();
 
-            mutate_camera(|camera| {
+            mutate_camera_2d(|camera| {
                 camera.translation -= diff / camera.scale;
             });
         }
@@ -70,7 +70,7 @@ fn main() -> anyhow::Result<()> {
             let diff = input.scroll_diff().1;
             let diff = (diff * 0.1) + 1.0;
 
-            camera_zoom_at(cursor_pos, diff);
+            camera2d_zoom_at(cursor_pos, diff);
         }
 
         for y in 0..20 {
