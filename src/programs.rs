@@ -1,5 +1,5 @@
 use glium::Program;
-use std::ops::{Index, IndexMut};
+use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 use crate::{EngineDisplay, EngineState, EngineStorage, get_state};
 
@@ -26,6 +26,7 @@ pub const TEXTURED_PROGRAM: ProgramRef = ProgramRef(2);
 pub const FLAT_3D_PROGRAM: ProgramRef = ProgramRef(3);
 pub const GOURAUD_3D_PROGRAM: ProgramRef = ProgramRef(4);
 pub const TEXTURED_3D_PROGRAM: ProgramRef = ProgramRef(5);
+pub const BLINN_PHONG_3D_PROGRAM: ProgramRef = ProgramRef(6);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ProgramRef(usize);
@@ -50,6 +51,19 @@ impl ProgramRef {
 
     pub fn get_mut(&self) -> &mut Program {
         &mut get_state().storage.programs[self.0]
+    }
+}
+
+impl Deref for ProgramRef {
+    type Target = Program;
+    fn deref(&self) -> &Self::Target {
+        &get_state().storage[*self]
+    }
+}
+
+impl DerefMut for ProgramRef {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut get_state().storage[*self]
     }
 }
 
@@ -96,6 +110,13 @@ pub(crate) fn init_programs(
         display,
         "../assets/shaders/textured/vertex.glsl",
         "../assets/shaders/textured/fragment.glsl"
+    )?;
+    storage.programs.push(program);
+
+    let program = include_program_internal!(
+        display,
+        "../assets/shaders/blinn_phong/vertex.glsl",
+        "../assets/shaders/blinn_phong/fragment.glsl"
     )?;
     storage.programs.push(program);
 

@@ -1,10 +1,10 @@
 use std::{
     io::Cursor,
-    ops::{Index, IndexMut},
+    ops::{Deref, DerefMut, Index, IndexMut},
     path::Path,
 };
 
-use bevy_math::{Mat4, Quat, Vec3};
+use bevy_math::{Mat3, Mat4, Quat, Vec3};
 use glium::{IndexBuffer, VertexBuffer, uniforms::Uniforms};
 use obj::{FromRawVertex, load_obj, raw::object::Polygon};
 
@@ -15,7 +15,7 @@ use crate::{
     draw_queue_3d::ObjectToDraw,
     get_state,
     materials::{DEFAULT_MATERIAL, MaterialRef},
-    prelude::create_flat_3d_material,
+    prelude::{Material, create_flat_3d_material},
 };
 
 pub struct Object3D {
@@ -38,7 +38,6 @@ impl Object3D {
         Self::from_obj_bytes(src.as_bytes())
     }
 
-    // FIXME: polygon handling
     pub fn from_obj_bytes_with_material(
         data: &[u8],
         material: MaterialRef,
@@ -70,6 +69,56 @@ impl Object3D {
         Ok(object.create())
     }
 
+    pub fn compute_smooth_normals(&mut self) {
+        use bevy_math::Vec3;
+        use std::collections::HashMap;
+
+        let vertices: Vec<MaterialVertex3D> = self.vertices.read().unwrap();
+        let indices: Vec<u32> = self.indices.read().unwrap();
+
+        let mut position_to_vertices: HashMap<[i32; 3], Vec<usize>> = HashMap::new();
+
+        for (i, vertex) in vertices.iter().enumerate() {
+            let key = [
+                (vertex.position[0] * 1000.0) as i32,
+                (vertex.position[1] * 1000.0) as i32,
+                (vertex.position[2] * 1000.0) as i32,
+            ];
+            position_to_vertices
+                .entry(key)
+                .or_insert_with(Vec::new)
+                .push(i);
+        }
+
+        let mut new_normals = vec![[0.0f32; 3]; vertices.len()];
+
+        for vertex_indices in position_to_vertices.values() {
+            let mut avg_normal = Vec3::ZERO;
+            for &idx in vertex_indices {
+                let n = vertices[idx].normal;
+                avg_normal += Vec3::new(n[0], n[1], n[2]);
+            }
+            avg_normal = avg_normal.normalize_or_zero();
+
+            for &idx in vertex_indices {
+                new_normals[idx] = [avg_normal.x, avg_normal.y, avg_normal.z];
+            }
+        }
+
+        let new_vertices: Vec<MaterialVertex3D> = vertices
+            .iter()
+            .enumerate()
+            .map(|(i, v)| MaterialVertex3D {
+                position: v.position,
+                normal: new_normals[i],
+                tex_coords: v.tex_coords,
+            })
+            .collect();
+
+        let state = get_state();
+        self.vertices = VertexBuffer::new(&state.display, &new_vertices).unwrap();
+    }
+
     pub fn create(self) -> Object3DRef {
         create_object(self)
     }
@@ -83,7 +132,6 @@ pub fn create_object(o: Object3D) -> Object3DRef {
     id
 }
 
-// FIXME: reduce repetition
 impl FromRawVertex<u32> for MaterialVertex3D {
     fn process(
         vertices: Vec<(f32, f32, f32, f32)>,
@@ -105,12 +153,10 @@ impl FromRawVertex<u32> for MaterialVertex3D {
         for polygon in polygons {
             match polygon {
                 Polygon::P(v) => {
-                    // Triangulate position-only polygon
                     if v.len() < 3 {
                         continue;
                     }
 
-                    // For n-gons, create a triangle fan
                     for i in 1..v.len() - 1 {
                         for &idx in &[v[0], v[i], v[i + 1]] {
                             let key = (idx, None, None);
@@ -129,7 +175,6 @@ impl FromRawVertex<u32> for MaterialVertex3D {
                     }
                 }
                 Polygon::PT(v) => {
-                    // Triangulate position+texture polygon
                     if v.len() < 3 {
                         continue;
                     }
@@ -153,7 +198,6 @@ impl FromRawVertex<u32> for MaterialVertex3D {
                     }
                 }
                 Polygon::PTN(v) => {
-                    // Triangulate position+texture+normal polygon
                     if v.len() < 3 {
                         continue;
                     }
@@ -178,7 +222,6 @@ impl FromRawVertex<u32> for MaterialVertex3D {
                     }
                 }
                 Polygon::PN(v) => {
-                    // Triangulate position+normal polygon
                     if v.len() < 3 {
                         continue;
                     }
@@ -272,8 +315,21 @@ impl Object3DRef {
     //     &mut self.get_mut().indices
     // }
 
-    pub fn material(&self) -> &mut MaterialRef {
-        &mut self.get_mut().material
+    pub fn material(&self) -> &mut Material {
+        self.get_mut().material.get_mut()
+    }
+}
+
+impl Deref for Object3DRef {
+    type Target = Object3D;
+    fn deref(&self) -> &Self::Target {
+        &get_state().storage[*self]
+    }
+}
+
+impl DerefMut for Object3DRef {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut get_state().storage[*self]
     }
 }
 
@@ -308,6 +364,12 @@ impl Transform3D {
     pub fn matrix(&mut self) -> Mat4 {
         self.update_matrix();
         self.mat
+    }
+
+    pub fn into_normal_matrix(&mut self) -> Mat3 {
+        let mat = self.matrix();
+        let mat = Mat3::from_mat4(mat);
+        mat.inverse().transpose()
     }
 
     fn mark_dirty(&mut self) {

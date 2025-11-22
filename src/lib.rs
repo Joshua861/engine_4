@@ -241,8 +241,9 @@ pub fn next_frame() {
 
     if let Some(c) = state.clear_color {
         frame.clear_color(c.r, c.g, c.b, c.a);
-        frame.clear_depth(1.0);
     }
+
+    frame.clear_depth(1.0);
 
     let view_proj = state.camera_3d.view_proj();
     state.draw_queue_3d.draw(&mut frame, &view_proj);

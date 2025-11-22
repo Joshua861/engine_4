@@ -305,3 +305,51 @@ pub fn set_minify_filter(filtering: MinifySamplerFilter) {
 pub fn set_magnify_filter(filtering: MagnifySamplerFilter) {
     get_state().config.default_magnify_filter = filtering;
 }
+
+#[cfg(feature = "debugging")]
+#[inline]
+pub fn debugger_add_vertices(vertices: usize) {
+    use crate::prelude::get_debug_info_mut;
+    let debug = get_debug_info_mut();
+    debug.current_frame_mut().vertex_count += vertices;
+}
+
+#[cfg(not(feature = "debugging"))]
+#[inline]
+pub fn debugger_add_vertices(vertices: usize) {}
+
+#[cfg(feature = "debugging")]
+#[inline]
+pub fn debugger_add_indices(indices: usize) {
+    use crate::prelude::get_debug_info_mut;
+    let debug = get_debug_info_mut();
+    debug.current_frame_mut().index_count += indices;
+}
+
+#[cfg(not(feature = "debugging"))]
+#[inline_always]
+pub fn debugger_add_indices(indices: usize) {}
+
+#[cfg(feature = "debugging")]
+#[inline]
+pub fn debugger_add_draw_calls(count: usize) {
+    use crate::prelude::get_debug_info_mut;
+    let debug = get_debug_info_mut();
+    debug.current_frame_mut().draw_calls += count;
+}
+
+#[cfg(not(feature = "debugging"))]
+#[inline_always]
+pub fn debugger_add_draw_calls(count: usize) {}
+
+#[cfg(feature = "debugging")]
+#[inline]
+pub fn debugger_add_drawn_objects(count: usize) {
+    use crate::prelude::get_debug_info_mut;
+    let debug = get_debug_info_mut();
+    debug.current_frame_mut().drawn_objects += count;
+}
+
+#[cfg(not(feature = "debugging"))]
+#[inline_always]
+pub fn debugger_add_drawn_object(count: usize) {}

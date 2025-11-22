@@ -1,6 +1,6 @@
 use std::{
     collections::{BTreeMap, HashMap},
-    ops::{Index, IndexMut},
+    ops::{Deref, DerefMut, Index, IndexMut},
 };
 
 use crate::{
@@ -8,7 +8,8 @@ use crate::{
     color::Color,
     get_state,
     programs::{
-        FLAT_3D_PROGRAM, FLAT_PROGRAM, GOURAUD_3D_PROGRAM, ProgramRef, TEXTURED_3D_PROGRAM,
+        BLINN_PHONG_3D_PROGRAM, FLAT_3D_PROGRAM, FLAT_PROGRAM, GOURAUD_3D_PROGRAM, ProgramRef,
+        TEXTURED_3D_PROGRAM,
     },
     textures::{EngineTexture, TextureRef},
 };
@@ -135,6 +136,10 @@ impl Material {
     pub fn set_color(&mut self, name: impl Into<String>, color: Color) {
         self.uniforms.insert(name.into(), UniformData::Color(color));
     }
+
+    pub fn get_uniform(&self, name: impl Into<String>) -> Option<UniformData> {
+        self.uniforms.get(&name.into()).copied()
+    }
 }
 
 impl UniformData {
@@ -194,6 +199,19 @@ impl MaterialRef {
     }
 }
 
+impl Deref for MaterialRef {
+    type Target = Material;
+    fn deref(&self) -> &Self::Target {
+        &get_state().storage[*self]
+    }
+}
+
+impl DerefMut for MaterialRef {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut get_state().storage[*self]
+    }
+}
+
 pub fn create_flat_3d_material(color: Color) -> MaterialRef {
     let material = Material::new(FLAT_3D_PROGRAM).with_color("color", color);
     material.create()
@@ -214,6 +232,20 @@ pub fn create_gouraud_material(
 
 pub fn create_textured_material(texture: TextureRef) -> MaterialRef {
     let material = Material::new(TEXTURED_3D_PROGRAM).with_texture("tex", texture);
+    material.create()
+}
+
+pub fn create_blinn_phong_material(
+    ambient: Color,
+    diffuse: Color,
+    specular: Color,
+    light_pos: Vec3,
+) -> MaterialRef {
+    let material = Material::new(BLINN_PHONG_3D_PROGRAM)
+        .with_color("ambient_color", ambient)
+        .with_color("diffuse_color", diffuse)
+        .with_color("specular_color", specular)
+        .with_vec3("light_pos", light_pos);
     material.create()
 }
 

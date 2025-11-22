@@ -1,4 +1,7 @@
-use std::io::Cursor;
+use std::{
+    io::Cursor,
+    ops::{Deref, DerefMut},
+};
 
 use bevy_math::{UVec2, Vec2};
 use glium::{
@@ -127,5 +130,18 @@ impl TextureRef {
 
     pub fn normalized_dimensions(&self) -> Vec2 {
         self.get().normalized_dimensions
+    }
+}
+
+impl Deref for TextureRef {
+    type Target = EngineTexture;
+    fn deref(&self) -> &Self::Target {
+        &get_state().storage.textures[self.0]
+    }
+}
+
+impl DerefMut for TextureRef {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut get_state().storage.textures[self.0]
     }
 }

@@ -170,7 +170,7 @@ pub struct Camera3D {
     pub fovy: f32,
     pub znear: f32,
     pub zfar: f32,
-
+    pub isometric: bool,
     window_size: Vec2,
     view_proj: Mat4,
     view_matrix: Mat4,
@@ -188,6 +188,7 @@ impl Camera3D {
             fovy: 100.0,
             znear: 0.1,
             zfar: 1000.0,
+            isometric: false,
             needs_update: true,
             view_proj: Mat4::ZERO,
             view_matrix: Mat4::ZERO,
@@ -202,18 +203,27 @@ impl Camera3D {
         if !self.needs_update {
             return;
         }
-
         let view = Mat4::look_at_rh(self.eye, self.target, self.up);
-        let proj = Mat4::perspective_rh(
-            self.fovy.to_radians(),
-            self.window_aspect_ratio(),
-            self.znear,
-            self.zfar,
-        );
+
+        let proj = if self.isometric {
+            let distance = (self.eye - self.target).length();
+            let height = distance * (self.fovy.to_radians() / 2.0).tan();
+            let width = height * self.window_aspect_ratio();
+
+            Mat4::orthographic_rh(-width, width, -height, height, self.znear, self.zfar)
+        } else {
+            Mat4::perspective_rh(
+                self.fovy.to_radians(),
+                self.window_aspect_ratio(),
+                self.znear,
+                self.zfar,
+            )
+        };
 
         self.view_matrix = view;
         self.proj_matrix = proj;
         self.view_proj = proj * view;
+        self.needs_update = false;
     }
 
     pub fn view_proj(&mut self) -> Mat4 {

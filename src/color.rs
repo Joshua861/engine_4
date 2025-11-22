@@ -1,5 +1,5 @@
 use bevy_math::Vec4;
-use palette::{Hsl, IntoColor, LinSrgb};
+use palette::{Hsl, IntoColor, LinSrgb, Oklch, Srgb};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
@@ -18,62 +18,133 @@ impl Color {
     pub const fn new(r: f32, g: f32, b: f32) -> Self {
         Self { r, g, b, a: 1.0 }
     }
-
     pub const fn new_u8(r: u8, g: u8, b: u8) -> Self {
         const fn convert(n: u8) -> f32 {
             (n * 255) as f32
         }
         Self::new(convert(r), convert(g), convert(b))
     }
-
     pub const fn from_rgba_u8(r: u8, g: u8, b: u8, a: u8) -> Self {
         const fn convert(n: u8) -> f32 {
             (n * 255) as f32
         }
         Self::from_rgba(convert(r), convert(g), convert(b), convert(a))
     }
-
     pub const fn from_rgba(r: f32, g: f32, b: f32, a: f32) -> Self {
         Self { r, g, b, a }
     }
-
     pub const fn for_gpu(&self) -> [f32; 4] {
         [self.r, self.g, self.b, self.a]
     }
-
     pub const fn to_vec4(&self) -> Vec4 {
         Vec4::new(self.r, self.g, self.b, self.a)
     }
-
     pub fn splat(v: f32) -> Self {
         Self::new(v, v, v)
     }
-
     pub const fn with_alpha(mut self, a: f32) -> Self {
         self.a = a;
         self
     }
-
-    /// Ignores and erases alpha
-    pub fn mix_two(a: Self, b: Self, fac: f32) -> Self {
-        let inv_fac = 1.0 - fac;
-
-        let r = a.r * fac + b.r * inv_fac;
-        let g = a.g * fac + b.g * inv_fac;
-        let b = a.b * fac + b.b * inv_fac;
-
-        Self::new(r, g, b)
+    /// Convert RGB to HSL, returning (hue, saturation, lightness)
+    fn to_hsl(&self) -> (f32, f32, f32) {
+        let lin_rgb = LinSrgb::new(self.r, self.g, self.b);
+        let srgb: Srgb = lin_rgb.into_color();
+        let hsl: Hsl = srgb.into_color();
+        (
+            hsl.hue.into_positive_degrees(),
+            hsl.saturation,
+            hsl.lightness,
+        )
     }
 
-    /// Ignores and erases alpha
-    pub fn mix_with(self, b: Self, fac: f32) -> Self {
-        Self::mix_two(self, b, fac)
-    }
-
-    pub fn hsl(hue: f32, saturation: f32, lightness: f32) -> Self {
+    /// Create color from HSL values, preserving alpha
+    fn from_hsl_with_alpha(hue: f32, saturation: f32, lightness: f32, alpha: f32) -> Self {
         let hsl = Hsl::new(hue, saturation, lightness);
-        let rgb: LinSrgb = hsl.into_color();
-        Self::new(rgb.red, rgb.green, rgb.blue)
+        let srgb: Srgb = hsl.into_color();
+        let lin_rgb: LinSrgb = srgb.into_color();
+        Self::from_rgba(lin_rgb.red, lin_rgb.green, lin_rgb.blue, alpha)
+    }
+
+    /// Convert RGB to Oklch, returning (lightness, chroma, hue)
+    fn to_oklch(&self) -> (f32, f32, f32) {
+        let lin_rgb = LinSrgb::new(self.r, self.g, self.b);
+        let oklch: Oklch = lin_rgb.into_color();
+        (oklch.l, oklch.chroma, oklch.hue.into_positive_degrees())
+    }
+
+    /// Create color from Oklch values, preserving alpha
+    fn from_oklch_with_alpha(lightness: f32, chroma: f32, hue: f32, alpha: f32) -> Self {
+        let oklch = Oklch::new(lightness, chroma, hue);
+        let lin_rgb: LinSrgb = oklch.into_color();
+        Self::from_rgba(lin_rgb.red, lin_rgb.green, lin_rgb.blue, alpha)
+    }
+
+    /// Lighten the color by a factor (0.0 to 1.0)
+    /// factor of 0.0 returns the original color, 1.0 returns white
+    pub fn lighten(self, factor: f32) -> Self {
+        let (h, s, l) = self.to_hsl();
+        let new_l = (l + factor * (1.0 - l)).clamp(0.0, 1.0);
+        Self::from_hsl_with_alpha(h, s, new_l, self.a)
+    }
+
+    /// Darken the color by a factor (0.0 to 1.0)
+    /// factor of 0.0 returns the original color, 1.0 returns black
+    pub fn darken(self, factor: f32) -> Self {
+        let (h, s, l) = self.to_hsl();
+        let new_l = (l - factor * l).clamp(0.0, 1.0);
+        Self::from_hsl_with_alpha(h, s, new_l, self.a)
+    }
+
+    /// Increase saturation by a factor (0.0 to 1.0)
+    /// factor of 0.0 returns the original color, 1.0 returns fully saturated
+    pub fn saturate(self, factor: f32) -> Self {
+        let (h, s, l) = self.to_hsl();
+        let new_s = (s + factor * (1.0 - s)).clamp(0.0, 1.0);
+        Self::from_hsl_with_alpha(h, new_s, l, self.a)
+    }
+
+    /// Decrease saturation by a factor (0.0 to 1.0)
+    /// factor of 0.0 returns the original color, 1.0 returns grayscale
+    pub fn desaturate(self, factor: f32) -> Self {
+        let (h, s, l) = self.to_hsl();
+        let new_s = (s - factor * s).clamp(0.0, 1.0);
+        Self::from_hsl_with_alpha(h, new_s, l, self.a)
+    }
+
+    /// Rotate the hue by the given number of degrees
+    /// Positive values rotate clockwise, negative counter-clockwise
+    pub fn hue_rotate(self, degrees: f32) -> Self {
+        let (h, s, l) = self.to_hsl();
+        let new_h = (h + degrees).rem_euclid(360.0);
+        Self::from_hsl_with_alpha(new_h, s, l, self.a)
+    }
+
+    /// Lighten the color by a factor using Oklch (0.0 to 1.0)
+    /// Perceptually uniform lightness adjustment
+    /// factor of 0.0 returns the original color, 1.0 returns white
+    pub fn lighten_oklch(self, factor: f32) -> Self {
+        let (l, c, h) = self.to_oklch();
+        let new_l = (l + factor * (1.0 - l)).clamp(0.0, 1.0);
+        Self::from_oklch_with_alpha(new_l, c, h, self.a)
+    }
+
+    /// Darken the color by a factor using Oklch (0.0 to 1.0)
+    /// Perceptually uniform lightness adjustment
+    /// factor of 0.0 returns the original color, 1.0 returns black
+    pub fn darken_oklch(self, factor: f32) -> Self {
+        let (l, c, h) = self.to_oklch();
+        let new_l = (l - factor * l).clamp(0.0, 1.0);
+        Self::from_oklch_with_alpha(new_l, c, h, self.a)
+    }
+
+    /// Rotate the hue by the given number of degrees using Oklch
+    /// Perceptually uniform hue rotation
+    /// Positive values rotate clockwise, negative counter-clockwise
+    pub fn hue_rotate_oklch(self, degrees: f32) -> Self {
+        let (l, c, h) = self.to_oklch();
+        let new_h = (h + degrees).rem_euclid(360.0);
+        Self::from_oklch_with_alpha(l, c, new_h, self.a)
     }
 
     pub const BLACK: Self = Self::new(0.0, 0.0, 0.0);

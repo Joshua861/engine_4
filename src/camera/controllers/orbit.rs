@@ -33,7 +33,7 @@ impl OrbitCameraController {
             sensitivity: 0.005,
             zoom_speed: 0.5,
             min_distance: 1.0,
-            max_distance: 20.0,
+            max_distance: 100.0,
             min_phi: 0.1,
             max_phi: std::f32::consts::PI - 0.1,
         }

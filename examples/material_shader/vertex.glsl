@@ -8,9 +8,9 @@ out vec3 v_normal;
 uniform mat4 model_matrix;
 uniform mat4 view_proj_matrix;
 uniform float time;
+uniform mat3 normal_matrix;
 
 void main() {
-    mat3 normal_matrix = transpose(inverse(mat3(model_matrix)));
     v_normal = normal_matrix * normal;
     vec3 offset = vec3(
         sin(time / 200 + position.x * 100),
