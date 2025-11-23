@@ -1,7 +1,5 @@
 #![allow(static_mut_refs)]
-#![allow(unused)]
 
-use std::time::Duration;
 use std::time::Instant;
 
 use bevy_math::Mat4;

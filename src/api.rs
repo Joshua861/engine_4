@@ -200,6 +200,10 @@ pub fn mutate_camera_3d<T: FnOnce(&'static mut Camera3D)>(f: T) {
     get_state().camera_3d.mark_dirty();
 }
 
+pub fn get_camera3d() -> &'static mut Camera3D {
+    &mut get_state().camera_3d
+}
+
 pub fn camera2d_zoom_at(screen_pos: Vec2, zoom_factor: f32) {
     get_state().camera_2d.zoom_at(screen_pos, zoom_factor);
 }

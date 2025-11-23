@@ -26,7 +26,7 @@ impl Color {
     }
     pub const fn from_rgba_u8(r: u8, g: u8, b: u8, a: u8) -> Self {
         const fn convert(n: u8) -> f32 {
-            (n * 255) as f32
+            n as f32 / 255.0
         }
         Self::from_rgba(convert(r), convert(g), convert(b), convert(a))
     }
@@ -58,8 +58,25 @@ impl Color {
         )
     }
 
+    pub fn hex(hex: u32) -> Self {
+        let red = (hex & 0xFF0000) >> 16;
+        let green = (hex & 0x00FF00) >> 8;
+        let blue = hex & 0x0000FF;
+
+        Self::from_rgba_u8(red as u8, green as u8, blue as u8, 255)
+    }
+
+    pub fn hex_alpha(hex: u32) -> Self {
+        let red = (hex & 0xFF000000) >> 24;
+        let green = (hex & 0x00FF0000) >> 16;
+        let blue = (hex & 0x0000FF00) >> 8;
+        let alpha = hex & 0x000000FF;
+
+        Self::from_rgba_u8(red as u8, green as u8, blue as u8, alpha as u8)
+    }
+
     /// Create color from HSL values, preserving alpha
-    fn from_hsl_with_alpha(hue: f32, saturation: f32, lightness: f32, alpha: f32) -> Self {
+    pub fn from_hsl_with_alpha(hue: f32, saturation: f32, lightness: f32, alpha: f32) -> Self {
         let hsl = Hsl::new(hue, saturation, lightness);
         let srgb: Srgb = hsl.into_color();
         let lin_rgb: LinSrgb = srgb.into_color();
@@ -67,14 +84,14 @@ impl Color {
     }
 
     /// Convert RGB to Oklch, returning (lightness, chroma, hue)
-    fn to_oklch(&self) -> (f32, f32, f32) {
+    pub fn to_oklch(&self) -> (f32, f32, f32) {
         let lin_rgb = LinSrgb::new(self.r, self.g, self.b);
         let oklch: Oklch = lin_rgb.into_color();
         (oklch.l, oklch.chroma, oklch.hue.into_positive_degrees())
     }
 
     /// Create color from Oklch values, preserving alpha
-    fn from_oklch_with_alpha(lightness: f32, chroma: f32, hue: f32, alpha: f32) -> Self {
+    pub fn from_oklch_with_alpha(lightness: f32, chroma: f32, hue: f32, alpha: f32) -> Self {
         let oklch = Oklch::new(lightness, chroma, hue);
         let lin_rgb: LinSrgb = oklch.into_color();
         Self::from_rgba(lin_rgb.red, lin_rgb.green, lin_rgb.blue, alpha)

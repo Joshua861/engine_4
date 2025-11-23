@@ -4,8 +4,8 @@ use std::{
     path::Path,
 };
 
-use bevy_math::{Mat3, Mat4, Quat, Vec3};
-use glium::{IndexBuffer, VertexBuffer, uniforms::Uniforms};
+use bevy_math::{BVec3, Mat3, Mat4, Quat, Vec3};
+use glium::{BackfaceCullingMode, IndexBuffer, VertexBuffer, uniforms::Uniforms};
 use obj::{FromRawVertex, load_obj, raw::object::Polygon};
 
 use crate::{
@@ -23,6 +23,7 @@ pub struct Object3D {
     pub indices: IndexBuffer<u32>,
     pub material: MaterialRef,
     pub transform: Transform3D,
+    pub draw_params_override: Option<glium::DrawParameters<'static>>,
 }
 
 impl Object3D {
@@ -64,6 +65,7 @@ impl Object3D {
             indices,
             material,
             transform: Transform3D::IDENTITY,
+            draw_params_override: None,
         };
 
         Ok(object.create())
@@ -340,6 +342,7 @@ pub struct Transform3D {
     scale: Vec3,
     rotation: Quat,
     translation: Vec3,
+    mirror: BVec3,
 }
 
 impl Transform3D {
@@ -349,6 +352,7 @@ impl Transform3D {
         scale: Vec3::ONE,
         rotation: Quat::IDENTITY,
         translation: Vec3::ZERO,
+        mirror: BVec3::FALSE,
     };
 
     pub fn update_matrix(&mut self) {
@@ -356,9 +360,43 @@ impl Transform3D {
             return;
         }
 
+        let effective_scale = Vec3::new(
+            if self.mirror.x {
+                -self.scale.x
+            } else {
+                self.scale.x
+            },
+            if self.mirror.y {
+                -self.scale.y
+            } else {
+                self.scale.y
+            },
+            if self.mirror.z {
+                -self.scale.z
+            } else {
+                self.scale.z
+            },
+        );
+
         self.mat =
-            Mat4::from_scale_rotation_translation(self.scale, self.rotation, self.translation);
+            Mat4::from_scale_rotation_translation(effective_scale, self.rotation, self.translation);
         self.needs_update = false;
+    }
+
+    pub fn should_flip_culling(&self) -> bool {
+        let mirror_count = [self.mirror.x, self.mirror.y, self.mirror.z]
+            .iter()
+            .filter(|&&m| m)
+            .count();
+        mirror_count % 2 == 1
+    }
+
+    pub fn desired_culling_mode(&self) -> BackfaceCullingMode {
+        if self.should_flip_culling() {
+            glium::draw_parameters::BackfaceCullingMode::CullCounterClockwise
+        } else {
+            glium::draw_parameters::BackfaceCullingMode::CullClockwise
+        }
     }
 
     pub fn matrix(&mut self) -> Mat4 {
@@ -403,46 +441,6 @@ impl Transform3D {
         &mut self.translation
     }
 
-    pub fn from_translation(translation: Vec3) -> Self {
-        Self {
-            mat: Mat4::from_translation(translation),
-            needs_update: false,
-            scale: Vec3::ONE,
-            rotation: Quat::IDENTITY,
-            translation,
-        }
-    }
-
-    pub fn from_scale(scale: Vec3) -> Self {
-        Self {
-            mat: Mat4::from_scale(scale),
-            needs_update: false,
-            scale,
-            rotation: Quat::IDENTITY,
-            translation: Vec3::ZERO,
-        }
-    }
-
-    pub fn from_rotation(rotation: Quat) -> Self {
-        Self {
-            mat: Mat4::from_quat(rotation),
-            needs_update: false,
-            scale: Vec3::ONE,
-            rotation,
-            translation: Vec3::ZERO,
-        }
-    }
-
-    pub fn from_scale_rotation_translation(scale: Vec3, rotation: Quat, translation: Vec3) -> Self {
-        Self {
-            mat: Mat4::from_scale_rotation_translation(scale, rotation, translation),
-            needs_update: false,
-            scale,
-            rotation,
-            translation,
-        }
-    }
-
     pub fn with_translation(mut self, translation: Vec3) -> Self {
         self.translation = translation;
         self.mark_dirty();
@@ -472,6 +470,89 @@ impl Transform3D {
         self.translation = translation;
         self.mark_dirty();
         self
+    }
+
+    pub fn mirror(&self) -> BVec3 {
+        self.mirror
+    }
+
+    pub fn mirror_mut(&mut self) -> &mut BVec3 {
+        self.mark_dirty();
+        &mut self.mirror
+    }
+
+    pub fn mirror_x(&mut self) {
+        self.mirror.x = !self.mirror.x;
+        self.mark_dirty();
+    }
+
+    pub fn mirror_y(&mut self) {
+        self.mirror.y = !self.mirror.y;
+        self.mark_dirty();
+    }
+
+    pub fn mirror_z(&mut self) {
+        self.mirror.z = !self.mirror.z;
+        self.mark_dirty();
+    }
+
+    pub fn translate_by(&mut self, translation: Vec3) {
+        self.translation += translation;
+        self.mark_dirty();
+    }
+
+    pub fn rotate_by(&mut self, rotation: Quat) {
+        self.rotation = self.rotation * rotation;
+        self.mark_dirty();
+    }
+
+    pub fn scale_by(&mut self, scale: Vec3) {
+        self.scale *= scale;
+        self.mark_dirty();
+    }
+
+    pub fn from_translation(translation: Vec3) -> Self {
+        Self {
+            mat: Mat4::from_translation(translation),
+            needs_update: false,
+            scale: Vec3::ONE,
+            rotation: Quat::IDENTITY,
+            translation,
+            mirror: BVec3::new(false, false, false),
+        }
+    }
+
+    pub fn from_scale(scale: Vec3) -> Self {
+        Self {
+            mat: Mat4::from_scale(scale),
+            needs_update: false,
+            scale,
+            rotation: Quat::IDENTITY,
+            translation: Vec3::ZERO,
+            mirror: BVec3::new(false, false, false),
+        }
+    }
+
+    pub fn from_rotation(rotation: Quat) -> Self {
+        Self {
+            mat: Mat4::from_quat(rotation),
+            needs_update: false,
+            scale: Vec3::ONE,
+            rotation,
+            translation: Vec3::ZERO,
+            mirror: BVec3::new(false, false, false),
+        }
+    }
+
+    pub fn from_scale_rotation_translation(scale: Vec3, rotation: Quat, translation: Vec3) -> Self {
+        Self {
+            mat: Mat4::from_scale_rotation_translation(scale, rotation, translation),
+            needs_update: false,
+            scale,
+            rotation,
+            translation,
+            mirror: BVec3::new(false, false, false),
+        }
     }
 }
 
@@ -509,6 +590,7 @@ pub fn test_triangle() -> anyhow::Result<Object3DRef> {
         indices,
         material: create_flat_3d_material(Color::RED_500),
         transform: Transform3D::IDENTITY,
+        draw_params_override: None,
     };
 
     Ok(triangle.create())

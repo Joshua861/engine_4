@@ -8,18 +8,52 @@
 - [X] cache projection matrix
 - [X] cull off screen world draws
 - [ ] SI Unit system
+- [ ] Compute shaders.
+- [ ] Serde feature to make everything publicly facing serializable.
 - [ ] Signed distance field / https://raytracing.github.io/books/RayTracingInOneWeekend.html
 - [X] Custom materials
-- [ ] Custom programs
-- [ ] Post processing
+- [X] Custom programs
+- [-] Post processing [1/7]
+  - [X] Bloom
+  - [ ] Pixelate
+    - [ ] Would be nice if this actually made it render less pixels but we may
+      just need to advise people to use the custom texture rendering method
+      below if they care about performance. (documentation!!!)
+  - [ ] Saturation
+  - [ ] Hue rotate
+  - [ ] Brightness
+  - [ ] Vignette
+  - [ ] Sharpen?
 - [ ] Circle outlines
+- [ ] Render to custom texture
+  - [ ] Create new render pipeline
+    - [ ] Should be refactored into it's own struct
+    - [ ] Contains all render queues + some sort of output descriptor
+      - [ ] May need refactoring for camera's and stuff to use the custom output size
+  - [ ] Let you use the texture however, like render it to the screen or use it in
+    a compute shader like for game of life.
+    - [ ] Or render to a lower resolution texture and scale it up for a pixelated effect.
+- [ ] Animation support
+  - [ ] Needs some sort of retained state.
+  - [ ] Maybe generic over types that implement some trait.
+    - [ ] Implement for all numerics, transform3D, colour, vectors.
+  - [ ] Struct contains start, end, time, and interpolation function.
+  - [ ] Interpolation function trait.
+    - [ ] So you could have structs with configurable interpolation.
 - [ ] Custom keybind/action map struct generic over action enum/struct
+- [ ] Documentation
+- [ ] Fix backface culling
+- [ ] Transform example
+- [ ] Reorganize everything
+  - [ ] Especially draw_queue2d.rs and shapes2d.rs
 - [ ] 2D custom materials
+- [ ] Colors from hex code
 - [ ] Custom 3D material example
 - [X] Batch textures
 - [ ] Arbritrary transform of 2D shapes
   - [ ] Transform2D struct
 - [ ] Sound
+  - [ ] 2D sound
   - [ ] 3D sound
 - [ ] Compute shaders
 - [X] Convert 2D Primitives to use Z-indexing so batching isnt a problem
@@ -35,7 +69,7 @@
   - [ ] Instanced ~draw_many~.
   - [ ] Lights
   - [X] Import from blender like godot does (why cant i be more like godot)
-  - [ ] add mirror BVec3 to transform3d
+  - [X] add mirror BVec3 to transform3d
   - [ ] LOD
 - [ ] include_(texture|object|model|sound) macros (macro crate)
 

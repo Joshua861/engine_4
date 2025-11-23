@@ -24,7 +24,7 @@ pub fn main() -> anyhow::Result<()> {
     )?;
 
     loop {
-        clear_screen(Color::BLACK);
+        clear_screen(Color::hex(0x000001));
         let input = get_input();
         orbit_controller.update(input);
 

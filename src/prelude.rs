@@ -4,7 +4,10 @@ pub use crate::collisions;
 pub use crate::collisions::IntersectsWith;
 pub use crate::color::Color;
 #[cfg(feature = "debugging")]
+pub use crate::debugging::grid::create_infinite_grid;
+#[cfg(feature = "debugging")]
 pub use crate::debugging::*;
+pub use crate::draw_queue_2d::MaterialVertex3D;
 pub use crate::include_program;
 pub use crate::init;
 pub use crate::materials::*;
@@ -16,8 +19,9 @@ pub use crate::shapes_2d::*;
 pub use crate::shapes_3d::*;
 pub use crate::textures::load_texture;
 pub use anyhow;
+pub use bevy_math;
 pub use bevy_math::ops::*;
-pub use bevy_math::{self, prelude::*};
+pub use bevy_math::prelude::{Mat2, Mat3, Mat4, Vec2, Vec3, Vec4};
 pub use egui_glium::egui_winit::egui;
 pub use glium::Texture2d;
 pub use glium::winit::event::MouseButton;

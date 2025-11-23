@@ -41,7 +41,6 @@ impl DrawQueue3D {
                 write: true,
                 ..Default::default()
             },
-            // backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
             ..Default::default()
         };
 
@@ -66,19 +65,22 @@ impl DrawQueue3D {
             set_common_uniforms(material, transform);
             let program = material.program.get();
 
+            let default_params = DrawParameters {
+                backface_culling: object.transform.desired_culling_mode(),
+                ..params.clone()
+            };
+            let params = object
+                .draw_params_override
+                .as_ref()
+                .unwrap_or(&default_params);
+
             debugger_add_vertices(object.vertices.len());
             debugger_add_indices(object.indices.len());
             debugger_add_drawn_objects(1);
             debugger_add_draw_calls(1);
 
             frame
-                .draw(
-                    &object.vertices,
-                    &object.indices,
-                    program,
-                    material,
-                    &params,
-                )
+                .draw(&object.vertices, &object.indices, program, material, params)
                 .unwrap();
         };
 

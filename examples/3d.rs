@@ -7,20 +7,19 @@ fn main() -> anyhow::Result<()> {
 
     let mut clear_color = Color::PURPLE_200;
 
-    mutate_camera_3d(|camera| {
-        // camera.isometric = true;
-    });
-
     let mut show_many = false;
     let mut orbit_controller = OrbitCameraController::new(Vec3::ZERO);
+    let mut light_on_camera = false;
+    let mut show_grid = false;
 
     let grid_width = (GRID_SIZE - 1) as f32 * 3.0;
     let grid_center = grid_width / 2.0;
+    let grid = create_infinite_grid()?;
 
-    let material =
-        create_gouraud_material(Color::SLATE_300, Color::SLATE_400, Vec3::new(2.0, 5.0, 0.0));
+    let light_pos = Vec3::new(2.0, 5.0, 0.0);
+    let material = create_gouraud_material(Color::SLATE_300, Color::SLATE_400, light_pos);
     let data = include_bytes!("../assets/models/suzanne.obj");
-    let mut suzanne = Object3D::from_obj_bytes_with_material(data, material)?;
+    let suzanne = Object3D::from_obj_bytes_with_material(data, material)?;
 
     show_debug_info();
 
@@ -69,13 +68,48 @@ fn main() -> anyhow::Result<()> {
             clear_color = clear_color.hue_rotate_oklch(5.0);
         }
 
-        clear_screen(clear_color);
+        if input.key_pressed(KeyCode::KeyK) {
+            suzanne.transform().mirror_y();
+        }
+
+        if input.key_pressed(KeyCode::Comma) {
+            suzanne.transform().mirror_z();
+        }
+
+        if input.key_pressed(KeyCode::KeyI) {
+            mutate_camera_3d(|c| {
+                c.isometric = !c.isometric;
+            });
+        }
+
+        if input.key_pressed(KeyCode::KeyX) {
+            show_grid = !show_grid;
+        }
+
         orbit_controller.update(input);
+
+        if input.key_pressed(KeyCode::KeyL) {
+            light_on_camera = !light_on_camera;
+
+            if !light_on_camera {
+                suzanne.material().set_vec3("light_pos", light_pos);
+            }
+        }
+
+        if light_on_camera {
+            suzanne.material().set_vec3("light_pos", get_camera3d().eye);
+        }
+
+        clear_screen(clear_color);
 
         if show_many {
             suzanne.draw_many(transforms.clone());
         } else {
             suzanne.draw();
+        }
+
+        if show_grid {
+            grid.draw();
         }
 
         if show_many {
@@ -93,7 +127,20 @@ fn main() -> anyhow::Result<()> {
             break;
         }
 
-        run_ui(|_| {});
+        run_ui(|ui| {
+            egui::Window::new("Keybinds").show(ui, |ui| {
+                ui.label("M - show many suzannes");
+                ui.label("Y - change color to yellow");
+                ui.label("G - change color to grey");
+                ui.label("B - change color to blue");
+                ui.label("hold R - rainbow background");
+                ui.label("K - mirror on the y axis");
+                ui.label(", - mirror on the z axis");
+                ui.label("I - toggle isometric camera");
+                ui.label("L - toggle locking light position to camera position");
+                ui.label("X - toggle grid")
+            });
+        });
         next_frame();
     }
 

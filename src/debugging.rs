@@ -3,6 +3,8 @@ use egui_plot::{Line, Plot, PlotPoints};
 
 use crate::{Fps, get_state};
 
+pub mod grid;
+
 const FRAME_BACKLOG: usize = 240;
 
 pub struct DebugInfo {
