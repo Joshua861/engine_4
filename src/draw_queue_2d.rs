@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 
-use crate::buffers::Buffers;
 use crate::post_processing::PostProcessingEffect;
 use crate::programs::{CIRCLE_PROGRAM, FLAT_PROGRAM, TEXTURED_PROGRAM};
 use crate::shapes_2d::{QUAD_INDICES, Shape2D, UNIT_QUAD};
 use crate::textures::TextureRef;
-use crate::{Color, EngineDisplay, Frame, get_state};
-use bevy_math::{Mat4, Quat, Vec2, Vec3};
+use crate::{Color, Frame, get_state};
+use bevy_math::{Mat4, Vec2};
 use glium::{Blend, DrawParameters, IndexBuffer, Surface, VertexBuffer, uniform};
 use glium::{Depth, DepthTest, implement_vertex};
 

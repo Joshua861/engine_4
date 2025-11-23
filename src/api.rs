@@ -14,7 +14,7 @@ use rand::{
 };
 use winit_input_helper::WinitInputHelper;
 
-use crate::{camera::Camera2D, color::Color, get_frame, get_state, textures::TextureRef};
+use crate::{camera::Camera2D, color::Color, get_state, textures::TextureRef};
 
 pub fn clear_screen(color: Color) {
     get_state().clear_color = Some(color);

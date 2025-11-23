@@ -1,8 +1,5 @@
-use std::{io::Cursor, path::Path};
 
-use bevy_math::{Mat4, Vec3};
-use glium::uniforms::Uniforms;
-use obj::{FromRawVertex, load_obj, raw::object::Polygon};
+use bevy_math::Vec3;
 
 use crate::Vertex3D;
 

@@ -1,6 +1,5 @@
-use std::f32::consts::PI;
 
-use bevy_math::{Mat3, Mat4, Quat, Vec2, Vec3, Vec4, VectorSpace};
+use bevy_math::{Mat3, Mat4, Vec2, Vec3, Vec4, VectorSpace};
 use glium::winit::window::Window;
 
 use crate::BIGGER_NUMBER;

@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::BTreeMap,
     ops::{Deref, DerefMut, Index, IndexMut},
 };
 
@@ -8,16 +8,13 @@ use crate::{
     color::Color,
     get_state,
     programs::{
-        BLINN_PHONG_3D_PROGRAM, FLAT_3D_PROGRAM, FLAT_PROGRAM, GOURAUD_3D_PROGRAM, ProgramRef,
+        BLINN_PHONG_3D_PROGRAM, FLAT_3D_PROGRAM, GOURAUD_3D_PROGRAM, ProgramRef,
         TEXTURED_3D_PROGRAM,
     },
-    textures::{EngineTexture, TextureRef},
+    textures::TextureRef,
 };
 use bevy_math::{Mat3, Mat4, Vec2, Vec3, Vec4};
-use glium::{
-    Program,
-    uniforms::{DynamicUniforms, SamplerBehavior, UniformValue},
-};
+use glium::uniforms::{SamplerBehavior, UniformValue};
 
 pub const FLAT_WHITE_MATERIAL: MaterialRef = MaterialRef(0);
 pub const FLAT_BLACK_MATERIAL: MaterialRef = MaterialRef(1);

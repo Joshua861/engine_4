@@ -1,11 +1,10 @@
 use std::{
     io::Cursor,
     ops::{Deref, DerefMut, Index, IndexMut},
-    path::Path,
 };
 
 use bevy_math::{BVec3, Mat3, Mat4, Quat, Vec3};
-use glium::{BackfaceCullingMode, IndexBuffer, VertexBuffer, uniforms::Uniforms};
+use glium::{BackfaceCullingMode, IndexBuffer, VertexBuffer};
 use obj::{FromRawVertex, load_obj, raw::object::Polygon};
 
 use crate::{
@@ -299,7 +298,7 @@ impl Object3DRef {
             .push(ObjectToDraw::WithTransform(*self, transform));
     }
 
-    pub fn with_transform(mut self, transform: Transform3D) -> Object3DRef {
+    pub fn with_transform(self, transform: Transform3D) -> Object3DRef {
         let object = self.get_mut();
         object.transform = transform;
         self

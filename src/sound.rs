@@ -1,5 +1,5 @@
 use crate::get_state;
-use rodio::{OutputStream, OutputStreamBuilder, Sink, Source, mixer::Mixer};
+use rodio::{OutputStream, OutputStreamBuilder};
 
 pub struct Sound {
     hint: &'static str,

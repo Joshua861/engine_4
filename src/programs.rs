@@ -1,7 +1,7 @@
 use glium::Program;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
-use crate::{EngineDisplay, EngineState, EngineStorage, get_state};
+use crate::{EngineDisplay, EngineStorage, get_state};
 
 macro_rules! include_program_internal {
     ($display: tt, $vertex: literal, $fragment: literal) => {{

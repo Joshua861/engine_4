@@ -1,12 +1,11 @@
 use crate::{
-    Color, EngineDisplay, Frame,
+    Color, EngineDisplay,
     draw_queue_2d::MaterialVertex3D,
-    get_state, include_program,
-    prelude::{Material, MaterialRef, Object3D, Object3DRef, Transform3D, load_program},
+    get_state,
+    prelude::{Material, Object3D, Object3DRef, Transform3D, load_program},
     programs::ProgramRef,
 };
-use bevy_math::{Vec3, Vec4};
-use glium::{IndexBuffer, Surface, VertexBuffer, implement_vertex};
+use glium::{IndexBuffer, VertexBuffer, implement_vertex};
 
 implement_vertex!(GridVertex, position);
 #[derive(Copy, Clone, Debug)]
@@ -73,7 +72,7 @@ pub fn create_infinite_grid() -> anyhow::Result<Object3DRef> {
         ..Default::default()
     };
 
-    let mut object = Object3D {
+    let object = Object3D {
         vertices: vertex_buffer,
         indices: index_buffer,
         material,

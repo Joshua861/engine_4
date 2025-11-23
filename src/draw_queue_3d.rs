@@ -1,4 +1,4 @@
-use bevy_math::{Mat3, Mat4};
+use bevy_math::Mat4;
 use glium::{DrawParameters, Surface};
 use rand::Rng;
 
