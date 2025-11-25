@@ -11,7 +11,10 @@ use glium::{
 };
 use image::ImageFormat;
 
-use crate::{EngineDisplay, EngineStorage, get_state};
+use crate::{
+    EngineDisplay, EngineStorage, color::Color, draw_queue_2d::DrawQueue2D,
+    draw_queue_3d::DrawQueue3D, get_state, post_processing::PostProcessingEffect,
+};
 
 pub const DUMMY_TEXTURE: TextureRef = TextureRef(0);
 
@@ -98,9 +101,6 @@ pub fn load_texture(bytes: &[u8], format: ImageFormat) -> anyhow::Result<Texture
     Ok(TextureRef(id))
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
-pub struct TextureRef(pub usize);
-
 pub struct EngineTexture {
     pub dimensions: UVec2,
     pub normalized_dimensions: Vec2,
@@ -114,6 +114,9 @@ impl EngineTexture {
         &self.gl_texture
     }
 }
+
+#[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
+pub struct TextureRef(pub usize);
 
 impl TextureRef {
     pub(crate) fn get(&self) -> &'static EngineTexture {

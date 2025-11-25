@@ -16,26 +16,34 @@ pub trait Shape2D: HasBounds2D {
 
 pub struct Circle {
     pub center: Vec2,
-    pub radius: f32,
+    pub radius: Vec2, // Changed to Vec2 to support ellipses
     pub color: Color,
 }
 
 impl HasBounds2D for Circle {
     fn bounds(&self) -> AABB2D {
-        AABB2D::from_center_size(self.center, Vec2::splat(self.radius * 2.0))
+        AABB2D::from_center_size(self.center, self.radius * 2.0)
+    }
+}
+
+impl Circle {
+    /// Get the radius that encompasses the entire ellipse (for collision detection)
+    pub fn encompassing_radius(&self) -> f32 {
+        self.radius.x.max(self.radius.y)
     }
 }
 
 pub struct CircleOutline {
     pub center: Vec2,
-    pub radius: f32,
+    pub radius: Vec2,
     pub color: Color,
     pub thickness: f32,
 }
 
 impl HasBounds2D for CircleOutline {
     fn bounds(&self) -> AABB2D {
-        AABB2D::from_center_size(self.center, Vec2::splat(self.radius * 2.0))
+        let total_radius = self.radius + Vec2::splat(self.thickness);
+        AABB2D::from_center_size(self.center, total_radius * 2.0)
     }
 }
 
@@ -281,22 +289,108 @@ define_draw_functions!(
     draw_custom_shape: points: Vec<Vec2>, color: Color => CustomShape { points, color }
 );
 
+// Circle drawing functions
 pub fn draw_circle(center: Vec2, radius: f32, color: Color) {
-    draw_circle_internal(center, radius, color);
+    get_state()
+        .draw_queue_2d()
+        .add_circle(center, Vec2::splat(radius), color);
 }
 
 pub fn draw_circle_world(center: Vec2, radius: f32, color: Color) {
-    draw_circle_world_internal(center, radius, color);
+    let circle = Circle {
+        center,
+        radius: Vec2::splat(radius),
+        color,
+    };
+    if circle.bounds().is_visible_in_world() {
+        get_state()
+            .world_draw_queue_2d()
+            .add_circle(center, Vec2::splat(radius), color);
+    }
 }
 
-pub fn draw_circle_outline(center: Vec2, radius: f32, color: Color, thickness: f32) {
-    draw_circle_outline_internal(center, radius, color, thickness);
+// Ellipse drawing functions
+pub fn draw_ellipse(center: Vec2, radius: Vec2, color: Color) {
+    get_state()
+        .draw_queue_2d()
+        .add_circle(center, radius, color);
 }
 
-pub fn draw_circle_outline_world(center: Vec2, radius: f32, color: Color, thickness: f32) {
-    draw_circle_outline_world_internal(center, radius, color, thickness);
+pub fn draw_ellipse_world(center: Vec2, radius: Vec2, color: Color) {
+    let circle = Circle {
+        center,
+        radius,
+        color,
+    };
+    if circle.bounds().is_visible_in_world() {
+        get_state()
+            .world_draw_queue_2d()
+            .add_circle(center, radius, color);
+    }
 }
 
+// Circle outline functions
+pub fn draw_circle_outline(center: Vec2, radius: f32, outline_color: Color, thickness: f32) {
+    get_state().draw_queue_2d().add_circle_with_outline(
+        center,
+        Vec2::splat(radius),
+        Color::new(0.0, 0.0, 0.0).with_alpha(0.0), // Transparent fill
+        thickness,
+        outline_color,
+    );
+}
+
+pub fn draw_circle_outline_world(center: Vec2, radius: f32, outline_color: Color, thickness: f32) {
+    let circle = Circle {
+        center,
+        radius: Vec2::splat(radius + thickness),
+        color: outline_color,
+    };
+    if circle.bounds().is_visible_in_world() {
+        get_state().world_draw_queue_2d().add_circle_with_outline(
+            center,
+            Vec2::splat(radius),
+            Color::new(0.0, 0.0, 0.0).with_alpha(0.0),
+            thickness,
+            outline_color,
+        );
+    }
+}
+
+// Ellipse outline functions
+pub fn draw_ellipse_outline(center: Vec2, radius: Vec2, outline_color: Color, thickness: f32) {
+    get_state().draw_queue_2d().add_circle_with_outline(
+        center,
+        radius,
+        Color::new(0.0, 0.0, 0.0).with_alpha(0.0),
+        thickness,
+        outline_color,
+    );
+}
+
+pub fn draw_ellipse_outline_world(
+    center: Vec2,
+    radius: Vec2,
+    outline_color: Color,
+    thickness: f32,
+) {
+    let circle = Circle {
+        center,
+        radius: radius + Vec2::splat(thickness),
+        color: outline_color,
+    };
+    if circle.bounds().is_visible_in_world() {
+        get_state().world_draw_queue_2d().add_circle_with_outline(
+            center,
+            radius,
+            Color::new(0.0, 0.0, 0.0).with_alpha(0.0),
+            thickness,
+            outline_color,
+        );
+    }
+}
+
+// Circle with outline (filled)
 pub fn draw_circle_with_outline(
     center: Vec2,
     radius: f32,
@@ -304,8 +398,13 @@ pub fn draw_circle_with_outline(
     outline: Color,
     thickness: f32,
 ) {
-    draw_circle(center, radius, fill);
-    draw_circle_outline(center, radius, outline, thickness);
+    get_state().draw_queue_2d().add_circle_with_outline(
+        center,
+        Vec2::splat(radius),
+        fill,
+        thickness,
+        outline,
+    );
 }
 
 pub fn draw_circle_with_outline_world(
@@ -315,53 +414,61 @@ pub fn draw_circle_with_outline_world(
     outline: Color,
     thickness: f32,
 ) {
-    draw_circle_world(center, radius, fill);
-    draw_circle_outline_world(center, radius, outline, thickness);
+    let circle = Circle {
+        center,
+        radius: Vec2::splat(radius + thickness),
+        color: fill,
+    };
+    if circle.bounds().is_visible_in_world() {
+        get_state().world_draw_queue_2d().add_circle_with_outline(
+            center,
+            Vec2::splat(radius),
+            fill,
+            thickness,
+            outline,
+        );
+    }
+}
+
+// Ellipse with outline (filled)
+pub fn draw_ellipse_with_outline(
+    center: Vec2,
+    radius: Vec2,
+    fill: Color,
+    outline: Color,
+    thickness: f32,
+) {
+    get_state()
+        .draw_queue_2d()
+        .add_circle_with_outline(center, radius, fill, thickness, outline);
+}
+
+pub fn draw_ellipse_with_outline_world(
+    center: Vec2,
+    radius: Vec2,
+    fill: Color,
+    outline: Color,
+    thickness: f32,
+) {
+    let circle = Circle {
+        center,
+        radius: radius + Vec2::splat(thickness),
+        color: fill,
+    };
+    if circle.bounds().is_visible_in_world() {
+        get_state()
+            .world_draw_queue_2d()
+            .add_circle_with_outline(center, radius, fill, thickness, outline);
+    }
 }
 
 pub fn draw_shape(shape: impl Shape2D) {
-    get_state().draw_queue.add_shape(shape);
+    get_state().draw_queue_2d().add_shape(shape);
 }
 
 pub fn draw_shape_world(shape: impl Shape2D) {
     if shape.is_visible_in_world() {
-        get_state().world_draw_queue.add_shape(shape);
-    }
-}
-
-fn draw_circle_internal(center: Vec2, radius: f32, color: Color) {
-    get_state().draw_queue.add_circle(center, radius, color);
-}
-
-fn draw_circle_world_internal(center: Vec2, radius: f32, color: Color) {
-    let circle = Circle {
-        center,
-        radius,
-        color,
-    };
-    if circle.bounds().is_visible_in_world() {
-        get_state()
-            .world_draw_queue
-            .add_circle(center, radius, color);
-    }
-}
-
-fn draw_circle_outline_internal(center: Vec2, radius: f32, color: Color, thickness: f32) {
-    get_state()
-        .draw_queue
-        .add_circle_outline(center, radius, color, thickness);
-}
-
-fn draw_circle_outline_world_internal(center: Vec2, radius: f32, color: Color, thickness: f32) {
-    let circle = Circle {
-        center,
-        radius,
-        color,
-    };
-    if circle.bounds().is_visible_in_world() {
-        get_state()
-            .world_draw_queue
-            .add_circle_outline(center, radius, color, thickness);
+        get_state().world_draw_queue_2d().add_shape(shape);
     }
 }
 

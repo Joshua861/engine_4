@@ -279,21 +279,24 @@ impl Object3DRef {
 
     pub fn draw(&self) {
         get_state()
-            .draw_queue_3d
+            .draw_queue_3d()
             .objects
             .push(ObjectToDraw::Single(*self));
     }
 
     pub fn draw_many(&self, transforms: Vec<Transform3D>) {
-        get_state().draw_queue_3d.objects.push(ObjectToDraw::Many {
-            object: *self,
-            transforms,
-        });
+        get_state()
+            .draw_queue_3d()
+            .objects
+            .push(ObjectToDraw::Many {
+                object: *self,
+                transforms,
+            });
     }
 
     pub fn draw_with_transform(&self, transform: Transform3D) {
         get_state()
-            .draw_queue_3d
+            .draw_queue_3d()
             .objects
             .push(ObjectToDraw::WithTransform(*self, transform));
     }

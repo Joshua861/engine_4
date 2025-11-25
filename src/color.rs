@@ -3,6 +3,7 @@ use palette::{Hsl, IntoColor, LinSrgb, Oklch, Srgb};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
+// Linear SRGB
 pub struct Color {
     /// Red component of the color
     pub r: f32,
@@ -81,6 +82,10 @@ impl Color {
         let srgb: Srgb = hsl.into_color();
         let lin_rgb: LinSrgb = srgb.into_color();
         Self::from_rgba(lin_rgb.red, lin_rgb.green, lin_rgb.blue, alpha)
+    }
+
+    pub fn hsl(hue: f32, saturation: f32, lightness: f32) -> Self {
+        Self::from_hsl_with_alpha(hue, saturation, lightness, 1.0)
     }
 
     /// Convert RGB to Oklch, returning (lightness, chroma, hue)

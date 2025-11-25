@@ -1,5 +1,5 @@
 use crate::{
-    Color, EngineDisplay,
+    Color,
     draw_queue_2d::MaterialVertex3D,
     get_state,
     prelude::{Material, Object3D, Object3DRef, Transform3D, load_program},
@@ -88,11 +88,4 @@ fn load_grid_program() -> anyhow::Result<ProgramRef> {
     let fragment_shader = include_str!("../../assets/shaders/grid/fragment.glsl");
 
     load_program(vertex_shader, fragment_shader)
-}
-
-fn create_grid_program(display: &EngineDisplay) -> anyhow::Result<ProgramRef> {
-    let v = include_str!("../../assets/shaders/grid/vertex.glsl");
-    let f = include_str!("../../assets/shaders/grid/fragment.glsl");
-
-    load_program(v, f)
 }

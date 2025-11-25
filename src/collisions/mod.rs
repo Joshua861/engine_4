@@ -445,7 +445,7 @@ impl ToCollider<Circle> for shapes_2d::Circle {
     fn to_collider(&self) -> Circle {
         Circle {
             center: self.center,
-            radius: self.radius,
+            radius: self.encompassing_radius(),
         }
     }
 }
@@ -470,6 +470,13 @@ pub fn circle(x: f32, y: f32, r: f32) -> Circle {
     Circle {
         center: Vec2::new(x, y),
         radius: r,
+    }
+}
+
+pub fn ellipse(x: f32, y: f32, rx: f32, ry: f32) -> Circle {
+    Circle {
+        center: Vec2::new(x, y),
+        radius: rx.max(ry),
     }
 }
 

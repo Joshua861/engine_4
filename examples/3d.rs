@@ -17,7 +17,7 @@ fn main() -> anyhow::Result<()> {
     let grid = create_infinite_grid()?;
 
     let light_pos = Vec3::new(2.0, 5.0, 0.0);
-    let material = create_gouraud_material(Color::SLATE_300, Color::SLATE_400, light_pos);
+    let material = create_gouraud_material(Color::SLATE_300, Color::SLATE_500, light_pos);
     let data = include_bytes!("../assets/models/suzanne.obj");
     let suzanne = Object3D::from_obj_bytes_with_material(data, material)?;
 
@@ -44,7 +44,7 @@ fn main() -> anyhow::Result<()> {
             let mat = suzanne.material();
 
             mat.set_color("regular_color", Color::YELLOW_300);
-            mat.set_color("dark_color", Color::YELLOW_400);
+            mat.set_color("dark_color", Color::YELLOW_500);
             clear_color = Color::YELLOW_200;
         }
 
@@ -52,7 +52,7 @@ fn main() -> anyhow::Result<()> {
             let mat = suzanne.material();
 
             mat.set_color("regular_color", Color::SLATE_300);
-            mat.set_color("dark_color", Color::SLATE_400);
+            mat.set_color("dark_color", Color::SLATE_500);
             clear_color = Color::PURPLE_200;
         }
 

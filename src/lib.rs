@@ -12,9 +12,7 @@ use color::Color;
 use config::EngineConfig;
 #[cfg(feature = "debugging")]
 use debugging::DebugInfo;
-use draw_queue_2d::DrawQueue2D;
 pub use draw_queue_2d::Vertex3D;
-use draw_queue_3d::DrawQueue3D;
 use egui_glium::{EguiGlium, egui_winit::egui::ViewportId};
 use fps_ticker::Fps;
 use glium::Program;
@@ -30,8 +28,12 @@ use glium::{
 };
 use materials::Material;
 use object_3d::Object3D;
+use prelude::init_materials;
 use programs::init_programs;
 use rand::rngs::ThreadRng;
+use render_pipeline::RenderPipeline;
+use render_pipeline::RenderTarget;
+use render_pipeline::RenderTexture;
 use sound::{Sound, SoundState};
 use textures::EngineTexture;
 use textures::init_textures;
@@ -57,6 +59,7 @@ mod physics;
 mod post_processing;
 pub mod prelude;
 mod programs;
+mod render_pipeline;
 mod shapes_2d;
 mod shapes_3d;
 mod slop;
@@ -91,16 +94,13 @@ struct EngineState {
     camera_3d: Camera3D,
     gui: EguiGlium,
     gui_initialized: bool,
-    draw_queue: DrawQueue2D,
-    world_draw_queue: DrawQueue2D,
-    draw_queue_3d: DrawQueue3D,
+    render_pipeline: RenderPipeline,
     #[cfg(feature = "debugging")]
     debug_info: debugging::DebugInfo,
     storage: EngineStorage,
     buffers: Buffers,
     rng: ThreadRng,
     sound: SoundState,
-    clear_color: Option<Color>,
     config: EngineConfig,
     time: f32,
     delta_time: f32,
@@ -112,6 +112,7 @@ unsafe impl Send for EngineState {}
 
 pub(crate) struct EngineStorage {
     textures: Vec<EngineTexture>,
+    render_textures: Vec<RenderTexture>,
     sounds: Vec<Sound>,
     programs: Vec<Program>,
     materials: Vec<Material>,
@@ -126,6 +127,7 @@ impl EngineStorage {
             programs: vec![],
             materials: vec![],
             objects: vec![],
+            render_textures: vec![],
         }
     }
 }
@@ -147,14 +149,12 @@ pub fn init(title: &str) -> anyhow::Result<()> {
     let camera_2d = Camera2D::from_window(&window);
     let camera_3d = Camera3D::from_window(&window);
     let gui = EguiGlium::new(ViewportId::ROOT, &display, &window, &event_loop);
-    let draw_queue = DrawQueue2D::empty();
-    let world_draw_queue = DrawQueue2D::with_z_config(-BIG_NUMBER, 0.01);
-    let draw_queue_3d = DrawQueue3D::empty();
     #[cfg(feature = "debugging")]
     let debug_info = DebugInfo::new();
     let mut storage = EngineStorage::new();
     init_programs(&display, &mut storage)?;
     init_textures(&mut storage, &display);
+    init_materials(&mut storage);
     let buffers = Buffers::new(&display)?;
     let rng = rand::rng();
     let gui_initialized = false;
@@ -163,6 +163,7 @@ pub fn init(title: &str) -> anyhow::Result<()> {
     let time = 0.0;
     let delta_time = 0.0;
     let last_frame_end_time = Instant::now();
+    let render_pipeline = RenderPipeline::new(RenderTarget::Screen);
 
     unsafe {
         ENGINE_STATE = Some(EngineState {
@@ -171,20 +172,17 @@ pub fn init(title: &str) -> anyhow::Result<()> {
             event_loop,
             input,
             frame,
-            clear_color: None,
             flat_projection,
             camera_2d,
             camera_3d,
             gui,
             gui_initialized,
-            draw_queue,
-            world_draw_queue,
-            draw_queue_3d,
             debug_info,
             buffers,
             storage,
             rng,
             sound,
+            render_pipeline,
             config,
             time,
             delta_time,
@@ -237,22 +235,8 @@ pub fn next_frame() {
 
     let mut frame = state.frame.take().unwrap_or_else(|| state.display.draw());
 
-    if let Some(c) = state.clear_color {
-        frame.clear_color(c.r, c.g, c.b, c.a);
-    }
-
-    frame.clear_depth(1.0);
-
-    let view_proj = state.camera_3d.view_proj();
-    state.draw_queue_3d.draw(&mut frame, &view_proj);
-
-    state
-        .world_draw_queue
-        .draw(&mut frame, &state.camera_2d.projection_matrix());
-    state.draw_queue.draw(&mut frame, &state.flat_projection);
-
-    state.draw_queue.clear();
-    state.world_draw_queue.clear();
+    state.render_pipeline.draw_on(&mut frame);
+    state.render_pipeline = RenderPipeline::new(RenderTarget::Screen);
 
     if state.gui_initialized {
         state.gui.paint(&state.display, &mut frame);
@@ -263,7 +247,6 @@ pub fn next_frame() {
 
     state.frame = Some(state.display.draw());
 
-    let now = Instant::now();
     let delta_time = state.last_frame_end_time.elapsed().as_secs_f32();
     state.delta_time = delta_time;
     state.time += delta_time;

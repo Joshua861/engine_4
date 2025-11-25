@@ -9,6 +9,7 @@ fn main() -> anyhow::Result<()> {
         Color::RED_900,
         Color::RED_500,
         Color::RED_200,
+        Color::PURPLE_300.with_alpha(0.3),
         Vec3::new(2.0, 5.0, 0.0),
     );
 

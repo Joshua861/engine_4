@@ -16,12 +16,7 @@ use crate::{
 use bevy_math::{Mat3, Mat4, Vec2, Vec3, Vec4};
 use glium::uniforms::{SamplerBehavior, UniformValue};
 
-pub const FLAT_WHITE_MATERIAL: MaterialRef = MaterialRef(0);
-pub const FLAT_BLACK_MATERIAL: MaterialRef = MaterialRef(1);
-pub const FLAT_RED_MATERIAL: MaterialRef = MaterialRef(2);
-pub const FLAT_GREEN_MATERIAL: MaterialRef = MaterialRef(3);
-pub const FLAT_BLUE_MATERIAL: MaterialRef = MaterialRef(4);
-pub const DEFAULT_MATERIAL: MaterialRef = FLAT_GREEN_MATERIAL;
+pub const DEFAULT_MATERIAL: MaterialRef = MaterialRef(0);
 
 pub struct Material {
     pub(crate) program: ProgramRef,
@@ -236,20 +231,26 @@ pub fn create_blinn_phong_material(
     ambient: Color,
     diffuse: Color,
     specular: Color,
+    rim: Color,
     light_pos: Vec3,
 ) -> MaterialRef {
     let material = Material::new(BLINN_PHONG_3D_PROGRAM)
         .with_color("ambient_color", ambient)
         .with_color("diffuse_color", diffuse)
         .with_color("specular_color", specular)
+        .with_color("rim_color", rim)
         .with_vec3("light_pos", light_pos);
     material.create()
 }
 
 pub(crate) fn init_materials(storage: &mut EngineStorage) {
-    create_flat_3d_material(Color::WHITE);
-    create_flat_3d_material(Color::BLACK);
-    create_flat_3d_material(Color::RED_500);
-    create_flat_3d_material(Color::GREEN_500);
-    create_flat_3d_material(Color::BLUE_500);
+    let regular_color = Color::hex(0xBBBDBD);
+    let dark_color = Color::hex(0x333333);
+    let light_pos = Vec3::new(0.0, 3.0, 1.0);
+    let material = Material::new(GOURAUD_3D_PROGRAM)
+        .with_color("regular_color", regular_color)
+        .with_color("dark_color", dark_color)
+        .with_vec3("light_pos", light_pos);
+
+    storage.materials.push(material);
 }

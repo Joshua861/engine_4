@@ -1,17 +1,45 @@
 #version 140
 
 in vec2 v_center;
-in float v_radius;
-in vec4 v_color;
+in float v_radius_x;
+in float v_radius_y;
+in float v_outline_thickness;
+in vec4 v_fill_color;
+in vec4 v_outline_color;
 in vec2 frag_position;
 
 out vec4 color;
 
 void main() {
-    float dist = distance(frag_position, v_center);
+    vec2 uv = (frag_position - v_center) / vec2(v_radius_x, v_radius_y);
+    float d = length(uv);
 
-    float delta = fwidth(dist);
-    float alpha = 1.0 - smoothstep(v_radius - delta, v_radius + delta, dist);
+    float delta = fwidth(d);
 
-    color = vec4(v_color.rgb, v_color.a * alpha);
+    if (v_outline_thickness > 0.0) {
+        vec2 uv_outer = (frag_position - v_center) / vec2(v_radius_x + v_outline_thickness, v_radius_y + v_outline_thickness);
+        float d_outer = length(uv_outer);
+        float delta_outer = fwidth(d_outer);
+
+        float fill_edge = 1.0 - smoothstep(1.0 - delta, 1.0 + delta, d);
+
+        float outer_edge = smoothstep(1.0 - delta_outer, 1.0 + delta_outer, d_outer);
+
+        if (d < 1.0) {
+            color = v_fill_color;
+            color.a *= fill_edge;
+        }
+        else if (d_outer < 1.0) {
+            color = v_outline_color;
+            color.a *= outer_edge;
+        }
+        else {
+            discard;
+        }
+    }
+    else {
+        float alpha = 1.0 - smoothstep(1.0 - delta, 1.0 + delta, d);
+        color = v_fill_color;
+        color.a *= alpha;
+    }
 }

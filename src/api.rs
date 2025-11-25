@@ -1,10 +1,7 @@
 use crate::{camera::Camera3D, collisions::AABB2D, shapes_2d::*};
 use bevy_math::Vec2;
 use egui_glium::egui_winit::egui::Context;
-use glium::{
-    Surface,
-    uniforms::{MagnifySamplerFilter, MinifySamplerFilter},
-};
+use glium::uniforms::{MagnifySamplerFilter, MinifySamplerFilter};
 use rand::{
     Rng,
     distr::{
@@ -17,7 +14,7 @@ use winit_input_helper::WinitInputHelper;
 use crate::{camera::Camera2D, color::Color, get_state, textures::TextureRef};
 
 pub fn clear_screen(color: Color) {
-    get_state().clear_color = Some(color);
+    get_state().render_pipeline.clear_color = Some(color);
 }
 
 pub fn draw_tri_outline(a: Vec2, b: Vec2, c: Vec2, thickness: f32, color: Color) {
@@ -224,7 +221,9 @@ pub fn draw_sprite(sprite_ref: TextureRef, position: Vec2, scale: f32) {
 }
 
 pub fn draw_sprite_scaled(sprite: TextureRef, position: Vec2, scale: Vec2) {
-    get_state().draw_queue.add_sprite(sprite, position, scale);
+    get_state()
+        .draw_queue_2d()
+        .add_sprite(sprite, position, scale);
 }
 
 pub fn draw_sprite_world(sprite_ref: TextureRef, position: Vec2, scale: f32) {
@@ -240,7 +239,7 @@ pub fn draw_sprite_scaled_world(sprite: TextureRef, position: Vec2, scale: Vec2)
     }
 
     get_state()
-        .world_draw_queue
+        .world_draw_queue_2d()
         .add_sprite(sprite, position, scale);
 }
 
@@ -357,3 +356,11 @@ pub fn debugger_add_drawn_objects(count: usize) {
 #[cfg(not(feature = "debugging"))]
 #[inline_always]
 pub fn debugger_add_drawn_object(count: usize) {}
+
+pub fn time() -> f32 {
+    get_state().time
+}
+
+pub fn delta_time() -> f32 {
+    get_state().delta_time
+}

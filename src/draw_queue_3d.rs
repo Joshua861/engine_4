@@ -30,7 +30,7 @@ impl DrawQueue3D {
         Self { objects: vec![] }
     }
 
-    pub fn draw(&mut self, frame: &mut Frame, view_proj: &Mat4) {
+    pub fn draw<T: Surface>(&mut self, frame: &mut T, view_proj: &Mat4) {
         let state = get_state();
         let display = &state.display;
 
@@ -60,7 +60,7 @@ impl DrawQueue3D {
             material.set_vec3("camera_pos", state.camera_3d.eye);
         };
 
-        let draw_object = |frame: &mut Frame, object: &mut Object3D, transform: Transform3D| {
+        let draw_object = |frame: &mut T, object: &mut Object3D, transform: Transform3D| {
             let material = object.material.get_mut();
             set_common_uniforms(material, transform);
             let program = material.program.get();

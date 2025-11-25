@@ -15,7 +15,6 @@ pub struct DrawQueue2D {
     current_max_index: u32,
 
     circle_instances: Vec<CircleInstance>,
-    circle_outline_instances: Vec<CircleOutlineInstance>,
     sprite_draws: HashMap<TextureRef, Vec<SpriteInstance>>,
     post_processing_effects: Vec<PostProcessingEffect>,
 
@@ -32,21 +31,21 @@ struct SpriteInstance {
     pub instance_size: [f32; 2],
 }
 
-implement_vertex!(CircleInstance, center, radius, color);
+implement_vertex!(
+    CircleInstance,
+    center,
+    radius,
+    fill_color,
+    outline_thickness,
+    outline_color
+);
 #[derive(Copy, Clone, Debug)]
 pub struct CircleInstance {
     pub center: [f32; 3],
-    pub radius: f32,
-    pub color: [f32; 4],
-}
-
-implement_vertex!(CircleOutlineInstance, center, radius, color, thickness);
-#[derive(Copy, Clone, Debug)]
-pub struct CircleOutlineInstance {
-    pub center: [f32; 3],
-    pub radius: f32,
-    pub color: [f32; 4],
-    pub thickness: f32,
+    pub radius: [f32; 2],
+    pub fill_color: [f32; 4],
+    pub outline_thickness: f32,
+    pub outline_color: [f32; 4],
 }
 
 implement_vertex!(Vertex3D, position, color);
@@ -62,7 +61,6 @@ pub struct MaterialVertex3D {
     pub position: [f32; 3],
     pub normal: [f32; 3],
     pub tex_coords: [f32; 2],
-    // pub color: [f32; 3],
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -90,22 +88,30 @@ impl Vertex2D {
 }
 
 impl CircleInstance {
-    pub fn new(center: Vec2, z: f32, radius: f32, color: Color) -> Self {
+    pub fn new(center: Vec2, z: f32, radius: Vec2, fill_color: Color) -> Self {
         Self {
             center: [center.x, center.y, z],
-            radius,
-            color: color.for_gpu(),
+            radius: radius.into(),
+            fill_color: fill_color.for_gpu(),
+            outline_thickness: 0.0,
+            outline_color: [0.0, 0.0, 0.0, 0.0],
         }
     }
-}
 
-impl CircleOutlineInstance {
-    pub fn new(center: Vec2, z: f32, radius: f32, color: Color, thickness: f32) -> Self {
+    pub fn new_with_outline(
+        center: Vec2,
+        z: f32,
+        radius: Vec2,
+        fill_color: Color,
+        outline_thickness: f32,
+        outline_color: Color,
+    ) -> Self {
         Self {
             center: [center.x, center.y, z],
-            radius,
-            color: color.for_gpu(),
-            thickness,
+            radius: radius.into(),
+            fill_color: fill_color.for_gpu(),
+            outline_thickness,
+            outline_color: outline_color.for_gpu(),
         }
     }
 }
@@ -117,7 +123,6 @@ impl DrawQueue2D {
             shape_indices: vec![],
             current_max_index: 0,
             circle_instances: vec![],
-            circle_outline_instances: vec![],
             sprite_draws: HashMap::new(),
             post_processing_effects: vec![],
             current_z: 0.0,
@@ -132,7 +137,6 @@ impl DrawQueue2D {
             shape_indices: vec![],
             current_max_index: 0,
             circle_instances: vec![],
-            circle_outline_instances: vec![],
             sprite_draws: HashMap::new(),
             post_processing_effects: vec![],
             current_z: start_z,
@@ -179,17 +183,31 @@ impl DrawQueue2D {
         self.shape_indices.append(&mut indices);
     }
 
-    pub fn add_circle(&mut self, center: Vec2, radius: f32, color: Color) {
+    pub fn add_circle(&mut self, center: Vec2, radius: Vec2, color: Color) {
         self.add_circle_at_z(center, radius, color, self.current_z);
         self.current_z += self.z_increment;
     }
 
-    pub fn add_circle_outline(&mut self, center: Vec2, radius: f32, color: Color, thickness: f32) {
-        self.add_circle_outline_at_z(center, radius, color, thickness, self.current_z);
+    pub fn add_circle_with_outline(
+        &mut self,
+        center: Vec2,
+        radius: Vec2,
+        fill_color: Color,
+        outline_thickness: f32,
+        outline_color: Color,
+    ) {
+        self.add_circle_with_outline_at_z(
+            center,
+            radius,
+            fill_color,
+            outline_thickness,
+            outline_color,
+            self.current_z,
+        );
         self.current_z += self.z_increment;
     }
 
-    pub fn add_circle_at_z(&mut self, center: Vec2, radius: f32, color: Color, z: f32) {
+    pub fn add_circle_at_z(&mut self, center: Vec2, radius: Vec2, color: Color, z: f32) {
         #[cfg(feature = "debugging")]
         {
             use crate::debugging::get_debug_info_mut;
@@ -203,12 +221,13 @@ impl DrawQueue2D {
             .push(CircleInstance::new(center, z, radius, color));
     }
 
-    pub fn add_circle_outline_at_z(
+    pub fn add_circle_with_outline_at_z(
         &mut self,
         center: Vec2,
-        radius: f32,
-        color: Color,
-        thickness: f32,
+        radius: Vec2,
+        fill_color: Color,
+        outline_thickness: f32,
+        outline_color: Color,
         z: f32,
     ) {
         #[cfg(feature = "debugging")]
@@ -220,10 +239,14 @@ impl DrawQueue2D {
             frame.drawn_objects += 1;
         }
 
-        self.circle_outline_instances
-            .push(CircleOutlineInstance::new(
-                center, z, radius, color, thickness,
-            ));
+        self.circle_instances.push(CircleInstance::new_with_outline(
+            center,
+            z,
+            radius,
+            fill_color,
+            outline_thickness,
+            outline_color,
+        ));
     }
 
     pub fn add_sprite(&mut self, texture: TextureRef, position: Vec2, size: Vec2) {
@@ -258,7 +281,7 @@ impl DrawQueue2D {
         self.post_processing_effects.push(effect);
     }
 
-    pub fn draw(&mut self, frame: &mut Frame, projection: &Mat4) {
+    pub fn draw<T: Surface>(&mut self, frame: &mut T, projection: &Mat4) {
         let state = get_state();
         let display = &state.display;
 
@@ -354,9 +377,9 @@ impl DrawQueue2D {
         }
     }
 
-    fn draw_sprite_batch(
+    fn draw_sprite_batch<T: Surface>(
         &self,
-        frame: &mut Frame,
+        frame: &mut T,
         projection: &Mat4,
         texture: TextureRef,
         instances: &[SpriteInstance],
@@ -412,7 +435,6 @@ impl DrawQueue2D {
         self.shape_indices.clear();
         self.current_max_index = 0;
         self.circle_instances.clear();
-        self.circle_outline_instances.clear();
         self.sprite_draws.clear();
         self.post_processing_effects.clear();
         self.current_z = self.start_z;

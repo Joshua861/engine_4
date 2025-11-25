@@ -8,5 +8,6 @@ uniform vec4 regular_color;
 
 void main() {
     float brightness = dot(normalize(v_normal), normalize(light_pos));
-    color = mix(dark_color, regular_color, brightness);
+    float value = (brightness + 1) / 2;
+    color = mix(dark_color, regular_color, value);
 }
