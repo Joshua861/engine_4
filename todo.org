@@ -11,6 +11,8 @@
 - [ ] Compute shaders.
 - [ ] Serde feature to make everything publicly facing serializable.
 - [ ] Transparency is fucked
+  - [ ] Very fucked
+  - [ ] Someone needs to do something about this
 - [ ] Move draw param overrides to the material
 - [ ] https://github.com/sqrew/tunes
 - [ ] Dithering to reduce colour banding
@@ -46,6 +48,7 @@
   - [ ] Struct contains start, end, time, and interpolation function.
   - [ ] Interpolation function trait.
     - [ ] So you could have structs with configurable interpolation.
+- [ ] Macros for all this *Ref stuff
 - [ ] draw text
   - [ ] draw_fps function
 - [ ] 2d mouse camera controller, like whats in the examples but built into the engine
@@ -62,7 +65,7 @@
         pub(crate) render_pass: Arc<miniquad::RenderPass>,
     }
     #+end_src
-  - [ ] we need a function for creating an empty texure and one for creating a render pass from existing textures or just a resolution
+  - [ ] we need a function for creating an empty texture and one for creating a render pass from existing textures or just a resolution
   - [ ] function to render a texture to the screen as a fullscreen quad
   - [ ] just let the user create a render pipeline which has the various draw queues, and let the draw queues also contain their proj matrices so it can be drawn with just a reference to the engine state.
   - [ ] let the engine use a default render pipeline, and have it be a vector of impl RenderPipelinePass which is implemented by draw_queue 2 and 3d and for drawing the UI in case the user wants to put things above that.
@@ -82,6 +85,14 @@
 - [ ] test colours
 - [ ] test everything
 - [ ] 2D custom materials
+  - [ ] use_material & use_default_material functions
+  - [ ] add default 2d material to render pipeline
+- [ ] https://github.com/not-fl3/macroquad/blob/master/examples/screen_texture.rs
+- [ ] better 2D physics. platformer
+- [ ] is this ECS?
+  - [ ] this could totally work lets be REAL https://docs.rs/hecs/latest/hecs/
+- [ ] lua scripting support
+- [ ] more warnings and better errors
 - [ ] Colors from hex code
 - [ ] Custom 3D material example
 - [X] Batch textures

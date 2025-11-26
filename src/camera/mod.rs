@@ -1,11 +1,11 @@
 use bevy_math::{Mat3, Mat4, Vec2, Vec3, Vec4};
 use glium::winit::window::Window;
 
-use crate::BIGGER_NUMBER;
+use crate::{BIGGER_NUMBER, EngineState};
 
 pub mod controllers;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct Camera2D {
     pub translation: Vec2,
     pub scale: f32,
@@ -17,6 +17,33 @@ pub struct Camera2D {
     inverse_view_matrix: Mat3,
     projection_matrix: Mat4,
     needs_update: bool,
+}
+
+#[derive(Clone, Debug, Copy)]
+pub(crate) struct Cameras {
+    pub flat: Mat4,
+    pub d2: Camera2D,
+    pub d3: Camera3D,
+}
+
+impl EngineState {
+    pub fn cameras_for_resolution(&self, width: u32, height: u32) -> Cameras {
+        let mut d2 = self.camera_2d;
+        d2.update_sizes(width, height);
+        let flat = projection(width, height);
+        let mut d3 = self.camera_3d;
+        d3.update_sizes(width, height);
+
+        Cameras { flat, d2, d3 }
+    }
+
+    pub fn cameras(&self) -> Cameras {
+        Cameras {
+            flat: self.flat_projection,
+            d2: self.camera_2d,
+            d3: self.camera_3d,
+        }
+    }
 }
 
 impl Camera2D {
@@ -156,11 +183,16 @@ impl Camera2D {
     }
 }
 
-pub fn projection(window: &Window) -> Mat4 {
+pub fn projection_from_window(window: &Window) -> Mat4 {
     let size = window.inner_size();
-    Mat4::orthographic_rh(0.0, size.width as f32, size.height as f32, 0.0, -1.0, 1.0)
+    projection(size.width, size.height)
 }
 
+pub fn projection(width: u32, height: u32) -> Mat4 {
+    Mat4::orthographic_rh(0.0, width as f32, height as f32, 0.0, -1.0, 1.0)
+}
+
+#[derive(Clone, Copy, Debug)]
 pub struct Camera3D {
     pub eye: Vec3,
     pub target: Vec3,

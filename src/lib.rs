@@ -1,4 +1,5 @@
 #![allow(static_mut_refs)]
+#![allow(unused)]
 
 use std::time::Instant;
 
@@ -7,7 +8,7 @@ use bevy_math::Vec2;
 use buffers::Buffers;
 use camera::Camera2D;
 use camera::Camera3D;
-use camera::projection;
+use camera::projection_from_window;
 use color::Color;
 use config::EngineConfig;
 #[cfg(feature = "debugging")]
@@ -15,6 +16,7 @@ use debugging::DebugInfo;
 pub use draw_queue_2d::Vertex3D;
 use egui_glium::{EguiGlium, egui_winit::egui::ViewportId};
 use fps_ticker::Fps;
+use glium::winit::window::WindowAttributes;
 use glium::Program;
 use glium::Surface;
 use glium::{
@@ -95,6 +97,7 @@ struct EngineState {
     gui: EguiGlium,
     gui_initialized: bool,
     render_pipeline: RenderPipeline,
+    texture_pipeline: Option<RenderPipeline>,
     #[cfg(feature = "debugging")]
     debug_info: debugging::DebugInfo,
     storage: EngineStorage,
@@ -137,7 +140,9 @@ pub fn init(title: &str) -> anyhow::Result<()> {
     color_eyre::install().expect("could not install color_eyre");
 
     let event_loop = EventLoop::builder().build()?;
+    let window_params = Window::default_attributes().with_transparent(false);
     let (window, display) = SimpleWindowBuilder::new()
+        .set_window_builder(window_params)
         .with_title(title)
         .build(&event_loop);
     let input = WinitInputHelper::new();
@@ -145,7 +150,7 @@ pub fn init(title: &str) -> anyhow::Result<()> {
 
     let frame = None;
 
-    let flat_projection = projection(&window);
+    let flat_projection = projection_from_window(&window);
     let camera_2d = Camera2D::from_window(&window);
     let camera_3d = Camera3D::from_window(&window);
     let gui = EguiGlium::new(ViewportId::ROOT, &display, &window, &event_loop);
@@ -163,12 +168,13 @@ pub fn init(title: &str) -> anyhow::Result<()> {
     let time = 0.0;
     let delta_time = 0.0;
     let last_frame_end_time = Instant::now();
-    let render_pipeline = RenderPipeline::new(RenderTarget::Screen);
+    let render_pipeline = RenderPipeline::screen();
 
     unsafe {
         ENGINE_STATE = Some(EngineState {
             window,
             display,
+            texture_pipeline: None,
             event_loop,
             input,
             frame,
@@ -218,7 +224,7 @@ pub fn next_frame() {
 
                 if let Some(size) = state.input.window_resized() {
                     state.display.resize(size.into());
-                    state.flat_projection = projection(&state.window);
+                    state.flat_projection = projection_from_window(&state.window);
                     let size = state.window.inner_size();
                     state.camera_2d.update_sizes(size.width, size.height);
                     state.camera_3d.update_sizes(size.width, size.height);
@@ -236,7 +242,7 @@ pub fn next_frame() {
     let mut frame = state.frame.take().unwrap_or_else(|| state.display.draw());
 
     state.render_pipeline.draw_on(&mut frame);
-    state.render_pipeline = RenderPipeline::new(RenderTarget::Screen);
+    state.render_pipeline = RenderPipeline::screen();
 
     if state.gui_initialized {
         state.gui.paint(&state.display, &mut frame);

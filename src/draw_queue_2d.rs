@@ -286,7 +286,17 @@ impl DrawQueue2D {
         let display = &state.display;
 
         let params = DrawParameters {
-            blend: Blend::alpha_blending(),
+            blend: Blend {
+                color: glium::BlendingFunction::Addition {
+                    source: glium::LinearBlendingFactor::SourceAlpha,
+                    destination: glium::LinearBlendingFactor::OneMinusSourceAlpha,
+                },
+                alpha: glium::BlendingFunction::Addition {
+                    source: glium::LinearBlendingFactor::One,
+                    destination: glium::LinearBlendingFactor::OneMinusSourceAlpha,
+                },
+                constant_value: (1.0, 1.0, 1.0, 1.0),
+            },
             depth: Depth {
                 test: DepthTest::IfLess,
                 write: true,

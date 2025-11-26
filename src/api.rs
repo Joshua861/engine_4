@@ -1,7 +1,17 @@
-use crate::{camera::Camera3D, collisions::AABB2D, shapes_2d::*};
-use bevy_math::Vec2;
+use crate::{
+    camera::Camera3D,
+    collisions::AABB2D,
+    render_pipeline::{RenderTexture, RenderTextureRef},
+    shapes_2d::*,
+    textures::EngineTexture,
+};
+use bevy_math::{UVec2, Vec2};
 use egui_glium::egui_winit::egui::Context;
-use glium::uniforms::{MagnifySamplerFilter, MinifySamplerFilter};
+use glium::{
+    Texture2d,
+    texture::DepthTexture2d,
+    uniforms::{MagnifySamplerFilter, MinifySamplerFilter},
+};
 use rand::{
     Rng,
     distr::{
@@ -13,8 +23,9 @@ use winit_input_helper::WinitInputHelper;
 
 use crate::{camera::Camera2D, color::Color, get_state, textures::TextureRef};
 
+// always sets color alpha to 1.0 to stop some buggyness
 pub fn clear_screen(color: Color) {
-    get_state().render_pipeline.clear_color = Some(color);
+    get_state().current_render_pipeline().clear_color = Some(color.with_alpha(1.0));
 }
 
 pub fn draw_tri_outline(a: Vec2, b: Vec2, c: Vec2, thickness: f32, color: Color) {
@@ -363,4 +374,26 @@ pub fn time() -> f32 {
 
 pub fn delta_time() -> f32 {
     get_state().delta_time
+}
+
+pub fn start_rendering_to_texture(texture: RenderTextureRef) {
+    get_state().start_rendering_to_texture(texture);
+}
+
+pub fn end_rendering_to_texture() {
+    get_state().end_rendering_to_texture();
+}
+
+pub fn create_empty_render_texture(width: u32, height: u32) -> anyhow::Result<RenderTextureRef> {
+    let state = get_state();
+    let facade = &state.display;
+    let texture = Texture2d::empty(facade, width, height)?;
+    let texture = EngineTexture::new(texture).create();
+    let render_texture = RenderTexture {
+        dimensions: UVec2::new(width, height),
+        depth_texture: DepthTexture2d::empty(facade, width, height)?,
+        color_texture: texture,
+    };
+
+    Ok(render_texture.create())
 }

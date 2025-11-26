@@ -20,8 +20,8 @@ pub const DUMMY_TEXTURE: TextureRef = TextureRef(0);
 
 #[derive(Clone, Copy)]
 pub struct TexturedVertex2D {
-    position: [f32; 2],
-    tex_coords: [f32; 2],
+    pub position: [f32; 2],
+    pub tex_coords: [f32; 2],
 }
 implement_vertex!(TexturedVertex2D, position, tex_coords);
 
@@ -80,25 +80,7 @@ pub fn load_texture(bytes: &[u8], format: ImageFormat) -> anyhow::Result<Texture
         },
     )?;
 
-    let dimensions = image_dimensions.into();
-    let texture = EngineTexture {
-        dimensions,
-        gl_texture: texture,
-        normalized_dimensions: {
-            let mut v = Vec2::new(dimensions.x as f32, dimensions.y as f32);
-            let max = v.x.max(v.y);
-            v.x /= max;
-            v.y /= max;
-            v
-        },
-        magnify_filter: state.config.default_magnify_filter,
-        minify_filter: state.config.default_minify_filter,
-    };
-
-    let id = state.storage.textures.len();
-    state.storage.textures.push(texture);
-
-    Ok(TextureRef(id))
+    Ok(EngineTexture::new(texture).create())
 }
 
 pub struct EngineTexture {
@@ -112,6 +94,32 @@ pub struct EngineTexture {
 impl EngineTexture {
     pub fn static_gl_texture(&'static self) -> &'static Texture2d {
         &self.gl_texture
+    }
+
+    pub fn new(texture: Texture2d) -> EngineTexture {
+        let state = get_state();
+        let dimensions = texture.dimensions().into();
+        EngineTexture {
+            dimensions,
+            gl_texture: texture,
+            normalized_dimensions: {
+                let mut v = Vec2::new(dimensions.x as f32, dimensions.y as f32);
+                let max = v.x.max(v.y);
+                v.x /= max;
+                v.y /= max;
+                v
+            },
+            magnify_filter: state.config.default_magnify_filter,
+            minify_filter: state.config.default_minify_filter,
+        }
+    }
+
+    pub fn create(self) -> TextureRef {
+        let state = get_state();
+        let id = state.storage.textures.len();
+        state.storage.textures.push(self);
+
+        TextureRef(id)
     }
 }
 
@@ -133,6 +141,11 @@ impl TextureRef {
 
     pub fn normalized_dimensions(&self) -> Vec2 {
         self.get().normalized_dimensions
+    }
+
+    pub fn new() -> Self {
+        let id = get_state().storage.textures.len();
+        Self(id)
     }
 }
 
