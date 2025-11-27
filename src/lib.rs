@@ -5,7 +5,9 @@ use std::time::Instant;
 
 use bevy_math::Mat4;
 use bevy_math::Vec2;
+use bevy_math::VectorSpace;
 use buffers::Buffers;
+use bumpalo::Bump;
 use camera::Camera2D;
 use camera::Camera3D;
 use camera::projection_from_window;
@@ -16,9 +18,9 @@ use debugging::DebugInfo;
 pub use draw_queue_2d::Vertex3D;
 use egui_glium::{EguiGlium, egui_winit::egui::ViewportId};
 use fps_ticker::Fps;
-use glium::winit::window::WindowAttributes;
 use glium::Program;
 use glium::Surface;
+use glium::winit::window::WindowAttributes;
 use glium::{
     Frame,
     backend::glutin::{Display, SimpleWindowBuilder},
@@ -29,6 +31,7 @@ use glium::{
     },
 };
 use materials::Material;
+use object_3d::Mesh;
 use object_3d::Object3D;
 use prelude::init_materials;
 use programs::init_programs;
@@ -36,9 +39,10 @@ use rand::rngs::ThreadRng;
 use render_pipeline::RenderPipeline;
 use render_pipeline::RenderTarget;
 use render_pipeline::RenderTexture;
-use sound::{Sound, SoundState};
+use text_rendering::EngineFont;
 use textures::EngineTexture;
 use textures::init_textures;
+use tunes::engine::AudioEngine;
 use winit_input_helper::WinitInputHelper;
 
 const BIG_NUMBER: f32 = 9999.9;
@@ -65,7 +69,6 @@ mod render_pipeline;
 mod shapes_2d;
 mod shapes_3d;
 mod slop;
-mod sound;
 mod text_rendering;
 mod textures;
 mod utils;
@@ -88,6 +91,7 @@ struct EngineState {
     window: Window,
     display: EngineDisplay,
     event_loop: EventLoop<()>,
+    bump_allocator: Bump,
     input: WinitInputHelper,
     frame: Option<Frame>,
     /// used for screen-space rendering
@@ -95,6 +99,7 @@ struct EngineState {
     camera_2d: Camera2D,
     camera_3d: Camera3D,
     gui: EguiGlium,
+    audio_engine: AudioEngine,
     gui_initialized: bool,
     render_pipeline: RenderPipeline,
     texture_pipeline: Option<RenderPipeline>,
@@ -103,11 +108,11 @@ struct EngineState {
     storage: EngineStorage,
     buffers: Buffers,
     rng: ThreadRng,
-    sound: SoundState,
     config: EngineConfig,
     time: f32,
     delta_time: f32,
     last_frame_end_time: Instant,
+    cursor_position: Vec2,
 }
 
 unsafe impl Sync for EngineState {}
@@ -116,21 +121,23 @@ unsafe impl Send for EngineState {}
 pub(crate) struct EngineStorage {
     textures: Vec<EngineTexture>,
     render_textures: Vec<RenderTexture>,
-    sounds: Vec<Sound>,
     programs: Vec<Program>,
     materials: Vec<Material>,
     objects: Vec<Object3D>,
+    fonts: Vec<EngineFont>,
+    meshes: Vec<Mesh>,
 }
 
 impl EngineStorage {
     pub fn new() -> Self {
         Self {
             textures: vec![],
-            sounds: vec![],
             programs: vec![],
             materials: vec![],
             objects: vec![],
             render_textures: vec![],
+            fonts: vec![],
+            meshes: vec![],
         }
     }
 }
@@ -163,12 +170,13 @@ pub fn init(title: &str) -> anyhow::Result<()> {
     let buffers = Buffers::new(&display)?;
     let rng = rand::rng();
     let gui_initialized = false;
-    let sound = SoundState::new()?;
     let config = EngineConfig::default();
     let time = 0.0;
     let delta_time = 0.0;
     let last_frame_end_time = Instant::now();
     let render_pipeline = RenderPipeline::screen();
+    let audio_engine = AudioEngine::new()?;
+    let bump_allocator = Bump::new();
 
     unsafe {
         ENGINE_STATE = Some(EngineState {
@@ -177,22 +185,24 @@ pub fn init(title: &str) -> anyhow::Result<()> {
             texture_pipeline: None,
             event_loop,
             input,
+            bump_allocator,
             frame,
             flat_projection,
             camera_2d,
             camera_3d,
+            audio_engine,
             gui,
             gui_initialized,
             debug_info,
             buffers,
             storage,
             rng,
-            sound,
             render_pipeline,
             config,
             time,
             delta_time,
             last_frame_end_time,
+            cursor_position: Vec2::ZERO,
         });
     }
 
@@ -256,6 +266,10 @@ pub fn next_frame() {
     let delta_time = state.last_frame_end_time.elapsed().as_secs_f32();
     state.delta_time = delta_time;
     state.time += delta_time;
+    state.last_frame_end_time = Instant::now();
+    if let Some(c) = state.input.cursor() {
+        state.cursor_position = c.into();
+    }
 }
 
 pub(crate) mod thread_assert {

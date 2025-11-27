@@ -2,7 +2,7 @@ use crate::{
     Color,
     draw_queue_2d::MaterialVertex3D,
     get_state,
-    prelude::{Material, Object3D, Object3DRef, Transform3D, load_program},
+    prelude::{Material, Mesh, Object3D, Object3DRef, Transform3D, load_program},
     programs::ProgramRef,
 };
 use glium::{IndexBuffer, VertexBuffer, implement_vertex};
@@ -73,8 +73,11 @@ pub fn create_infinite_grid() -> anyhow::Result<Object3DRef> {
     };
 
     let object = Object3D {
-        vertices: vertex_buffer,
-        indices: index_buffer,
+        mesh: Mesh {
+            vertices: vertex_buffer,
+            indices: index_buffer,
+        }
+        .create(),
         material,
         transform: Transform3D::IDENTITY,
         draw_params_override: Some(draw_params),

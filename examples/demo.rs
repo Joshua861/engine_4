@@ -4,15 +4,14 @@ fn main() -> anyhow::Result<()> {
     init("Demo")?;
 
     let mut is_dark_mode = false;
-    let mut cursor_pos = Vec2::ZERO;
+    let mut camera_controller = PanningCameraController::new();
     let guy_texture = load_texture(
         include_bytes!("../assets/textures/guy.jpg"),
         ImageFormat::Jpeg,
     )?;
 
     loop {
-        let (min, max) = get_camera2d().visible_bounds();
-
+        camera_controller.update();
         let input = get_input();
 
         if input.key_pressed(KeyCode::Space) {
@@ -21,10 +20,6 @@ fn main() -> anyhow::Result<()> {
 
         if input.key_pressed(KeyCode::KeyD) {
             show_debug_info();
-        }
-
-        if let Some((x, y)) = input.cursor() {
-            cursor_pos = Vec2::new(x, y);
         }
 
         if is_dark_mode {
@@ -55,23 +50,14 @@ fn main() -> anyhow::Result<()> {
             10.0,
             Color::ROSE_500,
         );
+        draw_hexagon(Vec2::new(1000.0, 200.0), 200.0, Color::BLUE_400);
+        draw_hexagon_pointy(
+            Vec2::new(1000.0, 200.0),
+            100.0 * 3.0_f32.sqrt(),
+            Color::BLUE_200,
+        );
 
         draw_square_world(Vec2::splat(-50.0), 100.0, Color::PINK_300);
-
-        if input.mouse_held(MouseButton::Left) {
-            let diff: Vec2 = input.mouse_diff().into();
-
-            mutate_camera_2d(|camera| {
-                camera.translation -= diff / camera.scale;
-            });
-        }
-
-        if input.scroll_diff().1 != 0.0 {
-            let diff = input.scroll_diff().1;
-            let diff = (diff * 0.1) + 1.0;
-
-            camera2d_zoom_at(cursor_pos, diff);
-        }
 
         for y in 0..20 {
             for x in 0..20 {
@@ -91,7 +77,7 @@ fn main() -> anyhow::Result<()> {
             for x in 0..100 {
                 let x = x as f32 * 100.0;
                 let y = y as f32 * 100.0;
-                let mouse_pos = screen_to_world(cursor_pos);
+                let mouse_pos = screen_to_world(cursor_pos());
                 let mouse_pos = collisions::Point::new(mouse_pos);
                 let color = if collisions::circle(x, y, 50.0).intersects_with(&mouse_pos) {
                     Color::RED_500

@@ -15,7 +15,6 @@ fn main() -> anyhow::Result<()> {
         start_rendering_to_texture(render_texture);
         clear_screen(Color::WHITE);
         draw_circle_world(Vec2::ZERO, 25.0, Color::PINK_500);
-
         draw_tri(
             Vec2::new(0.0, fsize.y),
             fsize / 2.0,
@@ -25,7 +24,8 @@ fn main() -> anyhow::Result<()> {
         draw_square(Vec2::ZERO, 10.0, Color::SKY_400);
         end_rendering_to_texture();
 
-        draw_sprite_scaled_world(render_texture.color_texture, Vec2::ZERO, fsize * 20.0);
+        // draw_sprite_scaled_world(render_texture.color_texture, Vec2::ZERO, fsize * 20.0);
+        draw_fullscreen_texture(render_texture.color_texture);
 
         if should_quit() {
             break;

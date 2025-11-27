@@ -1,29 +1,40 @@
-// src/post_processing.rs
 use bevy_math::Vec2;
-use glium::{Program, Surface, uniform};
+use glium::{Program, Surface, framebuffer::SimpleFrameBuffer, texture::Texture2d, uniform};
 
 use crate::{
-    color::Color, get_state, programs::ProgramRef, render_pipeline::RenderTextureRef,
-    textures::TextureRef,
+    EngineDisplay, color::Color, get_state, programs::ProgramRef,
+    render_pipeline::RenderTextureRef, textures::TextureRef,
 };
 
 #[derive(Clone, Debug)]
 pub enum PostProcessingEffect {
-    Bloom { threshold: f32, intensity: f32 },
-    Blur { radius: f32 },
-    Pixelate { pixel_size: f32 },
+    Bloom {
+        threshold: f32,
+        intensity: f32,
+        blur_radius: f32,
+    },
+    GaussianBlur {
+        sigma: f32,
+    },
+    Pixelate {
+        pixel_size: f32,
+    },
     Saturate(f32),
     HueRotate(f32),
     Brighten(f32),
-    Vignette { color: Color, intensity: f32 },
+    Vignette {
+        color: Color,
+        intensity: f32,
+    },
     Contrast(f32),
     Grayscale,
     Invert,
-    ChromaticAberration { strength: f32 },
+    ChromaticAberration {
+        strength: f32,
+    },
 }
 
 impl PostProcessingEffect {
-    /// Apply this effect to a texture and render to target
     pub fn apply<T: Surface>(
         &self,
         source: TextureRef,
@@ -34,11 +45,26 @@ impl PostProcessingEffect {
         let display = &state.display;
 
         match self {
-            Self::Blur { radius } => {
-                let program = get_or_create_blur_program();
+            Self::GaussianBlur { sigma } => {
+                // Two-pass separable Gaussian blur
+                let temp_texture = create_temp_texture(display, screen_size)?;
+                let mut temp_fb = SimpleFrameBuffer::new(display, &temp_texture)?;
+
+                // Horizontal pass
+                let program = get_or_create_gaussian_blur_program();
                 let uniforms = uniform! {
                     tex: source.get().gl_texture.sampled(),
-                    blur_radius: *radius,
+                    sigma: *sigma,
+                    direction: [1.0f32, 0.0f32],
+                    screen_size: [screen_size.x, screen_size.y],
+                };
+                render_fullscreen_quad(&mut temp_fb, program.get(), &uniforms)?;
+
+                // Vertical pass
+                let uniforms = uniform! {
+                    tex: temp_texture.sampled(),
+                    sigma: *sigma,
+                    direction: [0.0f32, 1.0f32],
                     screen_size: [screen_size.x, screen_size.y],
                 };
                 render_fullscreen_quad(target, program.get(), &uniforms)?;
@@ -89,15 +115,52 @@ impl PostProcessingEffect {
             Self::Bloom {
                 threshold,
                 intensity,
+                blur_radius,
             } => {
-                let program = get_or_create_bloom_program();
+                // Step 1: Extract bright areas
+                let bright_texture = create_temp_texture(display, screen_size)?;
+                let mut bright_fb = SimpleFrameBuffer::new(display, &bright_texture)?;
+
+                let bright_program = get_or_create_bright_pass_program();
                 let uniforms = uniform! {
                     tex: source.get().gl_texture.sampled(),
                     threshold: *threshold,
-                    intensity: *intensity,
+                };
+                render_fullscreen_quad(&mut bright_fb, bright_program.get(), &uniforms)?;
+
+                // Step 2: Blur the bright areas (two-pass Gaussian)
+                let temp_texture = create_temp_texture(display, screen_size)?;
+                let mut temp_fb = SimpleFrameBuffer::new(display, &temp_texture)?;
+
+                let blur_program = get_or_create_gaussian_blur_program();
+
+                // Horizontal blur pass
+                let uniforms = uniform! {
+                    tex: bright_texture.sampled(),
+                    sigma: *blur_radius,
+                    direction: [1.0f32, 0.0f32],
                     screen_size: [screen_size.x, screen_size.y],
                 };
-                render_fullscreen_quad(target, program.get(), &uniforms)?;
+                render_fullscreen_quad(&mut temp_fb, blur_program.get(), &uniforms)?;
+
+                // Vertical blur pass (back to bright_fb)
+                bright_fb.clear_color(0.0, 0.0, 0.0, 0.0);
+                let uniforms = uniform! {
+                    tex: temp_texture.sampled(),
+                    sigma: *blur_radius,
+                    direction: [0.0f32, 1.0f32],
+                    screen_size: [screen_size.x, screen_size.y],
+                };
+                render_fullscreen_quad(&mut bright_fb, blur_program.get(), &uniforms)?;
+
+                // Step 3: Combine original + blurred bright areas
+                let combine_program = get_or_create_bloom_combine_program();
+                let uniforms = uniform! {
+                    tex: source.get().gl_texture.sampled(),
+                    bloom_tex: bright_texture.sampled(),
+                    intensity: *intensity,
+                };
+                render_fullscreen_quad(target, combine_program.get(), &uniforms)?;
             }
             Self::Contrast(amount) => {
                 let program = get_or_create_contrast_program();
@@ -136,8 +199,12 @@ impl PostProcessingEffect {
     }
 }
 
-/// Render a fullscreen quad with the given program and uniforms
-fn render_fullscreen_quad<T: Surface, U: glium::uniforms::Uniforms>(
+fn create_temp_texture(display: &EngineDisplay, size: Vec2) -> anyhow::Result<Texture2d> {
+    let texture = Texture2d::empty(display, size.x as u32, size.y as u32)?;
+    Ok(texture)
+}
+
+pub(crate) fn render_fullscreen_quad<T: Surface, U: glium::uniforms::Uniforms>(
     target: &mut T,
     program: &Program,
     uniforms: &U,
@@ -149,7 +216,6 @@ fn render_fullscreen_quad<T: Surface, U: glium::uniforms::Uniforms>(
     let state = get_state();
     let display = &state.display;
 
-    // Fullscreen quad in NDC coordinates
     let vertices = [
         TexturedVertex2D {
             position: [-1.0, -1.0],
@@ -186,24 +252,25 @@ fn render_fullscreen_quad<T: Surface, U: glium::uniforms::Uniforms>(
     Ok(())
 }
 
-// Program loading functions
 use std::sync::OnceLock;
 
-static BLUR_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
+static GAUSSIAN_BLUR_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 static PIXELATE_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 static SATURATE_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 static HUE_ROTATE_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 static BRIGHTEN_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 static VIGNETTE_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
-static BLOOM_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
+static BRIGHT_PASS_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
+static BLOOM_COMBINE_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 static CONTRAST_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 static GRAYSCALE_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 static INVERT_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 static CHROMATIC_ABERRATION_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 
-fn get_or_create_blur_program() -> &'static ProgramRef {
-    BLUR_PROGRAM.get_or_init(|| {
-        crate::programs::load_program(POSTPROCESS_VERTEX_SHADER, BLUR_FRAGMENT_SHADER).unwrap()
+fn get_or_create_gaussian_blur_program() -> &'static ProgramRef {
+    GAUSSIAN_BLUR_PROGRAM.get_or_init(|| {
+        crate::programs::load_program(POSTPROCESS_VERTEX_SHADER, GAUSSIAN_BLUR_FRAGMENT_SHADER)
+            .unwrap()
     })
 }
 
@@ -238,9 +305,17 @@ fn get_or_create_vignette_program() -> &'static ProgramRef {
     })
 }
 
-fn get_or_create_bloom_program() -> &'static ProgramRef {
-    BLOOM_PROGRAM.get_or_init(|| {
-        crate::programs::load_program(POSTPROCESS_VERTEX_SHADER, BLOOM_FRAGMENT_SHADER).unwrap()
+fn get_or_create_bright_pass_program() -> &'static ProgramRef {
+    BRIGHT_PASS_PROGRAM.get_or_init(|| {
+        crate::programs::load_program(POSTPROCESS_VERTEX_SHADER, BRIGHT_PASS_FRAGMENT_SHADER)
+            .unwrap()
+    })
+}
+
+fn get_or_create_bloom_combine_program() -> &'static ProgramRef {
+    BLOOM_COMBINE_PROGRAM.get_or_init(|| {
+        crate::programs::load_program(POSTPROCESS_VERTEX_SHADER, BLOOM_COMBINE_FRAGMENT_SHADER)
+            .unwrap()
     })
 }
 
@@ -272,7 +347,6 @@ fn get_or_create_chromatic_aberration_program() -> &'static ProgramRef {
     })
 }
 
-// Shader sources
 const POSTPROCESS_VERTEX_SHADER: &str = r#"
 #version 140
 in vec2 position;
@@ -285,26 +359,39 @@ void main() {
 }
 "#;
 
-const BLUR_FRAGMENT_SHADER: &str = r#"
+// Separable Gaussian blur (optimized)
+const GAUSSIAN_BLUR_FRAGMENT_SHADER: &str = r#"
 #version 140
 in vec2 v_tex_coords;
 out vec4 color;
 uniform sampler2D tex;
-uniform float blur_radius;
+uniform float sigma;
+uniform vec2 direction; // [1,0] for horizontal, [0,1] for vertical
 uniform vec2 screen_size;
 
+const float PI = 3.14159265359;
+
+float gaussian(float x, float sigma) {
+    return exp(-(x * x) / (2.0 * sigma * sigma)) / (sqrt(2.0 * PI) * sigma);
+}
+
 void main() {
-    vec2 tex_offset = 1.0 / screen_size * blur_radius;
-    vec4 result = vec4(0.0);
+    // Calculate kernel radius (3 sigma covers 99.7% of the distribution)
+    int radius = int(ceil(3.0 * sigma));
     
-    for(int x = -4; x <= 4; ++x) {
-        for(int y = -4; y <= 4; ++y) {
-            vec2 offset = vec2(float(x), float(y)) * tex_offset;
-            result += texture(tex, v_tex_coords + offset);
-        }
+    vec2 tex_offset = direction / screen_size;
+    vec4 result = vec4(0.0);
+    float weight_sum = 0.0;
+    
+    // Sample along the specified direction
+    for(int i = -radius; i <= radius; ++i) {
+        float weight = gaussian(float(i), sigma);
+        vec2 offset = tex_offset * float(i);
+        result += texture(tex, v_tex_coords + offset) * weight;
+        weight_sum += weight;
     }
     
-    color = result / 81.0;
+    color = result / weight_sum;
 }
 "#;
 
@@ -398,35 +485,41 @@ void main() {
 }
 "#;
 
-const BLOOM_FRAGMENT_SHADER: &str = r#"
+// Bright pass for bloom
+const BRIGHT_PASS_FRAGMENT_SHADER: &str = r#"
 #version 140
 in vec2 v_tex_coords;
 out vec4 color;
 uniform sampler2D tex;
 uniform float threshold;
-uniform float intensity;
-uniform vec2 screen_size;
 
 void main() {
     vec4 tex_color = texture(tex, v_tex_coords);
     float brightness = dot(tex_color.rgb, vec3(0.2126, 0.7152, 0.0722));
     
     if (brightness > threshold) {
-        vec2 tex_offset = 1.0 / screen_size;
-        vec4 bloom = vec4(0.0);
-        
-        for(int x = -2; x <= 2; ++x) {
-            for(int y = -2; y <= 2; ++y) {
-                vec2 offset = vec2(float(x), float(y)) * tex_offset;
-                bloom += texture(tex, v_tex_coords + offset);
-            }
-        }
-        
-        bloom = bloom / 25.0 * intensity;
-        color = tex_color + bloom;
+        // Soft threshold
+        float soft = (brightness - threshold) / (1.0 - threshold);
+        color = tex_color * soft;
     } else {
-        color = tex_color;
+        color = vec4(0.0);
     }
+}
+"#;
+
+// Combine original + bloom
+const BLOOM_COMBINE_FRAGMENT_SHADER: &str = r#"
+#version 140
+in vec2 v_tex_coords;
+out vec4 color;
+uniform sampler2D tex;
+uniform sampler2D bloom_tex;
+uniform float intensity;
+
+void main() {
+    vec4 original = texture(tex, v_tex_coords);
+    vec4 bloom = texture(bloom_tex, v_tex_coords);
+    color = original + bloom * intensity;
 }
 "#;
 

@@ -9,38 +9,41 @@
 - [X] cull off screen world draws
 - [ ] SI Unit system
 - [ ] Compute shaders.
+- [ ] use bump allocators for per-frame data that gets cleared
 - [ ] Serde feature to make everything publicly facing serializable.
 - [ ] Transparency is fucked
   - [ ] Very fucked
   - [ ] Someone needs to do something about this
+- [ ] Circle anti aliasing on the outside is fucked
 - [ ] Move draw param overrides to the material
 - [ ] https://github.com/sqrew/tunes
 - [ ] Dithering to reduce colour banding
 - [ ] Signed distance field / https://raytracing.github.io/books/RayTracingInOneWeekend.html
 - [X] Custom materials
 - [X] Custom programs
-- [ ] Post processing [0/7]
-  - [ ] Bloom
-  - [ ] Pixelate
-    - [ ] Would be nice if this actually made it render less pixels but we may
+- [X] Post processing [7/7]
+  - [X] Bloom
+  - [X] Pixelate
+    - [X] Would be nice if this actually made it render less pixels but we may
       just need to advise people to use the custom texture rendering method
       below if they care about performance. (documentation!!!)
-  - [ ] Saturation
-  - [ ] Hue rotate
-  - [ ] Brightness
-  - [ ] Vignette
-  - [ ] Sharpen?
+  - [X] Saturation
+  - [X] Hue rotate
+  - [X] Brightness
+  - [X] Vignette
+  - [X] Sharpen?
 - [X] finish drawing circle outlines and add support for elipsis and arcs, this can all be one shader if you try hard enough.
-- [ ] Render to custom texture
-  - [ ] Create new render pipeline
-    - [ ] Should be refactored into it's own struct
-    - [ ] Contains all render queues + some sort of output descriptor
-      - [ ] May need refactoring for camera's and stuff to use the custom output size
-  - [ ] Let you use the texture however, like render it to the screen or use it in
+- [X] Render to custom texture
+  - [X] Create new render pipeline
+    - [X] Should be refactored into it's own struct
+    - [X] Contains all render queues + some sort of output descriptor
+      - [X] May need refactoring for camera's and stuff to use the custom output size
+  - [X] Let you use the texture however, like render it to the screen or use it in
     a compute shader like for game of life.
-    - [ ] Or render to a lower resolution texture and scale it up for a pixelated effect.
-- [ ] draw hexagon poly thing
+    - [X] Or render to a lower resolution texture and scale it up for a pixelated effect.
+- [X] draw hexagon poly thing
 - [ ] arbritrary rotation and custom material for all 2d shapes
+- [ ] transparant textures?
 - [ ] Animation support
   - [ ] Needs some sort of retained state.
   - [ ] Maybe generic over types that implement some trait.
@@ -57,7 +60,7 @@
 - [ ] https://docs.rs/macroquad/latest/macroquad/experimental/collections/storage/index.html
 - [ ] automatic saving and loading support with efficient binary format
 - [ ] multiple cameras
-- [ ] Render pass
+- [X] Render pass
   #+begin_src rust
     pub struct RenderPass {
         pub color_texture: Texture2D,
@@ -65,23 +68,23 @@
         pub(crate) render_pass: Arc<miniquad::RenderPass>,
     }
     #+end_src
-  - [ ] we need a function for creating an empty texture and one for creating a render pass from existing textures or just a resolution
-  - [ ] function to render a texture to the screen as a fullscreen quad
-  - [ ] just let the user create a render pipeline which has the various draw queues, and let the draw queues also contain their proj matrices so it can be drawn with just a reference to the engine state.
-  - [ ] let the engine use a default render pipeline, and have it be a vector of impl RenderPipelinePass which is implemented by draw_queue 2 and 3d and for drawing the UI in case the user wants to put things above that.
+  - [X] we need a function for creating an empty texture and one for creating a render pass from existing textures or just a resolution
+  - [X] function to render a texture to the screen as a fullscreen quad
+  - [X] just let the user create a render pipeline which has the various draw queues, and let the draw queues also contain their proj matrices so it can be drawn with just a reference to the engine state.
+  - [X] let the engine use a default render pipeline, and have it be a vector of impl RenderPipelinePass which is implemented by draw_queue 2 and 3d and for drawing the UI in case the user wants to put things above that.
   this should make it possible to add post processing effects easily
 - [ ] drawing curves
   - [ ] lines that connect points
   - [ ] bezier
   - [ ] cubic
 - [ ] Documentation
-- [ ] function to get screen size, width, height
+- [X] function to get screen size, width, height
 - [ ] Fix backface culling
 - [ ] export all colours as normal consts
 - [ ] Transform example
 - [ ] change cursor icons
 - [ ] Reorganize everything
-  - [ ] Especially draw_queue2d.rs and shapes2d.rs
+  Especially draw_queue2d.rs and shapes2d.rs
 - [ ] test colours
 - [ ] test everything
 - [ ] 2D custom materials
@@ -93,13 +96,14 @@
   - [ ] this could totally work lets be REAL https://docs.rs/hecs/latest/hecs/
 - [ ] lua scripting support
 - [ ] more warnings and better errors
-- [ ] Colors from hex code
-- [ ] Custom 3D material example
+- [X] Colors from hex code
+- [X] Custom 3D material example
 - [X] Batch textures
 - [ ] Arbritrary transform of 2D shapes
   - [ ] Transform2D struct
-- [ ] Sound
-  - [ ] 2D sound
+- [-] Sound
+  - [X] 2D sound
+  - [ ] Include sound
   - [ ] 3D sound
 - [ ] Compute shaders
 - [X] Convert 2D Primitives to use Z-indexing so batching isnt a problem
@@ -134,16 +138,13 @@
  - [ ] Texture atlasing: If you add textures, pack them into atlases to reduce state changes
  - [X] Occlusion culling: Don't even add shapes to draw queue if they're completely outside view
  - [ ] Level of Detail (LOD): Reduce polygon count for distant objects (fewer sides on distant polygons)
- - [ ] Depth buffer usage: Instead of draw order, use actual depth testing
  - [ ] Shader hot-reloading: Automatically reload shaders when files change during development
  - [ ] Multi-threaded draw queue building: Build draw queues on separate threads
- - [ ] GPU instancing for more shapes: Instance rectangles, triangles, polygons too
  - [ ] Uniform buffer objects (UBOs): Share projection matrices across draw calls more efficiently
 
 ** Memory
 
  - [ ] Object pooling: Reuse allocations for vertices/indices instead of creating new vectors
- - [ ] Arena allocators: Use bump allocators for per-frame data that gets cleared
  - [ ] Shape capacity hints: Let users reserve capacity if they know they'll draw many shapes
  - [ ] Sparse storage: For world objects, use spatial hash or quadtree instead of linear storage
 

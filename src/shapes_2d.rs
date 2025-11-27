@@ -16,7 +16,7 @@ pub trait Shape2D: HasBounds2D {
 
 pub struct Circle {
     pub center: Vec2,
-    pub radius: Vec2, // Changed to Vec2 to support ellipses
+    pub radius: Vec2,
     pub color: Color,
 }
 
@@ -27,7 +27,6 @@ impl HasBounds2D for Circle {
 }
 
 impl Circle {
-    /// Get the radius that encompasses the entire ellipse (for collision detection)
     pub fn encompassing_radius(&self) -> f32 {
         self.radius.x.max(self.radius.y)
     }
@@ -262,7 +261,7 @@ pub(crate) const UNIT_QUAD: [Vertex2D; 4] = [
 ];
 
 macro_rules! define_draw_functions {
-    ($($name:ident: $($param:ident: $ptype:ty),* => $constructor:expr),*) => {
+    ($($name:ident: $($param:ident: $ptype:ty),* => $constructor:expr),*,) => {
         $(
             pub fn $name($($param: $ptype),*) {
                 let shape = $constructor;
@@ -286,10 +285,11 @@ define_draw_functions!(
     draw_tri: a: Vec2, b: Vec2, c: Vec2, color: Color => Triangle { points: [a, b, c], color },
     draw_line: start: Vec2, end: Vec2, thickness: f32, color: Color => Line { start, end, thickness, color },
     draw_poly: center: Vec2, sides: usize, radius: f32, rotation: f32, color: Color => Poly { center, sides, radius, rotation, color },
-    draw_custom_shape: points: Vec<Vec2>, color: Color => CustomShape { points, color }
+    draw_custom_shape: points: Vec<Vec2>, color: Color => CustomShape { points, color },
+    draw_hexagon: center: Vec2, radius: f32, color: Color => Poly { center, sides: 6, radius, rotation: 0.0, color },
+    draw_hexagon_pointy: center: Vec2, radius: f32, color: Color => Poly { center, sides: 6, radius, rotation: std::f32::consts::FRAC_PI_6, color },
 );
 
-// Circle drawing functions
 pub fn draw_circle(center: Vec2, radius: f32, color: Color) {
     get_state()
         .draw_queue_2d()
@@ -309,7 +309,6 @@ pub fn draw_circle_world(center: Vec2, radius: f32, color: Color) {
     }
 }
 
-// Ellipse drawing functions
 pub fn draw_ellipse(center: Vec2, radius: Vec2, color: Color) {
     get_state()
         .draw_queue_2d()
@@ -329,12 +328,11 @@ pub fn draw_ellipse_world(center: Vec2, radius: Vec2, color: Color) {
     }
 }
 
-// Circle outline functions
 pub fn draw_circle_outline(center: Vec2, radius: f32, outline_color: Color, thickness: f32) {
     get_state().draw_queue_2d().add_circle_with_outline(
         center,
         Vec2::splat(radius),
-        Color::new(0.0, 0.0, 0.0).with_alpha(0.0), // Transparent fill
+        Color::new(0.0, 0.0, 0.0).with_alpha(0.0),
         thickness,
         outline_color,
     );
@@ -357,7 +355,6 @@ pub fn draw_circle_outline_world(center: Vec2, radius: f32, outline_color: Color
     }
 }
 
-// Ellipse outline functions
 pub fn draw_ellipse_outline(center: Vec2, radius: Vec2, outline_color: Color, thickness: f32) {
     get_state().draw_queue_2d().add_circle_with_outline(
         center,
@@ -390,7 +387,6 @@ pub fn draw_ellipse_outline_world(
     }
 }
 
-// Circle with outline (filled)
 pub fn draw_circle_with_outline(
     center: Vec2,
     radius: f32,
@@ -430,7 +426,6 @@ pub fn draw_circle_with_outline_world(
     }
 }
 
-// Ellipse with outline (filled)
 pub fn draw_ellipse_with_outline(
     center: Vec2,
     radius: Vec2,

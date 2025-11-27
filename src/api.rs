@@ -1,11 +1,13 @@
 use crate::{
     camera::Camera3D,
     collisions::AABB2D,
+    post_processing::{PostProcessingEffect, render_fullscreen_quad},
+    prelude::create_textured_material,
     render_pipeline::{RenderTexture, RenderTextureRef},
     shapes_2d::*,
     textures::EngineTexture,
 };
-use bevy_math::{UVec2, Vec2};
+use bevy_math::{UVec2, Vec2, VectorSpace};
 use egui_glium::egui_winit::egui::Context;
 use glium::{
     Texture2d,
@@ -19,6 +21,7 @@ use rand::{
         uniform::{SampleRange, SampleUniform},
     },
 };
+use tunes::engine::AudioEngine;
 use winit_input_helper::WinitInputHelper;
 
 use crate::{camera::Camera2D, color::Color, get_state, textures::TextureRef};
@@ -384,16 +387,95 @@ pub fn end_rendering_to_texture() {
     get_state().end_rendering_to_texture();
 }
 
-pub fn create_empty_render_texture(width: u32, height: u32) -> anyhow::Result<RenderTextureRef> {
+pub(crate) fn empty_render_texture(width: u32, height: u32) -> anyhow::Result<RenderTexture> {
     let state = get_state();
     let facade = &state.display;
     let texture = Texture2d::empty(facade, width, height)?;
     let texture = EngineTexture::new(texture).create();
-    let render_texture = RenderTexture {
+    Ok(RenderTexture {
         dimensions: UVec2::new(width, height),
         depth_texture: DepthTexture2d::empty(facade, width, height)?,
         color_texture: texture,
-    };
+    })
+}
 
-    Ok(render_texture.create())
+pub fn create_empty_render_texture(width: u32, height: u32) -> anyhow::Result<RenderTextureRef> {
+    Ok(empty_render_texture(width, height)?.create())
+}
+
+pub fn add_post_processing_effect(effect: PostProcessingEffect) {
+    get_state().current_render_pipeline().add_effect(effect);
+}
+
+pub fn blur_screen(sigma: f32) {
+    add_post_processing_effect(PostProcessingEffect::GaussianBlur { sigma });
+}
+
+/// does not render less textures. if you care about efficency, draw to a smaller render texture and then draw that to the screen
+pub fn pixelate_screen(pixel_size: f32) {
+    add_post_processing_effect(PostProcessingEffect::Pixelate { pixel_size });
+}
+
+pub fn saturate_screen(amount: f32) {
+    add_post_processing_effect(PostProcessingEffect::Saturate(amount));
+}
+
+pub fn hue_rotate_screen(degrees: f32) {
+    add_post_processing_effect(PostProcessingEffect::HueRotate(degrees));
+}
+
+pub fn brighten_screen(amount: f32) {
+    add_post_processing_effect(PostProcessingEffect::Brighten(amount));
+}
+
+pub fn vignette_screen(color: Color, intensity: f32) {
+    add_post_processing_effect(PostProcessingEffect::Vignette { color, intensity });
+}
+
+pub fn bloom_screen(threshold: f32, intensity: f32, radius: f32) {
+    add_post_processing_effect(PostProcessingEffect::Bloom {
+        threshold,
+        intensity,
+        blur_radius: radius,
+    });
+}
+
+pub fn contrast_screen(amount: f32) {
+    add_post_processing_effect(PostProcessingEffect::Contrast(amount));
+}
+
+pub fn greyscale_screen() {
+    add_post_processing_effect(PostProcessingEffect::Grayscale);
+}
+
+pub fn invert_screen() {
+    add_post_processing_effect(PostProcessingEffect::Invert);
+}
+
+pub fn chromatic_abberation_screen(strength: f32) {
+    add_post_processing_effect(PostProcessingEffect::ChromaticAberration { strength });
+}
+
+pub fn window_size() -> Vec2 {
+    get_state().window_size()
+}
+
+pub fn window_height() -> f32 {
+    get_state().window_size().y
+}
+
+pub fn window_width() -> f32 {
+    get_state().window_size().x
+}
+
+pub fn draw_fullscreen_texture(texture: TextureRef) {
+    draw_sprite_scaled(texture, Vec2::ZERO, window_size());
+}
+
+pub fn audio() -> &'static mut AudioEngine {
+    &mut get_state().audio_engine
+}
+
+pub fn cursor_pos() -> Vec2 {
+    get_state().cursor_position
 }

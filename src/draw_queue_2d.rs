@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use crate::post_processing::PostProcessingEffect;
 use crate::programs::{CIRCLE_PROGRAM, FLAT_PROGRAM, TEXTURED_PROGRAM};
 use crate::shapes_2d::{QUAD_INDICES, Shape2D, UNIT_QUAD};
 use crate::textures::TextureRef;
@@ -16,7 +15,6 @@ pub struct DrawQueue2D {
 
     circle_instances: Vec<CircleInstance>,
     sprite_draws: HashMap<TextureRef, Vec<SpriteInstance>>,
-    post_processing_effects: Vec<PostProcessingEffect>,
 
     current_z: f32,
     start_z: f32,
@@ -124,7 +122,6 @@ impl DrawQueue2D {
             current_max_index: 0,
             circle_instances: vec![],
             sprite_draws: HashMap::new(),
-            post_processing_effects: vec![],
             current_z: 0.0,
             start_z: 0.0,
             z_increment: 0.001,
@@ -138,8 +135,7 @@ impl DrawQueue2D {
             current_max_index: 0,
             circle_instances: vec![],
             sprite_draws: HashMap::new(),
-            post_processing_effects: vec![],
-            current_z: start_z,
+            current_z: 0.0,
             start_z,
             z_increment,
         }
@@ -277,10 +273,6 @@ impl DrawQueue2D {
         }
     }
 
-    pub fn add_effect(&mut self, effect: PostProcessingEffect) {
-        self.post_processing_effects.push(effect);
-    }
-
     pub fn draw<T: Surface>(&mut self, frame: &mut T, projection: &Mat4) {
         let state = get_state();
         let display = &state.display;
@@ -381,10 +373,6 @@ impl DrawQueue2D {
 
             self.draw_sprite_batch(frame, projection, *texture_ref, instances);
         }
-
-        for effect in &self.post_processing_effects {
-            // TODO: post processing
-        }
     }
 
     fn draw_sprite_batch<T: Surface>(
@@ -446,7 +434,6 @@ impl DrawQueue2D {
         self.current_max_index = 0;
         self.circle_instances.clear();
         self.sprite_draws.clear();
-        self.post_processing_effects.clear();
         self.current_z = self.start_z;
     }
 }

@@ -1,19 +1,41 @@
 use std::ops::{Deref, DerefMut};
 
 use bevy_math::{Mat4, UVec2, Vec2, Vec3};
-use glium::{Frame, Surface, Texture2d, framebuffer::SimpleFrameBuffer, texture::DepthTexture2d};
+use glium::{
+    Frame, Surface, Texture2d, framebuffer::SimpleFrameBuffer, texture::DepthTexture2d, uniform,
+};
 use log::warn;
 
 use crate::{
-    BIG_NUMBER, EngineState, camera::Cameras, color::Color, draw_queue_2d::DrawQueue2D,
-    draw_queue_3d::DrawQueue3D, get_state, post_processing::PostProcessingEffect,
-    textures::TextureRef,
+    BIG_NUMBER, EngineDisplay, EngineState, EngineStorage,
+    api::{create_empty_render_texture, empty_render_texture},
+    camera::Cameras,
+    color::Color,
+    draw_queue_2d::DrawQueue2D,
+    draw_queue_3d::DrawQueue3D,
+    get_state,
+    post_processing::PostProcessingEffect,
+    programs::ProgramRef,
+    textures::{EngineTexture, TextureRef},
 };
 
 pub struct RenderTexture {
     pub dimensions: UVec2,
     pub color_texture: TextureRef,
     pub depth_texture: DepthTexture2d,
+}
+
+impl RenderTexture {
+    pub fn framebuffer(&mut self) -> SimpleFrameBuffer<'_> {
+        let state = get_state();
+        let texture = self.color_texture.get();
+        SimpleFrameBuffer::with_depth_buffer(
+            &state.display,
+            &texture.gl_texture,
+            &self.depth_texture,
+        )
+        .unwrap()
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
@@ -30,6 +52,10 @@ impl RenderTextureRef {
 
     pub fn dimensions(&self) -> UVec2 {
         self.get().dimensions
+    }
+
+    pub fn framebuffer(&self) -> SimpleFrameBuffer<'_> {
+        self.get_mut().framebuffer()
     }
 }
 
@@ -120,6 +146,19 @@ impl RenderPipeline {
         }
     }
 
+    pub fn post_processing_effects(&mut self) -> &mut PostProcessingStep {
+        if matches!(self.most_recent_step(), RenderStep::Drawing(_)) {
+            self.steps
+                .push(RenderStep::PostProcessing(PostProcessingStep(Vec::new())));
+        }
+
+        let len = self.steps.len() - 1;
+        match &mut self.steps[len] {
+            RenderStep::PostProcessing(p) => p,
+            RenderStep::Drawing(_) => unreachable!(),
+        }
+    }
+
     pub fn draw_queue_2d(&mut self) -> &mut DrawQueue2D {
         &mut self.draw_queues().draw_queue_2d
     }
@@ -147,6 +186,10 @@ impl RenderPipeline {
             Some(c) => c,
             None => get_state().cameras(),
         }
+    }
+
+    pub fn add_effect(&mut self, effect: PostProcessingEffect) {
+        self.post_processing_effects().0.push(effect);
     }
 
     pub fn new(output: RenderTarget, camera_override: Option<Cameras>) -> Self {
@@ -180,40 +223,121 @@ impl RenderPipeline {
     }
 
     pub fn draw_on<T: Surface>(&mut self, frame: &mut T) {
+        let state = get_state();
         let mut cameras = self.cameras();
-
-        if let Some(c) = self.clear_color {
-            frame.clear_color(c.r, c.g, c.b, c.a);
-        } else {
-            frame.clear_color(0.0, 0.0, 0.0, 1.0);
-        }
-
-        frame.clear_depth(1.0);
-
         let is_texture_target = matches!(self.output, RenderTarget::Texture(_));
 
-        for step in self.steps.iter_mut() {
-            match step {
-                RenderStep::PostProcessing(_) => todo!(),
-                RenderStep::Drawing(draw_queues) => {
-                    let view_proj = cameras.d3.view_proj();
-                    draw_queues.draw_queue_3d.draw(frame, &view_proj);
+        let has_post_processing = self
+            .steps
+            .iter()
+            .any(|step| matches!(step, RenderStep::PostProcessing(_)));
 
-                    let mut projection = cameras.d2.projection_matrix();
-                    if is_texture_target {
-                        projection = Mat4::from_scale(Vec3::new(1.0, -1.0, 1.0)) * projection;
-                    }
-                    draw_queues.world_draw_queue_2d.draw(frame, &projection);
+        if has_post_processing {
+            let dimensions = frame.get_dimensions();
 
-                    let mut flat_projection = cameras.flat;
-                    if is_texture_target {
-                        flat_projection =
-                            Mat4::from_scale(Vec3::new(1.0, -1.0, 1.0)) * flat_projection;
+            let mut a = empty_render_texture(dimensions.0, dimensions.1).unwrap();
+            let mut b = empty_render_texture(dimensions.0, dimensions.1).unwrap();
+
+            if let Some(c) = self.clear_color {
+                a.framebuffer().clear_color(c.r, c.g, c.b, c.a);
+                b.framebuffer().clear_color(c.r, c.g, c.b, c.a);
+            } else {
+                a.framebuffer().clear_color(0.0, 0.0, 0.0, 1.0);
+                b.framebuffer().clear_color(0.0, 0.0, 0.0, 1.0);
+            }
+            a.framebuffer().clear_depth(1.0);
+            b.framebuffer().clear_depth(1.0);
+
+            for step in std::mem::take(&mut self.steps) {
+                match step {
+                    RenderStep::Drawing(draw_queues) => {
+                        self.draw_queues_to(
+                            &mut a.framebuffer(),
+                            draw_queues,
+                            &mut cameras,
+                            is_texture_target,
+                        );
                     }
-                    draw_queues.draw_queue_2d.draw(frame, &flat_projection);
+                    RenderStep::PostProcessing(effects) => {
+                        for effect in effects.0 {
+                            effect
+                                .apply(
+                                    a.color_texture,
+                                    &mut b.framebuffer(),
+                                    Vec2::new(dimensions.0 as f32, dimensions.1 as f32),
+                                )
+                                .unwrap();
+
+                            std::mem::swap(&mut a, &mut b);
+                        }
+                    }
+                }
+            }
+
+            self.draw_texture_to_target(frame, a.color_texture);
+
+            state.storage.textures.pop();
+            state.storage.textures.pop();
+        } else {
+            if let Some(c) = self.clear_color {
+                frame.clear_color(c.r, c.g, c.b, c.a);
+            } else {
+                frame.clear_color(0.0, 0.0, 0.0, 1.0);
+            }
+            frame.clear_depth(1.0);
+
+            for step in std::mem::take(&mut self.steps) {
+                match step {
+                    RenderStep::Drawing(draw_queues) => {
+                        self.draw_queues_to(frame, draw_queues, &mut cameras, is_texture_target);
+                    }
+                    RenderStep::PostProcessing(_) => {
+                        unreachable!();
+                    }
                 }
             }
         }
+    }
+
+    fn draw_queues_to<T: Surface>(
+        &self,
+        target: &mut T,
+        mut draw_queues: DrawQueues,
+        cameras: &mut Cameras,
+        is_texture_target: bool,
+    ) {
+        let view_proj = cameras.d3.view_proj();
+        draw_queues.draw_queue_3d.draw(target, &view_proj);
+
+        let mut projection = cameras.d2.projection_matrix();
+        if is_texture_target {
+            projection = Mat4::from_scale(Vec3::new(1.0, -1.0, 1.0)) * projection;
+        }
+        draw_queues.world_draw_queue_2d.draw(target, &projection);
+
+        let mut flat_projection = cameras.flat;
+        if is_texture_target {
+            flat_projection = Mat4::from_scale(Vec3::new(1.0, -1.0, 1.0)) * flat_projection;
+        }
+        draw_queues.draw_queue_2d.draw(target, &flat_projection);
+    }
+
+    fn draw_texture_to_target<T: Surface>(&self, target: &mut T, texture: TextureRef) {
+        use crate::post_processing::render_fullscreen_quad;
+        use crate::programs::load_program;
+
+        static COPY_PROGRAM: std::sync::OnceLock<ProgramRef> = std::sync::OnceLock::new();
+        let program = COPY_PROGRAM.get_or_init(|| {
+            let vertex_shader = include_str!("../assets/shaders/copy/vertex.glsl");
+            let fragment_shader = include_str!("../assets/shaders/copy/fragment.glsl");
+            load_program(vertex_shader, fragment_shader).unwrap()
+        });
+
+        let uniforms = uniform! {
+            tex: texture.get().gl_texture.sampled()
+        };
+
+        render_fullscreen_quad(target, program.get(), &uniforms).unwrap();
     }
 
     pub fn screen() -> Self {

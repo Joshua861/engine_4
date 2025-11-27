@@ -74,13 +74,19 @@ impl DrawQueue3D {
                 .as_ref()
                 .unwrap_or(&default_params);
 
-            debugger_add_vertices(object.vertices.len());
-            debugger_add_indices(object.indices.len());
+            debugger_add_vertices(object.mesh.vertices.len());
+            debugger_add_indices(object.mesh.indices.len());
             debugger_add_drawn_objects(1);
             debugger_add_draw_calls(1);
 
             frame
-                .draw(&object.vertices, &object.indices, program, material, params)
+                .draw(
+                    &object.mesh.vertices,
+                    &object.mesh.indices,
+                    program,
+                    material,
+                    params,
+                )
                 .unwrap();
         };
 

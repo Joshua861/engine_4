@@ -64,6 +64,7 @@ impl DebugInfo {
     }
 
     pub(crate) fn draw_debug_info(&mut self, ui: &egui_glium::egui_winit::egui::Context) {
+        let state = get_state();
         if !self.show_window {
             return;
         }
@@ -136,7 +137,16 @@ impl DebugInfo {
                     .show(ui, |ui| ui.line(line));
             }
 
-            ui.label(&format!("FPS: {:.1}", self.fps.avg()));
+            ui.label(format!("Textures: {}", state.storage.textures.len()));
+            ui.label(format!(
+                "Render textures: {}",
+                state.storage.render_textures.len()
+            ));
+            ui.label(format!("Programs: {}", state.storage.programs.len()));
+            ui.label(format!("Materials: {}", state.storage.materials.len()));
+            ui.label(format!("Objects: {}", state.storage.objects.len()));
+
+            ui.label(format!("FPS: {:.1}", self.fps.avg()));
         });
     }
 }

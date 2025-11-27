@@ -18,8 +18,7 @@ use crate::{
 };
 
 pub struct Object3D {
-    pub vertices: VertexBuffer<MaterialVertex3D>,
-    pub indices: IndexBuffer<u32>,
+    pub mesh: MeshRef,
     pub material: MaterialRef,
     pub transform: Transform3D,
     pub draw_params_override: Option<glium::DrawParameters<'static>>,
@@ -60,8 +59,7 @@ impl Object3D {
         )?;
 
         let object = Self {
-            vertices,
-            indices,
+            mesh: Mesh { vertices, indices }.create(),
             material,
             transform: Transform3D::IDENTITY,
             draw_params_override: None,
@@ -74,8 +72,8 @@ impl Object3D {
         use bevy_math::Vec3;
         use std::collections::HashMap;
 
-        let vertices: Vec<MaterialVertex3D> = self.vertices.read().unwrap();
-        let indices: Vec<u32> = self.indices.read().unwrap();
+        let vertices: Vec<MaterialVertex3D> = self.mesh.vertices.read().unwrap();
+        let indices: Vec<u32> = self.mesh.indices.read().unwrap();
 
         let mut position_to_vertices: HashMap<[i32; 3], Vec<usize>> = HashMap::new();
 
@@ -117,11 +115,21 @@ impl Object3D {
             .collect();
 
         let state = get_state();
-        self.vertices = VertexBuffer::new(&state.display, &new_vertices).unwrap();
+        self.mesh.vertices = VertexBuffer::new(&state.display, &new_vertices).unwrap();
     }
 
     pub fn create(self) -> Object3DRef {
         create_object(self)
+    }
+
+    pub fn from_mesh_and_material(mesh: MeshRef, material: MaterialRef) -> Object3DRef {
+        Self {
+            mesh,
+            material,
+            transform: Transform3D::IDENTITY,
+            draw_params_override: None,
+        }
+        .create()
     }
 }
 
@@ -588,12 +596,65 @@ pub fn test_triangle() -> anyhow::Result<Object3DRef> {
     )?;
 
     let triangle = Object3D {
-        vertices,
-        indices,
+        mesh: Mesh { vertices, indices }.create(),
         material: create_flat_3d_material(Color::RED_500),
         transform: Transform3D::IDENTITY,
         draw_params_override: None,
     };
 
     Ok(triangle.create())
+}
+
+pub struct Mesh {
+    pub vertices: VertexBuffer<MaterialVertex3D>,
+    pub indices: IndexBuffer<u32>,
+}
+
+impl Mesh {
+    pub fn create(self) -> MeshRef {
+        let state = get_state();
+
+        let id = MeshRef(state.storage.meshes.len());
+        state.storage.meshes.push(self);
+        id
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct MeshRef(usize);
+
+impl Index<MeshRef> for EngineStorage {
+    type Output = Mesh;
+    fn index(&self, index: MeshRef) -> &Self::Output {
+        &self.meshes[index.0]
+    }
+}
+
+impl IndexMut<MeshRef> for EngineStorage {
+    fn index_mut(&mut self, index: MeshRef) -> &mut Self::Output {
+        &mut self.meshes[index.0]
+    }
+}
+
+impl MeshRef {
+    pub fn get(&self) -> &Mesh {
+        &get_state().storage.meshes[self.0]
+    }
+
+    pub fn get_mut(&self) -> &mut Mesh {
+        &mut get_state().storage.meshes[self.0]
+    }
+}
+
+impl Deref for MeshRef {
+    type Target = Mesh;
+    fn deref(&self) -> &Self::Target {
+        &get_state().storage[*self]
+    }
+}
+
+impl DerefMut for MeshRef {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut get_state().storage[*self]
+    }
 }

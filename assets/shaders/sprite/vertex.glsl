@@ -15,7 +15,7 @@ void main() {
     v_tex_coords = tex_coords;
 
     vec2 scaled_pos = position * instance_size;
-    vec2 world_pos = scaled_pos + instance_position;
+    vec2 world_pos = scaled_pos + instance_position + instance_size;
 
     gl_Position = projection * vec4(world_pos, instance_z, 1.0);
 }
