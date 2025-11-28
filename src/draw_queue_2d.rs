@@ -154,12 +154,12 @@ impl DrawQueue2D {
         self.current_z
     }
 
-    pub fn add_shape(&mut self, shape: impl Shape2D) {
+    pub fn add_shape(&mut self, shape: &impl Shape2D) {
         self.add_shape_at_z(shape, self.current_z);
         self.current_z += self.z_increment;
     }
 
-    pub fn add_shape_at_z(&mut self, shape: impl Shape2D, z: f32) {
+    pub fn add_shape_at_z(&mut self, shape: &impl Shape2D, z: f32) {
         #[cfg(feature = "debugging")]
         {
             use crate::debugging::get_debug_info_mut;

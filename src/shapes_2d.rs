@@ -1,7 +1,7 @@
 use crate::{
     collisions::{AABB2D, HasBounds2D},
     color::Color,
-    draw_queue_2d::Vertex2D,
+    draw_queue_2d::{DrawQueue2D, Vertex2D},
     get_state,
 };
 use bevy_math::Vec2;
@@ -12,12 +12,32 @@ pub trait Shape2D: HasBounds2D {
     fn is_visible_in_world(&self) -> bool {
         self.bounds().is_visible_in_world()
     }
+    fn add_to_draw_queue(&self, draw_queue: &mut DrawQueue2D);
+    fn draw(&self) {
+        self.add_to_draw_queue(get_state().draw_queue_2d())
+    }
+    fn draw_world(&self) {
+        if self.is_visible_in_world() {
+            self.add_to_draw_queue(get_state().world_draw_queue_2d())
+        }
+    }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct Circle {
     pub center: Vec2,
     pub radius: Vec2,
     pub color: Color,
+}
+
+impl Shape2D for Circle {
+    fn add_to_draw_queue(&self, draw_queue: &mut DrawQueue2D) {
+        draw_queue.add_circle(self.center, self.radius, self.color);
+    }
+
+    fn points(&self, starting_index: u32) -> (Vec<u32>, Vec<Vertex2D>) {
+        (vec![], vec![])
+    }
 }
 
 impl HasBounds2D for Circle {
@@ -32,6 +52,7 @@ impl Circle {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct CircleOutline {
     pub center: Vec2,
     pub radius: Vec2,
@@ -46,6 +67,7 @@ impl HasBounds2D for CircleOutline {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct Rect {
     pub top_left: Vec2,
     pub size: Vec2,
@@ -78,8 +100,13 @@ impl Shape2D for Rect {
         let indices = QUAD_INDICES.map(|n| n + starting_index).to_vec();
         (indices, quad)
     }
+
+    fn add_to_draw_queue(&self, draw_queue: &mut DrawQueue2D) {
+        draw_queue.add_shape(self);
+    }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct Triangle {
     pub points: [Vec2; 3],
     pub color: Color,
@@ -99,8 +126,13 @@ impl Shape2D for Triangle {
         let indices = starting_index..starting_index + 3;
         (indices.collect(), tri.to_vec())
     }
+
+    fn add_to_draw_queue(&self, draw_queue: &mut DrawQueue2D) {
+        draw_queue.add_shape(self);
+    }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct Line {
     pub start: Vec2,
     pub end: Vec2,
@@ -163,8 +195,13 @@ impl Shape2D for Line {
             (vec![], vec![])
         }
     }
+
+    fn add_to_draw_queue(&self, draw_queue: &mut DrawQueue2D) {
+        draw_queue.add_shape(self);
+    }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct Poly {
     pub sides: usize,
     pub radius: f32,
@@ -206,8 +243,13 @@ impl Shape2D for Poly {
         let indices = indices.iter().map(|n| n + starting_index).collect();
         (indices, vertices)
     }
+
+    fn add_to_draw_queue(&self, draw_queue: &mut DrawQueue2D) {
+        draw_queue.add_shape(self);
+    }
 }
 
+#[derive(Clone, Debug)]
 pub struct CustomShape {
     pub points: Vec<Vec2>,
     pub color: Color,
@@ -237,6 +279,10 @@ impl Shape2D for CustomShape {
         let indices = indices.iter().map(|n| n + starting_index).collect();
         (indices, vertices)
     }
+
+    fn add_to_draw_queue(&self, draw_queue: &mut DrawQueue2D) {
+        draw_queue.add_shape(self);
+    }
 }
 
 pub(crate) const QUAD_INDICES: [u32; 6] = [0, 1, 2, 1, 2, 3];
@@ -265,13 +311,13 @@ macro_rules! define_draw_functions {
         $(
             pub fn $name($($param: $ptype),*) {
                 let shape = $constructor;
-                draw_shape(shape);
+                draw_shape(&shape);
             }
 
             paste::item! {
                 pub fn [<$name _world>]($($param: $ptype),*) {
                     let shape = $constructor;
-                    draw_shape_world(shape);
+                    draw_shape_world(&shape);
                 }
             }
         )*
@@ -457,14 +503,12 @@ pub fn draw_ellipse_with_outline_world(
     }
 }
 
-pub fn draw_shape(shape: impl Shape2D) {
-    get_state().draw_queue_2d().add_shape(shape);
+pub fn draw_shape(shape: &impl Shape2D) {
+    shape.draw();
 }
 
-pub fn draw_shape_world(shape: impl Shape2D) {
-    if shape.is_visible_in_world() {
-        get_state().world_draw_queue_2d().add_shape(shape);
-    }
+pub fn draw_shape_world(shape: &impl Shape2D) {
+    shape.draw_world();
 }
 
 fn gen_mesh_from_points(points: &[Vec2], color: Color) -> (Vec<Vertex2D>, Vec<u32>) {

@@ -5,13 +5,12 @@ use palette::{Hsl, IntoColor, LinSrgb, Oklch, Srgb};
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 // Linear SRGB
 pub struct Color {
-    /// Red component of the color
     pub r: f32,
-    /// Green component of the color
+
     pub g: f32,
-    /// Blue component of the color
+
     pub b: f32,
-    /// Alpha component of the color
+
     pub a: f32,
 }
 
@@ -47,7 +46,7 @@ impl Color {
         self.a = a;
         self
     }
-    /// Convert RGB to HSL, returning (hue, saturation, lightness)
+
     fn to_hsl(&self) -> (f32, f32, f32) {
         let lin_rgb = LinSrgb::new(self.r, self.g, self.b);
         let srgb: Srgb = lin_rgb.into_color();
@@ -76,7 +75,6 @@ impl Color {
         Self::from_rgba_u8(red as u8, green as u8, blue as u8, alpha as u8)
     }
 
-    /// Create color from HSL values, preserving alpha
     pub fn from_hsl_with_alpha(hue: f32, saturation: f32, lightness: f32, alpha: f32) -> Self {
         let hsl = Hsl::new(hue, saturation, lightness);
         let srgb: Srgb = hsl.into_color();
@@ -88,81 +86,60 @@ impl Color {
         Self::from_hsl_with_alpha(hue, saturation, lightness, 1.0)
     }
 
-    /// Convert RGB to Oklch, returning (lightness, chroma, hue)
     pub fn to_oklch(&self) -> (f32, f32, f32) {
         let lin_rgb = LinSrgb::new(self.r, self.g, self.b);
         let oklch: Oklch = lin_rgb.into_color();
         (oklch.l, oklch.chroma, oklch.hue.into_positive_degrees())
     }
 
-    /// Create color from Oklch values, preserving alpha
     pub fn from_oklch_with_alpha(lightness: f32, chroma: f32, hue: f32, alpha: f32) -> Self {
         let oklch = Oklch::new(lightness, chroma, hue);
         let lin_rgb: LinSrgb = oklch.into_color();
         Self::from_rgba(lin_rgb.red, lin_rgb.green, lin_rgb.blue, alpha)
     }
 
-    /// Lighten the color by a factor (0.0 to 1.0)
-    /// factor of 0.0 returns the original color, 1.0 returns white
     pub fn lighten(self, factor: f32) -> Self {
         let (h, s, l) = self.to_hsl();
         let new_l = (l + factor * (1.0 - l)).clamp(0.0, 1.0);
         Self::from_hsl_with_alpha(h, s, new_l, self.a)
     }
 
-    /// Darken the color by a factor (0.0 to 1.0)
-    /// factor of 0.0 returns the original color, 1.0 returns black
     pub fn darken(self, factor: f32) -> Self {
         let (h, s, l) = self.to_hsl();
         let new_l = (l - factor * l).clamp(0.0, 1.0);
         Self::from_hsl_with_alpha(h, s, new_l, self.a)
     }
 
-    /// Increase saturation by a factor (0.0 to 1.0)
-    /// factor of 0.0 returns the original color, 1.0 returns fully saturated
     pub fn saturate(self, factor: f32) -> Self {
         let (h, s, l) = self.to_hsl();
         let new_s = (s + factor * (1.0 - s)).clamp(0.0, 1.0);
         Self::from_hsl_with_alpha(h, new_s, l, self.a)
     }
 
-    /// Decrease saturation by a factor (0.0 to 1.0)
-    /// factor of 0.0 returns the original color, 1.0 returns grayscale
     pub fn desaturate(self, factor: f32) -> Self {
         let (h, s, l) = self.to_hsl();
         let new_s = (s - factor * s).clamp(0.0, 1.0);
         Self::from_hsl_with_alpha(h, new_s, l, self.a)
     }
 
-    /// Rotate the hue by the given number of degrees
-    /// Positive values rotate clockwise, negative counter-clockwise
     pub fn hue_rotate(self, degrees: f32) -> Self {
         let (h, s, l) = self.to_hsl();
         let new_h = (h + degrees).rem_euclid(360.0);
         Self::from_hsl_with_alpha(new_h, s, l, self.a)
     }
 
-    /// Lighten the color by a factor using Oklch (0.0 to 1.0)
-    /// Perceptually uniform lightness adjustment
-    /// factor of 0.0 returns the original color, 1.0 returns white
     pub fn lighten_oklch(self, factor: f32) -> Self {
         let (l, c, h) = self.to_oklch();
         let new_l = (l + factor * (1.0 - l)).clamp(0.0, 1.0);
         Self::from_oklch_with_alpha(new_l, c, h, self.a)
     }
 
-    /// Darken the color by a factor using Oklch (0.0 to 1.0)
-    /// Perceptually uniform lightness adjustment
-    /// factor of 0.0 returns the original color, 1.0 returns black
     pub fn darken_oklch(self, factor: f32) -> Self {
         let (l, c, h) = self.to_oklch();
         let new_l = (l - factor * l).clamp(0.0, 1.0);
         Self::from_oklch_with_alpha(new_l, c, h, self.a)
     }
 
-    /// Rotate the hue by the given number of degrees using Oklch
-    /// Perceptually uniform hue rotation
-    /// Positive values rotate clockwise, negative counter-clockwise
     pub fn hue_rotate_oklch(self, degrees: f32) -> Self {
         let (l, c, h) = self.to_oklch();
         let new_h = (h + degrees).rem_euclid(360.0);
@@ -171,6 +148,7 @@ impl Color {
 
     pub const BLACK: Self = Self::new(0.0, 0.0, 0.0);
     pub const WHITE: Self = Self::new(1.0, 1.0, 1.0);
+    pub const TRANSPARENT: Self = Self::from_rgba(0.0, 0.0, 0.0, 0.0);
 }
 
 #[rustfmt::skip]

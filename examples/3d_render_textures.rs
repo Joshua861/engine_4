@@ -1,4 +1,23 @@
+use bevy_math::VectorSpace;
 use engine_4::prelude::*;
+
+struct MovingCircle {
+    circle: Circle,
+    velocity: Vec2,
+}
+
+impl MovingCircle {
+    pub fn random() -> Self {
+        Self {
+            circle: Circle {
+                center: Vec2::new(rand::<f32>() * 1000.0, rand::<f32>() * 1000.0),
+                radius: Vec2::splat(rand::<f32>() * 30.0),
+                color: Color::from_rgba(rand(), rand(), rand(), 1.0),
+            },
+            velocity: Vec2::ZERO,
+        }
+    }
+}
 
 fn main() -> anyhow::Result<()> {
     init("3D render textures")?;
@@ -12,23 +31,22 @@ fn main() -> anyhow::Result<()> {
         textured_material,
     )?;
 
-    mutate_camera_3d(|c| c.isometric = true);
-
-    let flat_material = create_gouraud_material(Color::SKY_500, Color::SKY_300, Vec3::Y);
-    let mut flat_cube = Object3D::from_mesh_and_material(textured_cube.mesh, flat_material);
+    let mut circles: Vec<_> = (0..500).map(|_| MovingCircle::random()).collect();
 
     loop {
         clear_screen(Color::WHITE);
 
         camera_controller.update(get_input());
 
-        flat_cube
-            .transform
-            .rotate_by(Quat::from_xyzw(0.005, 0.026, 0.009, 1.000));
-
         start_rendering_to_texture(render_texture);
         clear_screen(Color::TEAL_500);
-        flat_cube.draw();
+        for circle in circles.iter_mut() {
+            let r = || (rand::<f32>() - 0.5) * 1.0;
+            circle.velocity += Vec2::new(r(), r());
+            circle.circle.center += circle.velocity;
+            circle.circle.center %= 1000.0;
+            draw_shape(&circle.circle);
+        }
         end_rendering_to_texture();
 
         textured_cube.draw();
