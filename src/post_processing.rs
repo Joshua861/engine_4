@@ -1,10 +1,7 @@
 use bevy_math::Vec2;
 use glium::{Program, Surface, framebuffer::SimpleFrameBuffer, texture::Texture2d, uniform};
 
-use crate::{
-    EngineDisplay, color::Color, get_state, programs::ProgramRef,
-    render_pipeline::RenderTextureRef, textures::TextureRef,
-};
+use crate::{EngineDisplay, color::Color, get_state, programs::ProgramRef, textures::TextureRef};
 
 #[derive(Clone, Debug)]
 pub enum PostProcessingEffect {

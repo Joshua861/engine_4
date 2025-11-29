@@ -1,22 +1,13 @@
 use std::ops::{Deref, DerefMut};
 
 use bevy_math::{Mat4, UVec2, Vec2, Vec3};
-use glium::{
-    Frame, Surface, Texture2d, framebuffer::SimpleFrameBuffer, texture::DepthTexture2d, uniform,
-};
+use glium::{Surface, framebuffer::SimpleFrameBuffer, texture::DepthTexture2d, uniform};
 use log::warn;
 
 use crate::{
-    BIG_NUMBER, EngineDisplay, EngineState, EngineStorage,
-    api::{create_empty_render_texture, empty_render_texture},
-    camera::Cameras,
-    color::Color,
-    draw_queue_2d::DrawQueue2D,
-    draw_queue_3d::DrawQueue3D,
-    get_state,
-    post_processing::PostProcessingEffect,
-    programs::ProgramRef,
-    textures::{EngineTexture, TextureRef},
+    BIG_NUMBER, EngineState, api::empty_render_texture, camera::Cameras, color::Color,
+    draw_queue_2d::DrawQueue2D, draw_queue_3d::DrawQueue3D, get_state,
+    post_processing::PostProcessingEffect, programs::ProgramRef, textures::TextureRef,
 };
 
 pub struct RenderTexture {

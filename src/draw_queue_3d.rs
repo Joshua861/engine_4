@@ -6,11 +6,11 @@ use crate::api::{
     debugger_add_draw_calls, debugger_add_drawn_objects, debugger_add_indices,
     debugger_add_vertices,
 };
+use crate::get_state;
 use crate::materials::Material;
 use crate::object_3d::Object3D;
 use crate::object_3d::Object3DRef;
 use crate::prelude::Transform3D;
-use crate::{Frame, get_state};
 
 pub struct DrawQueue3D {
     pub(crate) objects: Vec<ObjectToDraw>,

@@ -1,8 +1,7 @@
 use crate::{
     camera::Camera3D,
     collisions::AABB2D,
-    post_processing::{PostProcessingEffect, render_fullscreen_quad},
-    prelude::create_textured_material,
+    post_processing::PostProcessingEffect,
     render_pipeline::{RenderTexture, RenderTextureRef},
     shapes_2d::*,
     textures::EngineTexture,
@@ -22,7 +21,6 @@ use rand::{
     },
 };
 use tunes::engine::AudioEngine;
-use winit_input_helper::WinitInputHelper;
 
 use crate::{camera::Camera2D, color::Color, get_state, textures::TextureRef};
 

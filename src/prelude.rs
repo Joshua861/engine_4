@@ -9,6 +9,7 @@ pub use crate::debugging::grid::create_infinite_grid;
 #[cfg(feature = "debugging")]
 pub use crate::debugging::*;
 pub use crate::draw_queue_2d::MaterialVertex3D;
+pub use crate::image::Image;
 pub use crate::include_program;
 pub use crate::init;
 pub use crate::input::*;
@@ -20,7 +21,9 @@ pub use crate::post_processing::*;
 pub use crate::programs::load_program;
 pub use crate::shapes_2d::*;
 pub use crate::shapes_3d::*;
+pub use crate::textures::atlas::*;
 pub use crate::textures::load_texture;
+pub use crate::utils::usize_rect::USizeRect;
 pub use crate::utils::*;
 pub use anyhow;
 pub use bevy_math;

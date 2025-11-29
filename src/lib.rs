@@ -34,13 +34,11 @@ use prelude::init_materials;
 use programs::init_programs;
 use rand::rngs::ThreadRng;
 use render_pipeline::RenderPipeline;
-use render_pipeline::RenderTarget;
 use render_pipeline::RenderTexture;
 use text_rendering::EngineFont;
 use textures::EngineTexture;
 use textures::init_textures;
 use tunes::engine::AudioEngine;
-use winit_input_helper::WinitInputHelper;
 
 const BIG_NUMBER: f32 = 9999.9;
 const BIGGER_NUMBER: f32 = BIG_NUMBER * 2.0;
@@ -56,6 +54,7 @@ mod config;
 mod debugging;
 mod draw_queue_2d;
 mod draw_queue_3d;
+mod image;
 mod input;
 mod materials;
 mod object_3d;
@@ -302,5 +301,9 @@ impl EngineState {
     pub(crate) fn window_size(&self) -> Vec2 {
         let size = self.window.inner_size();
         Vec2::new(size.width as f32, size.height as f32)
+    }
+
+    pub(crate) fn facade(&self) -> &EngineDisplay {
+        &self.display
     }
 }

@@ -34,7 +34,7 @@ impl Object3D {
     }
 
     pub fn from_obj_with_material(src: &str, material: MaterialRef) -> anyhow::Result<Object3DRef> {
-        Self::from_obj_bytes(src.as_bytes())
+        Self::from_obj_bytes_with_material(src.as_bytes(), material)
     }
 
     pub fn from_obj_bytes_with_material(

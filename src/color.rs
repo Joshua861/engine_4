@@ -1,16 +1,14 @@
 use bevy_math::Vec4;
 use palette::{Hsl, IntoColor, LinSrgb, Oklch, Srgb};
 
+pub mod u8;
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
-// Linear SRGB
 pub struct Color {
     pub r: f32,
-
     pub g: f32,
-
     pub b: f32,
-
     pub a: f32,
 }
 

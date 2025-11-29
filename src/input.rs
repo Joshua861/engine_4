@@ -1,13 +1,12 @@
 use bevy_math::UVec2;
 use glium::winit;
+use std::path::PathBuf;
 use std::{
     collections::HashMap,
     ops::{Deref, DerefMut},
 };
-use std::{path::PathBuf, time::Duration};
-use winit::dpi::PhysicalSize;
-use winit::event::{DeviceEvent, MouseButton, WindowEvent};
-use winit::keyboard::{Key, KeyCode, PhysicalKey};
+use winit::event::MouseButton;
+use winit::keyboard::{Key, KeyCode};
 use winit_input_helper::WinitInputHelper;
 
 use crate::get_state;
@@ -98,6 +97,10 @@ impl Input {
         self.action_map.insert(action, button);
     }
 
+    pub fn bind(&mut self, action: Action, button: impl Into<Button>) {
+        self.action_map.insert(action, button.into());
+    }
+
     pub fn get_key(&self, action: Action) -> Option<&KeyCode> {
         self.action_map.get(&action).and_then(|n| n.as_keyboard())
     }
@@ -152,6 +155,10 @@ impl Input {
         } else {
             false
         }
+    }
+
+    pub fn get_all_binds(&self) -> &HashMap<Action, Button> {
+        &self.action_map
     }
 }
 
@@ -414,6 +421,13 @@ pub fn bind_button(action: Action, button: Button) {
     get_state().input.bind_button(action, button)
 }
 
+/// Binds a button (either keyboard or mouse) to an action.
+///
+/// When the button is pressed, `action_pressed()` and related functions will return true for this action.
+pub fn bind(action: Action, button: impl Into<Button>) {
+    get_state().input.bind(action, button)
+}
+
 /// Returns the keyboard key bound to the specified action, if any.
 ///
 /// Returns None if the action is not bound or is bound to a mouse button instead.
@@ -433,4 +447,9 @@ pub fn get_mouse(action: Action) -> Option<&'static MouseButton> {
 /// Returns None if the action is not bound to any button.
 pub fn get_button(action: Action) -> Option<&'static Button> {
     get_state().input.get_button(action)
+}
+
+/// Get a map of all the bindings that have been registered with the engine.
+pub fn get_all_binds() -> &'static HashMap<Action, Button> {
+    get_state().input.get_all_binds()
 }

@@ -22,7 +22,7 @@ fn main() -> anyhow::Result<()> {
         }
 
         if action_pressed(REBIND) {
-            bind_key(FWD, KeyCode::KeyE);
+            bind(FWD, KeyCode::KeyE);
         }
 
         if should_quit() {
@@ -48,11 +48,11 @@ fn main() -> anyhow::Result<()> {
 // fn main() -> anyhow::Result<()> {
 //     init("Action mapping")?;
 //
-//     bind_button(FWD, KeyCode::KeyW.into());
-//     bind_button(BACK, KeyCode::KeyS.into());
-//     bind_button(RIGHT, KeyCode::KeyD.into());
-//     bind_button(LEFT, KeyCode::KeyA.into());
-//     bind_button(JUMP, KeyCode::Space.into());
+//     bind(FWD, KeyCode::KeyW);
+//     bind(BACK, KeyCode::KeyS);
+//     bind(RIGHT, KeyCode::KeyD);
+//     bind(LEFT, KeyCode::KeyA);
+//     bind(JUMP, KeyCode::Space);
 //
 //     loop {
 //         if action_pressed(FWD) {
