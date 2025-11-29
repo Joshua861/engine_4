@@ -1,11 +1,9 @@
 #![allow(static_mut_refs)]
-#![allow(unused)]
 
 use std::time::Instant;
 
 use bevy_math::Mat4;
 use bevy_math::Vec2;
-use bevy_math::VectorSpace;
 use buffers::Buffers;
 use bumpalo::Bump;
 use camera::Camera2D;
@@ -19,8 +17,6 @@ pub use draw_queue_2d::Vertex3D;
 use egui_glium::{EguiGlium, egui_winit::egui::ViewportId};
 use fps_ticker::Fps;
 use glium::Program;
-use glium::Surface;
-use glium::winit::window::WindowAttributes;
 use glium::{
     Frame,
     backend::glutin::{Display, SimpleWindowBuilder},
