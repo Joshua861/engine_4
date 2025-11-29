@@ -378,11 +378,11 @@ float gaussian(float x, float sigma) {
 void main() {
     // Calculate kernel radius (3 sigma covers 99.7% of the distribution)
     int radius = int(ceil(3.0 * sigma));
-    
+
     vec2 tex_offset = direction / screen_size;
     vec4 result = vec4(0.0);
     float weight_sum = 0.0;
-    
+
     // Sample along the specified direction
     for(int i = -radius; i <= radius; ++i) {
         float weight = gaussian(float(i), sigma);
@@ -390,7 +390,7 @@ void main() {
         result += texture(tex, v_tex_coords + offset) * weight;
         weight_sum += weight;
     }
-    
+
     color = result / weight_sum;
 }
 "#;
@@ -496,7 +496,7 @@ uniform float threshold;
 void main() {
     vec4 tex_color = texture(tex, v_tex_coords);
     float brightness = dot(tex_color.rgb, vec3(0.2126, 0.7152, 0.0722));
-    
+
     if (brightness > threshold) {
         // Soft threshold
         float soft = (brightness - threshold) / (1.0 - threshold);
@@ -572,12 +572,12 @@ uniform vec2 screen_size;
 void main() {
     vec2 direction = v_tex_coords - vec2(0.5);
     vec2 offset = direction * strength / screen_size;
-    
+
     float r = texture(tex, v_tex_coords + offset).r;
     float g = texture(tex, v_tex_coords).g;
     float b = texture(tex, v_tex_coords - offset).b;
     float a = texture(tex, v_tex_coords).a;
-    
+
     color = vec4(r, g, b, a);
 }
 "#;

@@ -30,6 +30,7 @@ use glium::{
         window::Window,
     },
 };
+use input::Input;
 use materials::Material;
 use object_3d::Mesh;
 use object_3d::Object3D;
@@ -59,6 +60,7 @@ mod config;
 mod debugging;
 mod draw_queue_2d;
 mod draw_queue_3d;
+mod input;
 mod materials;
 mod object_3d;
 mod physics;
@@ -92,7 +94,7 @@ struct EngineState {
     display: EngineDisplay,
     event_loop: EventLoop<()>,
     bump_allocator: Bump,
-    input: WinitInputHelper,
+    input: Input,
     frame: Option<Frame>,
     /// used for screen-space rendering
     flat_projection: Mat4,
@@ -152,7 +154,7 @@ pub fn init(title: &str) -> anyhow::Result<()> {
         .set_window_builder(window_params)
         .with_title(title)
         .build(&event_loop);
-    let input = WinitInputHelper::new();
+    let input = Input::new();
     window.request_redraw();
 
     let frame = None;
