@@ -92,7 +92,7 @@ impl CircleInstance {
             radius: radius.into(),
             fill_color: fill_color.for_gpu(),
             outline_thickness: 0.0,
-            outline_color: [0.0, 0.0, 0.0, 0.0],
+            outline_color: fill_color.for_gpu(),
         }
     }
 

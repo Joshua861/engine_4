@@ -16,6 +16,8 @@ use crate::{
     draw_queue_3d::DrawQueue3D, get_state, post_processing::PostProcessingEffect,
 };
 
+mod atlas;
+
 pub const DUMMY_TEXTURE: TextureRef = TextureRef(0);
 
 #[derive(Clone, Copy)]

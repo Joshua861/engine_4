@@ -193,10 +193,6 @@ pub fn should_quit() -> bool {
     get_state().input.close_requested()
 }
 
-pub fn get_input() -> &'static WinitInputHelper {
-    &get_state().input
-}
-
 pub fn get_camera2d() -> &'static mut Camera2D {
     &mut get_state().camera_2d
 }

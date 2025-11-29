@@ -36,7 +36,7 @@ impl Shape2D for Circle {
     }
 
     fn points(&self, starting_index: u32) -> (Vec<u32>, Vec<Vertex2D>) {
-        (vec![], vec![])
+        unimplemented!();
     }
 }
 
@@ -64,6 +64,22 @@ impl HasBounds2D for CircleOutline {
     fn bounds(&self) -> AABB2D {
         let total_radius = self.radius + Vec2::splat(self.thickness);
         AABB2D::from_center_size(self.center, total_radius * 2.0)
+    }
+}
+
+impl Shape2D for CircleOutline {
+    fn add_to_draw_queue(&self, draw_queue: &mut DrawQueue2D) {
+        draw_queue.add_circle_with_outline(
+            self.center,
+            self.radius,
+            Color::TRANSPARENT,
+            self.thickness,
+            self.color,
+        );
+    }
+
+    fn points(&self, starting_index: u32) -> (Vec<u32>, Vec<Vertex2D>) {
+        unimplemented!();
     }
 }
 
@@ -378,7 +394,7 @@ pub fn draw_circle_outline(center: Vec2, radius: f32, outline_color: Color, thic
     get_state().draw_queue_2d().add_circle_with_outline(
         center,
         Vec2::splat(radius),
-        Color::new(0.0, 0.0, 0.0).with_alpha(0.0),
+        outline_color.with_alpha(0.0),
         thickness,
         outline_color,
     );
