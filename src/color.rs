@@ -2,6 +2,7 @@ use bevy_math::Vec4;
 use palette::{Hsl, IntoColor, LinSrgb, Oklch, Srgb};
 
 pub mod u8;
+pub mod schemes;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]

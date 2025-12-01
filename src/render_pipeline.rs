@@ -77,10 +77,6 @@ pub enum RenderTarget {
     Texture(RenderTextureRef),
 }
 
-pub trait RenderPipelinePass {
-    fn render(&mut self, state: &mut EngineState, target: RenderTarget);
-}
-
 pub struct RenderPipeline {
     pub steps: Vec<RenderStep>,
     pub output: RenderTarget,
@@ -91,15 +87,6 @@ pub struct RenderPipeline {
 pub enum RenderStep {
     Drawing(DrawQueues),
     PostProcessing(PostProcessingStep),
-}
-
-impl RenderStep {
-    fn assert_drawing(&mut self) -> &mut DrawQueues {
-        match self {
-            Self::Drawing(d) => d,
-            _ => panic!("called `assert_drawing` on non-drawing render step."),
-        }
-    }
 }
 
 pub struct DrawQueues {
@@ -165,11 +152,6 @@ impl RenderPipeline {
     pub fn most_recent_step(&self) -> &RenderStep {
         let len = self.steps.len() - 1;
         &self.steps[len]
-    }
-
-    pub fn most_recent_step_mut(&mut self) -> &mut RenderStep {
-        let len = self.steps.len() - 1;
-        &mut self.steps[len]
     }
 
     pub fn cameras(&self) -> Cameras {

@@ -4,6 +4,7 @@ pub use crate::camera::controllers::pan::PanningCameraController;
 pub use crate::collisions;
 pub use crate::collisions::IntersectsWith;
 pub use crate::color::Color;
+// pub use crate::color::schemes::ColorScheme;
 #[cfg(feature = "debugging")]
 pub use crate::debugging::grid::create_infinite_grid;
 #[cfg(feature = "debugging")]

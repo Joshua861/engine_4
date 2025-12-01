@@ -52,16 +52,6 @@ pub fn create_infinite_grid() -> anyhow::Result<Object3DRef> {
 
     let program = load_grid_program()?;
 
-    let material = Material::new(program)
-        .with_float("grid_scale", 1.0)
-        .with_float("grid_size", 10.0)
-        .with_color("grid_color_thin", Color::NEUTRAL_500.with_alpha(0.4))
-        .with_color("grid_color_thick", Color::NEUTRAL_500.with_alpha(0.8))
-        .with_color("x_axis_color", Color::RED_200)
-        .with_color("z_axis_color", Color::BLUE_200)
-        .with_float("axis_width", 0.02)
-        .create();
-
     let draw_params = glium::DrawParameters {
         blend: glium::Blend::alpha_blending(),
         depth: glium::Depth {
@@ -72,6 +62,17 @@ pub fn create_infinite_grid() -> anyhow::Result<Object3DRef> {
         ..Default::default()
     };
 
+    let material = Material::new(program)
+        .with_float("grid_scale", 1.0)
+        .with_float("grid_size", 10.0)
+        .with_color("grid_color_thin", Color::NEUTRAL_500.with_alpha(0.4))
+        .with_color("grid_color_thick", Color::NEUTRAL_500.with_alpha(0.8))
+        .with_color("x_axis_color", Color::RED_200)
+        .with_color("z_axis_color", Color::BLUE_200)
+        .with_float("axis_width", 0.02)
+        .with_draw_param_overrides(draw_params)
+        .create();
+
     let object = Object3D {
         mesh: Mesh {
             vertices: vertex_buffer,
@@ -80,7 +81,6 @@ pub fn create_infinite_grid() -> anyhow::Result<Object3DRef> {
         .create(),
         material,
         transform: Transform3D::IDENTITY,
-        draw_params_override: Some(draw_params),
     };
 
     Ok(object.create())

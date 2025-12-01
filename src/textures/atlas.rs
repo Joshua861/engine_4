@@ -99,7 +99,6 @@ impl TextureAtlas {
                 let new_texture = EngineTexture::from_engine_image(self.image.clone())?;
                 state.storage[self.texture] = new_texture;
             } else {
-                let display = &state.display;
                 let raw_image = RawImage2d::from_raw_rgba(
                     self.image.clone().into_bytes(),
                     self.image.dimensions_u32().into(),

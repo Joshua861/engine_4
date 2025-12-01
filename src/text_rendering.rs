@@ -4,7 +4,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use bevy_math::{IVec2, Rect, Vec2, VectorSpace};
+use bevy_math::{IVec2, Rect, Vec2};
 use fontdue::{Metrics, layout::TextStyle};
 use glium::uniforms::{MagnifySamplerFilter, MinifySamplerFilter};
 
@@ -26,6 +26,7 @@ pub struct EngineFont {
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct CharacterInfo {
+    #[allow(unused)]
     pub offset: IVec2,
     pub advance: f32,
     pub sprite: SpriteKey,
@@ -46,6 +47,7 @@ pub struct Glyph {
 #[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct FontRef(pub usize);
 
+#[allow(unused)]
 impl FontRef {
     pub(crate) fn get(&self) -> &'static EngineFont {
         &get_state().storage.fonts[self.0]

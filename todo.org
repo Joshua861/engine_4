@@ -18,7 +18,7 @@
 - [ ] frame time in debug
 - [ ] color schemes? like built in struct called colour scheme with gruvbox and
   cattpucin and stuff?
-- [ ] Fix examples now get_input() doesnt exist SPC / get_input
+- [X] Fix examples now get_input() doesnt exist SPC / get_input
 - [ ] use bump allocators for per-frame data that gets cleared
 - [ ] texture atlasses
 - [ ] Serde feature to make everything publicly facing serializable.
@@ -26,8 +26,8 @@
 - [ ] Transparency is fucked
   - [ ] Very fucked
   - [ ] Someone needs to do something about this
-- [ ] Circle anti aliasing on the outside is fucked
-- [ ] Move draw param overrides to the material
+- [ ] Circle anti aliasing between outline and fill
+- [X] Move draw param overrides to the material
 - [ ] https://github.com/sqrew/tunes
 - [ ] Dithering to reduce colour banding
 - [ ] Signed distance field / https://raytracing.github.io/books/RayTracingInOneWeekend.html
@@ -60,7 +60,7 @@
   - [ ] layout / text wrapping / text alignment
   - [ ] rich text
   - [X] text measurement
-  - [ ] scale and rotation
+  - [ ] text scale and rotation
   - [ ] sdf?
 - [X] transparant textures?
 - [ ] controller support

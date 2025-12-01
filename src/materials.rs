@@ -21,6 +21,7 @@ pub const DEFAULT_MATERIAL: MaterialRef = MaterialRef(0);
 pub struct Material {
     pub(crate) program: ProgramRef,
     pub(crate) uniforms: BTreeMap<String, UniformData>,
+    pub draw_param_overrides: Option<glium::DrawParameters<'static>>,
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -40,6 +41,7 @@ impl Material {
         Self {
             program,
             uniforms: BTreeMap::new(),
+            draw_param_overrides: None,
         }
     }
 
@@ -51,6 +53,11 @@ impl Material {
         state.storage.materials.push(self);
 
         id
+    }
+
+    pub fn with_draw_param_overrides(mut self, params: glium::DrawParameters<'static>) -> Self {
+        self.draw_param_overrides = Some(params);
+        self
     }
 
     pub fn with_float(mut self, name: impl Into<String>, value: f32) -> Self {
@@ -95,6 +102,10 @@ impl Material {
     }
 
     // ----------------------------------------------------------------------------------
+
+    pub fn set_draw_param_overrides(&mut self, params: glium::DrawParameters<'static>) {
+        self.draw_param_overrides = Some(params);
+    }
 
     pub fn set_float(&mut self, name: impl Into<String>, value: f32) {
         self.uniforms.insert(name.into(), UniformData::Float(value));

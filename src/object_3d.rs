@@ -21,7 +21,6 @@ pub struct Object3D {
     pub mesh: MeshRef,
     pub material: MaterialRef,
     pub transform: Transform3D,
-    pub draw_params_override: Option<glium::DrawParameters<'static>>,
 }
 
 impl Object3D {
@@ -62,7 +61,6 @@ impl Object3D {
             mesh: Mesh { vertices, indices }.create(),
             material,
             transform: Transform3D::IDENTITY,
-            draw_params_override: None,
         };
 
         Ok(object.create())
@@ -123,7 +121,6 @@ impl Object3D {
             mesh,
             material,
             transform: Transform3D::IDENTITY,
-            draw_params_override: None,
         }
         .create()
     }
@@ -595,7 +592,6 @@ pub fn test_triangle() -> anyhow::Result<Object3DRef> {
         mesh: Mesh { vertices, indices }.create(),
         material: create_flat_3d_material(Color::RED_500),
         transform: Transform3D::IDENTITY,
-        draw_params_override: None,
     };
 
     Ok(triangle.create())

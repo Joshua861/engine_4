@@ -4,7 +4,6 @@ use std::time::Instant;
 
 use bevy_math::Mat4;
 use bevy_math::Vec2;
-use bumpalo::Bump;
 use camera::Camera2D;
 use camera::Camera3D;
 use camera::projection_from_window;
@@ -42,7 +41,6 @@ use tunes::engine::AudioEngine;
 
 const BIG_NUMBER: f32 = 9999.9;
 const BIGGER_NUMBER: f32 = BIG_NUMBER * 2.0;
-const SMALL_NUMBER: f32 = 0.001;
 
 mod api;
 mod camera;
@@ -77,17 +75,13 @@ fn get_state() -> &'static mut EngineState {
     unsafe { ENGINE_STATE.as_mut().unwrap_or_else(|| panic!()) }
 }
 
-fn get_frame() -> &'static mut Frame {
-    get_state().frame.as_mut().unwrap()
-}
-
 type EngineDisplay = Display<WindowSurface>;
 
 struct EngineState {
     window: Window,
     display: EngineDisplay,
     event_loop: EventLoop<()>,
-    bump_allocator: Bump,
+    // bump_allocator: Bump,
     input: Input,
     frame: Option<Frame>,
     /// used for screen-space rendering
@@ -173,7 +167,7 @@ pub fn init(title: &str) -> anyhow::Result<()> {
     let last_frame_end_time = Instant::now();
     let render_pipeline = RenderPipeline::screen();
     let audio_engine = AudioEngine::new()?;
-    let bump_allocator = Bump::new();
+    // let bump_allocator = Bump::new();
 
     unsafe {
         ENGINE_STATE = Some(EngineState {
@@ -182,7 +176,7 @@ pub fn init(title: &str) -> anyhow::Result<()> {
             texture_pipeline: None,
             event_loop,
             input,
-            bump_allocator,
+            // bump_allocator,
             frame,
             flat_projection,
             camera_2d,
@@ -312,10 +306,6 @@ impl EngineState {
     pub(crate) fn window_size(&self) -> Vec2 {
         let size = self.window.inner_size();
         Vec2::new(size.width as f32, size.height as f32)
-    }
-
-    pub(crate) fn facade(&self) -> &EngineDisplay {
-        &self.display
     }
 
     pub(crate) fn dpi_scaling(&self) -> f32 {

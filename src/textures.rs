@@ -15,7 +15,7 @@ use crate::{EngineDisplay, EngineStorage, get_state, image::Image};
 
 pub mod atlas;
 
-pub const DUMMY_TEXTURE: TextureRef = TextureRef(0);
+// pub const DUMMY_TEXTURE: TextureRef = TextureRef(0);
 
 #[derive(Clone, Copy)]
 pub struct TexturedVertex2D {
@@ -24,42 +24,42 @@ pub struct TexturedVertex2D {
 }
 implement_vertex!(TexturedVertex2D, position, tex_coords);
 
-pub(crate) const UNIT_SQUARE: [TexturedVertex2D; 4] = [
-    TexturedVertex2D {
-        position: [-1.0, -1.0],
-        tex_coords: [0.0, 0.0],
-    },
-    TexturedVertex2D {
-        position: [1.0, -1.0],
-        tex_coords: [1.0, 0.0],
-    },
-    TexturedVertex2D {
-        position: [-1.0, 1.0],
-        tex_coords: [0.0, 1.0],
-    },
-    TexturedVertex2D {
-        position: [1.0, 1.0],
-        tex_coords: [1.0, 1.0],
-    },
-];
+// pub(crate) const UNIT_SQUARE: [TexturedVertex2D; 4] = [
+//     TexturedVertex2D {
+//         position: [-1.0, -1.0],
+//         tex_coords: [0.0, 0.0],
+//     },
+//     TexturedVertex2D {
+//         position: [1.0, -1.0],
+//         tex_coords: [1.0, 0.0],
+//     },
+//     TexturedVertex2D {
+//         position: [-1.0, 1.0],
+//         tex_coords: [0.0, 1.0],
+//     },
+//     TexturedVertex2D {
+//         position: [1.0, 1.0],
+//         tex_coords: [1.0, 1.0],
+//     },
+// ];
 
-pub fn init_textures(storage: &mut EngineStorage, display: &EngineDisplay) {
-    let dummy_image = RawImage2d::from_raw_rgb(vec![255u8, 255u8, 255u8], (1, 1));
-    let dummy_texture = Texture2d::with_format(
-        display,
-        dummy_image,
-        glium::texture::UncompressedFloatFormat::U8U8U8U8,
-        glium::texture::MipmapsOption::NoMipmap,
-    )
-    .unwrap();
-    let dummy = EngineTexture {
-        dimensions: UVec2::ONE,
-        normalized_dimensions: Vec2::ONE,
-        gl_texture: dummy_texture,
-        magnify_filter: MagnifySamplerFilter::Nearest,
-        minify_filter: MinifySamplerFilter::Nearest,
-    };
-    storage.textures.push(dummy);
+pub fn init_textures(_storage: &mut EngineStorage, _display: &EngineDisplay) {
+    // let dummy_image = RawImage2d::from_raw_rgb(vec![255u8, 255u8, 255u8], (1, 1));
+    // let dummy_texture = Texture2d::with_format(
+    //     display,
+    //     dummy_image,
+    //     glium::texture::UncompressedFloatFormat::U8U8U8U8,
+    //     glium::texture::MipmapsOption::NoMipmap,
+    // )
+    // .unwrap();
+    // let dummy = EngineTexture {
+    //     dimensions: UVec2::ONE,
+    //     normalized_dimensions: Vec2::ONE,
+    //     gl_texture: dummy_texture,
+    //     magnify_filter: MagnifySamplerFilter::Nearest,
+    //     minify_filter: MinifySamplerFilter::Nearest,
+    // };
+    // storage.textures.push(dummy);
 }
 
 pub fn load_texture(bytes: &[u8], format: ImageFormat) -> anyhow::Result<TextureRef> {
@@ -80,8 +80,6 @@ impl EngineTexture {
     }
 
     pub fn load_from_bytes(bytes: &[u8], format: ImageFormat) -> anyhow::Result<Self> {
-        let state = get_state();
-
         let image = image::load(Cursor::new(bytes), format)?.to_rgba8();
         let image_dimensions = image.dimensions();
         let image = RawImage2d::from_raw_rgba(image.into_raw(), image_dimensions);

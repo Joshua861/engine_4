@@ -69,7 +69,8 @@ impl DrawQueue3D {
                 ..params.clone()
             };
             let params = object
-                .draw_params_override
+                .material
+                .draw_param_overrides
                 .as_ref()
                 .unwrap_or(&default_params);
 
