@@ -10,8 +10,7 @@ pub fn main() -> anyhow::Result<()> {
 
     loop {
         clear_screen(Color::hex(0x3F3F3F));
-        let input = get_input();
-        orbit_controller.update(input);
+        orbit_controller.update();
 
         object.draw();
 

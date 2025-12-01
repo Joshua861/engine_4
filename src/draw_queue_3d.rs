@@ -32,7 +32,6 @@ impl DrawQueue3D {
 
     pub fn draw<T: Surface>(&mut self, frame: &mut T, view_proj: &Mat4) {
         let state = get_state();
-        let display = &state.display;
 
         let params = DrawParameters {
             blend: glium::Blend::alpha_blending(),
@@ -105,8 +104,7 @@ impl DrawQueue3D {
                 }
                 ObjectToDraw::WithTransform(object, transform) => {
                     let object = object.get_mut();
-                    let transform = object.transform;
-                    draw_object(frame, object, transform);
+                    draw_object(frame, object, *transform);
                 }
             }
         }

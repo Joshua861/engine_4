@@ -36,7 +36,7 @@ fn main() -> anyhow::Result<()> {
     loop {
         clear_screen(Color::WHITE);
 
-        camera_controller.update(get_input());
+        camera_controller.update();
 
         start_rendering_to_texture(render_texture);
         clear_screen(Color::TEAL_500);

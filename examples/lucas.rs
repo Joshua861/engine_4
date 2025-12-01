@@ -199,27 +199,15 @@ impl Lizard {
 
 fn main() -> anyhow::Result<()> {
     init("Lucas")?;
-    let mut mouse_pos = Vec2::ZERO;
+    let mut controller = PanningCameraController::new();
     let mut lizard = Lizard::new();
 
     loop {
         clear_screen(Color::NEUTRAL_100);
+        controller.update();
 
-        let input = get_input();
-
-        if let Some((x, y)) = input.cursor() {
-            mouse_pos = Vec2::new(x, y);
-        }
-
-        lizard.update(mouse_pos);
+        lizard.update(cursor_pos());
         lizard.draw();
-
-        if input.scroll_diff().1 != 0.0 {
-            let diff = input.scroll_diff().1;
-            let diff = (diff * 0.1) + 1.0;
-
-            camera2d_zoom_at(mouse_pos, diff);
-        }
 
         if should_quit() {
             break;

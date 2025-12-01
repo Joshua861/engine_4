@@ -13,6 +13,10 @@ pub struct Image {
 }
 
 impl Image {
+    pub fn new(width: usize, height: usize, buf: Vec<Pixel>) -> Self {
+        Self { width, height, buf }
+    }
+
     pub fn empty(width: usize, height: usize) -> Self {
         Self::gen_color(width, height, Pixel::TRANSPARENT)
     }
@@ -22,25 +26,27 @@ impl Image {
         Self { width, height, buf }
     }
 
-    pub fn from_bytes(width: usize, height: usize, mut buf: Vec<u8>) -> Option<Self> {
+    pub fn from_bytes(width: usize, height: usize, buf: Vec<u8>) -> Option<Self> {
         let len = buf.len();
 
         if width * height * 4 != len {
             dbg!(width, height, len);
             None
         } else {
-            // SAFETY: safe because buf is of u8's in sets of 4, where each 4 corresponds to 1 rgba set.
-            // we just checked that the u8s must be in exact sets of 4.
-            // the internal representation of the pixel union is indentical.
-            // this should never fail as far as i know.
             let size = width * height;
-            let buf = unsafe { Vec::from_raw_parts(buf.as_mut_ptr() as *mut Pixel, size, size) };
+            let ptr = buf.as_ptr() as *const Pixel;
+            std::mem::forget(buf); // prevent free
+            let buf = unsafe { Vec::from_raw_parts(ptr as *mut Pixel, size, size) };
             Some(Self { width, height, buf })
         }
     }
 
-    pub fn into_bytes(mut self) -> Vec<u8> {
-        unsafe { Vec::from_raw_parts(self.buf.as_mut_ptr() as *mut u8, self.size(), self.size()) }
+    pub fn into_bytes(self) -> Vec<u8> {
+        let ptr = self.buf.as_ptr() as *const u8;
+        let len = self.size() * 4;
+        let cap = self.size() * 4;
+        std::mem::forget(self.buf); // prevent free
+        unsafe { Vec::from_raw_parts(ptr as *mut u8, len, cap) }
     }
 
     pub const fn size(&self) -> usize {
@@ -200,13 +206,9 @@ impl Image {
     pub fn sub_image(&self, rect: USizeRect) -> Image {
         let mut buf = Vec::with_capacity(rect.width() * rect.height());
 
-        let mut n = 0;
-        let y = rect.min.y;
-        let x = rect.min.x;
-        for y in y..y + rect.height() {
-            for x in x..x + rect.width() {
-                buf[n] = *self.get_pixel(x, y).unwrap();
-                n += 1;
+        for y in rect.min.y..rect.min.y + rect.height() {
+            for x in rect.min.x..rect.min.x + rect.width() {
+                buf.push(*self.get_pixel(x, y).unwrap());
             }
         }
 

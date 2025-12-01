@@ -1,4 +1,7 @@
+use std::f32::consts::FRAC_PI_3;
+
 use engine_4::prelude::*;
+use nalgebra::Transform2;
 
 fn main() -> anyhow::Result<()> {
     init("Demo")?;
@@ -12,13 +15,12 @@ fn main() -> anyhow::Result<()> {
 
     loop {
         camera_controller.update();
-        let input = get_input();
 
-        if input.key_pressed(KeyCode::Space) {
+        if key_pressed(KeyCode::Space) {
             is_dark_mode = !is_dark_mode;
         }
 
-        if input.key_pressed(KeyCode::KeyD) {
+        if key_pressed(KeyCode::KeyD) {
             show_debug_info();
         }
 
@@ -90,6 +92,15 @@ fn main() -> anyhow::Result<()> {
         }
 
         draw_sprite_world(guy_texture, Vec2::new(0.0, 0.0), 50.0);
+        draw_sprite_world_ex(
+            guy_texture,
+            Transform2D::from_scale_rotation_translation(
+                Vec2::new(100.0, 30.0),
+                FRAC_PI_3,
+                Vec2::new(100.0, 0.0),
+            ),
+            Color::SKY_300,
+        );
 
         {
             let points: Vec<Vec2> = (0..10)

@@ -472,3 +472,9 @@ mod tests {
         assert_eq!(r2.max, USizeVec2::new(11, 11));
     }
 }
+
+impl From<USizeRect> for Rect {
+    fn from(value: USizeRect) -> Self {
+        Self::from_corners(value.min.as_vec2(), value.max.as_vec2())
+    }
+}

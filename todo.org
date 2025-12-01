@@ -11,8 +11,14 @@
 - [ ] clipping/masking
 - [ ] drop shadows 2d
 - [ ] Reduce build time
+- [ ] cull glyph textures out of view
+- [ ] test transform 2 and 3D
 - [ ] Unity particle system
 - [ ] Compute shaders.
+- [ ] frame time in debug
+- [ ] color schemes? like built in struct called colour scheme with gruvbox and
+  cattpucin and stuff?
+- [ ] Fix examples now get_input() doesnt exist SPC / get_input
 - [ ] use bump allocators for per-frame data that gets cleared
 - [ ] texture atlasses
 - [ ] Serde feature to make everything publicly facing serializable.
@@ -49,13 +55,14 @@
     - [X] Or render to a lower resolution texture and scale it up for a pixelated effect.
 - [X] draw hexagon poly thing
 - [ ] arbritrary rotation and custom material for all 2d shapes
-- [ ] TEXT RENDERING!!!
-  - [ ] fonts
+- [-] TEXT RENDERING!!!
+  - [X] fonts
   - [ ] layout / text wrapping / text alignment
   - [ ] rich text
-  - [ ] text measurement
+  - [X] text measurement
+  - [ ] scale and rotation
   - [ ] sdf?
-- [ ] transparant textures?
+- [X] transparant textures?
 - [ ] controller support
 - [ ] drag and drop files?
 - [ ] Animation support
@@ -113,6 +120,7 @@
 - [ ] 2D custom materials
   - [ ] use_material & use_default_material functions
   - [ ] add default 2d material to render pipeline
+  - [ ] hashmap of material ref to mesh
 - [ ] https://github.com/not-fl3/macroquad/blob/master/examples/screen_texture.rs
 - [ ] better 2D physics. platformer
 - [ ] is this ECS?
@@ -170,3 +178,91 @@
 - [X] Custom polygons from shapes
 - [X] physics system needs retained state. let the user retain it wherever they want. just put it all in a struct.
 
+* Testing (slop prose)
+1. Camera System (src/camera/mod.rs)
+The camera transformations are complex and affect everything visual:
+
+screen_to_world() and world_to_screen() roundtrip accuracy
+zoom_at() maintaining world point under cursor
+visible_bounds() calculations with various transformations
+Scale, rotation, and translation combinations
+Edge cases with extreme zoom levels
+
+2. Collision Detection (src/collisions/mod.rs)
+You already have good collision tests, but consider adding:
+
+Edge cases: zero-radius circles, zero-size squares
+Numerical stability with very large/small coordinates
+Polygon winding order edge cases
+Self-intersecting polygons
+Degenerate cases (collinear points in polygons)
+
+3. Draw Queue Z-Ordering (src/draw_queue_2d.rs)
+Critical for rendering correctness:
+
+Verify shapes draw in correct order
+Test z-value management across multiple queues
+Boundary conditions when z approaches limits
+Z-increment behavior with many objects
+
+4. Texture Atlas (src/textures/atlas.rs)
+Complex packing logic with edge cases:
+
+Atlas growth/reallocation correctness
+Sprite retrieval after atlas resize
+UV coordinate calculations
+Edge cases: sprites exactly fitting remaining space
+Memory efficiency with various sprite sizes
+
+5. Material System (src/materials.rs)
+Uniform handling can be fragile:
+
+Setting and retrieving different uniform types
+Uniform type mismatches
+Missing required uniforms for shaders
+Material cloning/copying behavior
+
+6. Physics Integration (src/physics.rs)
+Wrapper around Rapier2D but still needs tests:
+
+Body creation and retrieval
+Collider attachment
+Gravity customization
+Step simulation determinism
+Handle validity after removals
+
+7. Render Pipeline (src/render_pipeline.rs)
+Complex state management:
+
+Switching between render targets
+Post-processing effect chains
+Camera override behavior
+Framebuffer attachment correctness
+Resource cleanup
+
+8. Input System (src/input.rs)
+User-facing API that needs reliability:
+
+Action binding/unbinding
+Key press/release/held states
+Mouse button state tracking
+Action queries with unbound actions
+Scroll and cursor position edge cases
+
+9. Object3D Transformations (src/object_3d.rs)
+Transform math is error-prone:
+
+Matrix generation from SRT components
+Normal matrix calculations
+Mirroring behavior (especially culling mode)
+Transform composition
+Mark dirty/update cycles
+
+10. Color Conversions (src/color.rs)
+You have HSL/OKLCH conversions that could have edge cases:
+
+HSL/OKLCH roundtrip accuracy
+Hue rotation wrap-around (0°/360°)
+Saturation/lightness clamping
+Color space boundary values
+Alpha channel preservation

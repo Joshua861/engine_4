@@ -73,7 +73,6 @@ impl Object3D {
         use std::collections::HashMap;
 
         let vertices: Vec<MaterialVertex3D> = self.mesh.vertices.read().unwrap();
-        let indices: Vec<u32> = self.mesh.indices.read().unwrap();
 
         let mut position_to_vertices: HashMap<[i32; 3], Vec<usize>> = HashMap::new();
 
@@ -83,10 +82,7 @@ impl Object3D {
                 (vertex.position[1] * 1000.0) as i32,
                 (vertex.position[2] * 1000.0) as i32,
             ];
-            position_to_vertices
-                .entry(key)
-                .or_insert_with(Vec::new)
-                .push(i);
+            position_to_vertices.entry(key).or_default().push(i);
         }
 
         let mut new_normals = vec![[0.0f32; 3]; vertices.len()];
@@ -348,7 +344,7 @@ impl DerefMut for Object3DRef {
 #[derive(Clone, Copy, Debug)]
 pub struct Transform3D {
     mat: Mat4,
-    needs_update: bool,
+    dirty: bool,
     scale: Vec3,
     rotation: Quat,
     translation: Vec3,
@@ -358,7 +354,7 @@ pub struct Transform3D {
 impl Transform3D {
     pub const IDENTITY: Self = Self {
         mat: Mat4::IDENTITY,
-        needs_update: false,
+        dirty: false,
         scale: Vec3::ONE,
         rotation: Quat::IDENTITY,
         translation: Vec3::ZERO,
@@ -366,7 +362,7 @@ impl Transform3D {
     };
 
     pub fn update_matrix(&mut self) {
-        if !self.needs_update {
+        if !self.dirty {
             return;
         }
 
@@ -390,7 +386,7 @@ impl Transform3D {
 
         self.mat =
             Mat4::from_scale_rotation_translation(effective_scale, self.rotation, self.translation);
-        self.needs_update = false;
+        self.dirty = false;
     }
 
     pub fn should_flip_culling(&self) -> bool {
@@ -421,7 +417,7 @@ impl Transform3D {
     }
 
     fn mark_dirty(&mut self) {
-        self.needs_update = true;
+        self.dirty = true;
     }
 
     pub fn scale(&self) -> Vec3 {
@@ -524,7 +520,7 @@ impl Transform3D {
     pub fn from_translation(translation: Vec3) -> Self {
         Self {
             mat: Mat4::from_translation(translation),
-            needs_update: false,
+            dirty: false,
             scale: Vec3::ONE,
             rotation: Quat::IDENTITY,
             translation,
@@ -535,7 +531,7 @@ impl Transform3D {
     pub fn from_scale(scale: Vec3) -> Self {
         Self {
             mat: Mat4::from_scale(scale),
-            needs_update: false,
+            dirty: false,
             scale,
             rotation: Quat::IDENTITY,
             translation: Vec3::ZERO,
@@ -546,7 +542,7 @@ impl Transform3D {
     pub fn from_rotation(rotation: Quat) -> Self {
         Self {
             mat: Mat4::from_quat(rotation),
-            needs_update: false,
+            dirty: false,
             scale: Vec3::ONE,
             rotation,
             translation: Vec3::ZERO,
@@ -557,7 +553,7 @@ impl Transform3D {
     pub fn from_scale_rotation_translation(scale: Vec3, rotation: Quat, translation: Vec3) -> Self {
         Self {
             mat: Mat4::from_scale_rotation_translation(scale, rotation, translation),
-            needs_update: false,
+            dirty: false,
             scale,
             rotation,
             translation,

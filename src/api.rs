@@ -2,11 +2,12 @@ use crate::{
     camera::Camera3D,
     collisions::AABB2D,
     post_processing::PostProcessingEffect,
+    prelude::FontRef,
     render_pipeline::{RenderTexture, RenderTextureRef},
     shapes_2d::*,
     textures::EngineTexture,
 };
-use bevy_math::{UVec2, Vec2, VectorSpace};
+use bevy_math::{UVec2, Vec2};
 use egui_glium::egui_winit::egui::Context;
 use glium::{
     Texture2d,
@@ -229,9 +230,12 @@ pub fn draw_sprite(sprite_ref: TextureRef, position: Vec2, scale: f32) {
 }
 
 pub fn draw_sprite_scaled(sprite: TextureRef, position: Vec2, scale: Vec2) {
-    get_state()
-        .draw_queue_2d()
-        .add_sprite(sprite, position, scale);
+    get_state().draw_queue_2d().add_sprite(
+        sprite,
+        Transform2D::from_scale_translation(scale, position),
+        Color::WHITE,
+        None,
+    );
 }
 
 pub fn draw_sprite_world(sprite_ref: TextureRef, position: Vec2, scale: f32) {
@@ -246,9 +250,33 @@ pub fn draw_sprite_scaled_world(sprite: TextureRef, position: Vec2, scale: Vec2)
         return;
     }
 
+    get_state().world_draw_queue_2d().add_sprite(
+        sprite,
+        Transform2D::from_scale_translation(scale, position),
+        Color::WHITE,
+        None,
+    );
+}
+
+pub fn draw_sprite_world_ex(sprite: TextureRef, transform: Transform2D, color: Color) {
+    let bounds = AABB2D::new(
+        transform.translation() - transform.scale(),
+        transform.translation() + transform.scale(),
+    );
+
+    if !bounds.is_visible_in_world() {
+        return;
+    }
+
     get_state()
         .world_draw_queue_2d()
-        .add_sprite(sprite, position, scale);
+        .add_sprite(sprite, transform, color, None);
+}
+
+pub fn draw_sprite_ex(sprite: TextureRef, transform: Transform2D, color: Color) {
+    get_state()
+        .draw_queue_2d()
+        .add_sprite(sprite, transform, color, None);
 }
 
 pub fn screen_to_world(screen_pos: Vec2) -> Vec2 {
@@ -319,7 +347,7 @@ pub fn set_magnify_filter(filtering: MagnifySamplerFilter) {
 
 #[cfg(feature = "debugging")]
 #[inline]
-pub fn debugger_add_vertices(vertices: usize) {
+pub(crate) fn debugger_add_vertices(vertices: usize) {
     use crate::prelude::get_debug_info_mut;
     let debug = get_debug_info_mut();
     debug.current_frame_mut().vertex_count += vertices;
@@ -327,11 +355,11 @@ pub fn debugger_add_vertices(vertices: usize) {
 
 #[cfg(not(feature = "debugging"))]
 #[inline]
-pub fn debugger_add_vertices(vertices: usize) {}
+pub(crate) fn debugger_add_vertices(vertices: usize) {}
 
 #[cfg(feature = "debugging")]
 #[inline]
-pub fn debugger_add_indices(indices: usize) {
+pub(crate) fn debugger_add_indices(indices: usize) {
     use crate::prelude::get_debug_info_mut;
     let debug = get_debug_info_mut();
     debug.current_frame_mut().index_count += indices;
@@ -339,11 +367,11 @@ pub fn debugger_add_indices(indices: usize) {
 
 #[cfg(not(feature = "debugging"))]
 #[inline_always]
-pub fn debugger_add_indices(indices: usize) {}
+pub(crate) fn debugger_add_indices(indices: usize) {}
 
 #[cfg(feature = "debugging")]
 #[inline]
-pub fn debugger_add_draw_calls(count: usize) {
+pub(crate) fn debugger_add_draw_calls(count: usize) {
     use crate::prelude::get_debug_info_mut;
     let debug = get_debug_info_mut();
     debug.current_frame_mut().draw_calls += count;
@@ -351,11 +379,11 @@ pub fn debugger_add_draw_calls(count: usize) {
 
 #[cfg(not(feature = "debugging"))]
 #[inline_always]
-pub fn debugger_add_draw_calls(count: usize) {}
+pub(crate) fn debugger_add_draw_calls(count: usize) {}
 
 #[cfg(feature = "debugging")]
 #[inline]
-pub fn debugger_add_drawn_objects(count: usize) {
+pub(crate) fn debugger_add_drawn_objects(count: usize) {
     use crate::prelude::get_debug_info_mut;
     let debug = get_debug_info_mut();
     debug.current_frame_mut().drawn_objects += count;
@@ -363,7 +391,7 @@ pub fn debugger_add_drawn_objects(count: usize) {
 
 #[cfg(not(feature = "debugging"))]
 #[inline_always]
-pub fn debugger_add_drawn_object(count: usize) {}
+pub(crate) fn debugger_add_drawn_object(count: usize) {}
 
 pub fn time() -> f32 {
     get_state().time
@@ -472,4 +500,33 @@ pub fn audio() -> &'static mut AudioEngine {
 
 pub fn cursor_pos() -> Vec2 {
     get_state().cursor_position
+}
+
+pub fn dpi_scaling() -> f32 {
+    get_state().dpi_scaling()
+}
+
+pub fn default_font() -> FontRef {
+    FontRef(0)
+}
+
+pub fn frame_count() -> usize {
+    get_state().frame_count
+}
+
+pub fn physics_time() -> f32 {
+    get_state().physics_time
+}
+
+pub fn pause_physics_timer() {
+    get_state().is_physics_time_paused = true;
+}
+
+pub fn play_physics_timer() {
+    get_state().is_physics_time_paused = false;
+}
+
+pub fn toggle_physics_timer() {
+    let state = get_state();
+    state.is_physics_time_paused = !state.is_physics_time_paused;
 }

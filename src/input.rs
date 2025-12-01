@@ -431,21 +431,21 @@ pub fn bind(action: Action, button: impl Into<Button>) {
 /// Returns the keyboard key bound to the specified action, if any.
 ///
 /// Returns None if the action is not bound or is bound to a mouse button instead.
-pub fn get_key(action: Action) -> Option<&'static KeyCode> {
+pub fn get_key_binding(action: Action) -> Option<&'static KeyCode> {
     get_state().input.get_key(action)
 }
 
 /// Returns the mouse button bound to the specified action, if any.
 ///
 /// Returns None if the action is not bound or is bound to a keyboard key instead.
-pub fn get_mouse(action: Action) -> Option<&'static MouseButton> {
+pub fn get_mouse_binding(action: Action) -> Option<&'static MouseButton> {
     get_state().input.get_mouse(action)
 }
 
 /// Returns the button (keyboard or mouse) bound to the specified action, if any.
 ///
 /// Returns None if the action is not bound to any button.
-pub fn get_button(action: Action) -> Option<&'static Button> {
+pub fn get_binding(action: Action) -> Option<&'static Button> {
     get_state().input.get_button(action)
 }
 

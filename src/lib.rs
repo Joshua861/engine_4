@@ -4,7 +4,6 @@ use std::time::Instant;
 
 use bevy_math::Mat4;
 use bevy_math::Vec2;
-use buffers::Buffers;
 use bumpalo::Bump;
 use camera::Camera2D;
 use camera::Camera3D;
@@ -30,6 +29,7 @@ use input::Input;
 use materials::Material;
 use object_3d::Mesh;
 use object_3d::Object3D;
+use prelude::init_fonts;
 use prelude::init_materials;
 use programs::init_programs;
 use rand::rngs::ThreadRng;
@@ -45,7 +45,6 @@ const BIGGER_NUMBER: f32 = BIG_NUMBER * 2.0;
 const SMALL_NUMBER: f32 = 0.001;
 
 mod api;
-mod buffers;
 mod camera;
 pub mod collisions;
 mod color;
@@ -103,10 +102,12 @@ struct EngineState {
     #[cfg(feature = "debugging")]
     debug_info: debugging::DebugInfo,
     storage: EngineStorage,
-    buffers: Buffers,
     rng: ThreadRng,
     config: EngineConfig,
     time: f32,
+    physics_time: f32,
+    is_physics_time_paused: bool,
+    frame_count: usize,
     delta_time: f32,
     last_frame_end_time: Instant,
     cursor_position: Vec2,
@@ -164,7 +165,6 @@ pub fn init(title: &str) -> anyhow::Result<()> {
     init_programs(&display, &mut storage)?;
     init_textures(&mut storage, &display);
     init_materials(&mut storage);
-    let buffers = Buffers::new(&display)?;
     let rng = rand::rng();
     let gui_initialized = false;
     let config = EngineConfig::default();
@@ -191,7 +191,6 @@ pub fn init(title: &str) -> anyhow::Result<()> {
             gui,
             gui_initialized,
             debug_info,
-            buffers,
             storage,
             rng,
             render_pipeline,
@@ -199,11 +198,16 @@ pub fn init(title: &str) -> anyhow::Result<()> {
             time,
             delta_time,
             last_frame_end_time,
+            is_physics_time_paused: false,
             cursor_position: Vec2::ZERO,
+            frame_count: 0,
+            physics_time: 0.0,
         });
     }
 
     thread_assert::set_thread_id();
+
+    init_fonts();
 
     Ok(())
 }
@@ -264,6 +268,13 @@ pub fn next_frame() {
     state.delta_time = delta_time;
     state.time += delta_time;
     state.last_frame_end_time = Instant::now();
+
+    if !state.is_physics_time_paused {
+        state.physics_time += delta_time;
+    }
+
+    state.frame_count += 1;
+
     if let Some(c) = state.input.cursor() {
         state.cursor_position = c.into();
     }
@@ -305,5 +316,9 @@ impl EngineState {
 
     pub(crate) fn facade(&self) -> &EngineDisplay {
         &self.display
+    }
+
+    pub(crate) fn dpi_scaling(&self) -> f32 {
+        self.window.scale_factor() as f32
     }
 }

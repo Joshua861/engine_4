@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 
+use crate::api::debugger_add_drawn_objects;
+use crate::prelude::Transform2D;
 use crate::programs::{CIRCLE_PROGRAM, FLAT_PROGRAM, TEXTURED_PROGRAM};
 use crate::shapes_2d::{QUAD_INDICES, Shape2D, UNIT_QUAD};
 use crate::textures::TextureRef;
 use crate::{Color, get_state};
-use bevy_math::{Mat4, Vec2};
+use bevy_math::{Mat4, Rect, Vec2};
 use glium::{Blend, DrawParameters, IndexBuffer, Surface, VertexBuffer, uniform};
 use glium::{Depth, DepthTest, implement_vertex};
 
@@ -14,19 +16,24 @@ pub struct DrawQueue2D {
     current_max_index: u32,
 
     circle_instances: Vec<CircleInstance>,
-    sprite_draws: HashMap<TextureRef, Vec<SpriteInstance>>,
+    sprite_draws: HashMap<TextureRef, SpriteDrawBatch>,
 
     current_z: f32,
     start_z: f32,
     z_increment: f32,
 }
 
-implement_vertex!(SpriteInstance, instance_position, instance_z, instance_size);
+struct SpriteDrawBatch {
+    vertices: Vec<SpriteVertex>,
+    indices: Vec<u32>,
+}
+
+implement_vertex!(SpriteVertex, position, tex_coords, color);
 #[derive(Copy, Clone, Debug)]
-struct SpriteInstance {
-    pub instance_position: [f32; 2],
-    pub instance_z: f32,
-    pub instance_size: [f32; 2],
+struct SpriteVertex {
+    pub position: [f32; 3],
+    pub tex_coords: [f32; 2],
+    pub color: [f32; 4],
 }
 
 implement_vertex!(
@@ -245,32 +252,86 @@ impl DrawQueue2D {
         ));
     }
 
-    pub fn add_sprite(&mut self, texture: TextureRef, position: Vec2, size: Vec2) {
-        self.add_sprite_at_z(texture, position, size, self.current_z);
+    pub fn add_sprite(
+        &mut self,
+        texture: TextureRef,
+        transform: Transform2D,
+        color: Color,
+        region: Option<Rect>,
+    ) {
+        self.add_sprite_at_z(texture, transform, color, region, self.current_z);
         self.current_z += self.z_increment;
     }
 
-    pub fn add_sprite_at_z(&mut self, texture: TextureRef, position: Vec2, size: Vec2, z: f32) {
-        #[cfg(feature = "debugging")]
-        {
-            use crate::debugging::get_debug_info_mut;
+    pub fn add_sprite_at_z(
+        &mut self,
+        texture: TextureRef,
+        mut transform: Transform2D,
+        color: Color,
+        region: Option<Rect>,
+        z: f32,
+    ) {
+        debugger_add_drawn_objects(1);
 
-            let debug = get_debug_info_mut();
-            let frame = debug.current_frame_mut();
-            frame.drawn_objects += 1;
-        }
+        let batch = self
+            .sprite_draws
+            .entry(texture)
+            .or_insert_with(|| SpriteDrawBatch {
+                vertices: Vec::new(),
+                indices: Vec::new(),
+            });
 
-        let instance = SpriteInstance {
-            instance_position: position.into(),
-            instance_size: (size * 0.5).into(), // half size
-            instance_z: z,
+        let base_index = batch.vertices.len() as u32;
+
+        let (tex_min_x, tex_min_y, tex_max_x, tex_max_y) = if let Some(region) = region {
+            let tex = texture.get();
+            let tex_width = tex.gl_texture.width() as f32;
+            let tex_height = tex.gl_texture.height() as f32;
+
+            (
+                region.min.x / tex_width,
+                region.min.y / tex_height,
+                region.max.x / tex_width,
+                region.max.y / tex_height,
+            )
+        } else {
+            (0.0, 0.0, 1.0, 1.0)
         };
 
-        if self.sprite_draws.contains_key(&texture) {
-            self.sprite_draws.get_mut(&texture).unwrap().push(instance);
-        } else {
-            self.sprite_draws.insert(texture, vec![instance]);
+        let color_gpu = color.for_gpu();
+        let mat = transform.matrix();
+
+        let corners = [
+            bevy_math::Vec3::new(0.0, 0.0, 0.0),
+            bevy_math::Vec3::new(1.0, 0.0, 0.0),
+            bevy_math::Vec3::new(1.0, 1.0, 0.0),
+            bevy_math::Vec3::new(0.0, 1.0, 0.0),
+        ];
+
+        let tex_coords = [
+            [tex_min_x, tex_min_y],
+            [tex_max_x, tex_min_y],
+            [tex_max_x, tex_max_y],
+            [tex_min_x, tex_max_y],
+        ];
+
+        for i in 0..4 {
+            let v = mat.transform_point3(corners[i]);
+            batch.vertices.push(SpriteVertex {
+                position: [v.x, v.y, z],
+                tex_coords: tex_coords[i],
+                color: color_gpu,
+            });
         }
+
+        batch.indices.extend_from_slice(&[
+            base_index,
+            base_index + 1,
+            base_index + 2,
+            base_index,
+            base_index + 2,
+            base_index + 3,
+        ]);
     }
 
     pub fn draw<T: Surface>(&mut self, frame: &mut T, projection: &Mat4) {
@@ -368,10 +429,10 @@ impl DrawQueue2D {
                 .unwrap();
         }
 
-        for texture_ref in self.sprite_draws.keys() {
-            let instances = self.sprite_draws.get(texture_ref).unwrap();
-
-            self.draw_sprite_batch(frame, projection, *texture_ref, instances);
+        for (texture_ref, batch) in &self.sprite_draws {
+            if !batch.vertices.is_empty() {
+                self.draw_sprite_batch(frame, projection, *texture_ref, batch);
+            }
         }
     }
 
@@ -380,14 +441,19 @@ impl DrawQueue2D {
         frame: &mut T,
         projection: &Mat4,
         texture: TextureRef,
-        instances: &[SpriteInstance],
+        batch: &SpriteDrawBatch,
     ) {
         let state = get_state();
-        let buffers = &state.buffers;
         let display = &state.display;
 
         let texture = texture.get();
-        let instance_buffer = VertexBuffer::new(display, instances).unwrap();
+        let vertex_buffer = VertexBuffer::new(display, &batch.vertices).unwrap();
+        let index_buffer = IndexBuffer::new(
+            display,
+            glium::index::PrimitiveType::TrianglesList,
+            &batch.indices,
+        )
+        .unwrap();
 
         let uniforms = uniform! {
             tex: texture.gl_texture.sampled().minify_filter(texture.minify_filter).magnify_filter(texture.magnify_filter),
@@ -410,17 +476,14 @@ impl DrawQueue2D {
             let debug = get_debug_info_mut();
             let frame_info = debug.current_frame_mut();
             frame_info.draw_calls += 1;
-            frame_info.vertex_count += buffers.unit_square_tex.len() * instances.len();
-            frame_info.index_count += buffers.unit_indices_tex.len() * instances.len();
+            frame_info.vertex_count += vertex_buffer.len();
+            frame_info.index_count += index_buffer.len();
         }
 
         frame
             .draw(
-                (
-                    &buffers.unit_square_tex,
-                    instance_buffer.per_instance().unwrap(),
-                ),
-                &buffers.unit_indices_tex,
+                &vertex_buffer,
+                &index_buffer,
                 TEXTURED_PROGRAM.get(),
                 &uniforms,
                 &params,

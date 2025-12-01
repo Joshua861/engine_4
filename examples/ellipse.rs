@@ -3,12 +3,11 @@ use engine_4::prelude::*;
 fn main() -> anyhow::Result<()> {
     init("Ellipse & Circle Outline Demo")?;
 
-    let mut time = 0.0;
+    let mut controller = PanningCameraController::new();
 
     loop {
         clear_screen(Color::NEUTRAL_100);
-        let input = get_input();
-        time += delta_time();
+        controller.update();
 
         draw_circle(Vec2::new(100.0, 100.0), 50.0, Color::RED_500);
         draw_circle(Vec2::new(250.0, 100.0), 40.0, Color::BLUE_500);
@@ -50,7 +49,7 @@ fn main() -> anyhow::Result<()> {
             6.0,
         );
 
-        let angle = time * 2.0;
+        let angle = time() * 2.0;
         let rx = 60.0 + (angle * 1.5).sin() * 20.0;
         let ry = 40.0 + (angle * 2.0).cos() * 15.0;
         draw_ellipse_with_outline(
@@ -61,8 +60,8 @@ fn main() -> anyhow::Result<()> {
             4.0,
         );
 
-        let pulse = (time * 3.0).sin() * 10.0 + 50.0;
-        let outline_pulse = (time * 3.0).cos() * 2.0 + 5.0;
+        let pulse = (time() * 3.0).sin() * 10.0 + 50.0;
+        let outline_pulse = (time() * 3.0).cos() * 2.0 + 5.0;
         draw_circle_with_outline(
             Vec2::new(250.0, 400.0),
             pulse,
@@ -87,23 +86,6 @@ fn main() -> anyhow::Result<()> {
             Color::AMBER_900,
             5.0,
         );
-
-        if input.mouse_held(MouseButton::Left) {
-            let diff: Vec2 = input.mouse_diff().into();
-            mutate_camera_2d(|camera| {
-                camera.translation -= diff / camera.scale;
-            });
-        }
-
-        if input.scroll_diff().1 != 0.0 {
-            let cursor_pos = input
-                .cursor()
-                .map(|(x, y)| Vec2::new(x, y))
-                .unwrap_or(Vec2::ZERO);
-            let diff = input.scroll_diff().1;
-            let diff = (diff * 0.1) + 1.0;
-            camera2d_zoom_at(cursor_pos, diff);
-        }
 
         if should_quit() {
             break;

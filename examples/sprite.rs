@@ -5,7 +5,7 @@ fn main() -> anyhow::Result<()> {
     use_nearest_filtering();
 
     let mut is_dark_mode = false;
-    let mut cursor_pos = Vec2::ZERO;
+    let mut controller = PanningCameraController::new();
     let guy_texture = load_texture(
         include_bytes!("../assets/textures/guy.jpg"),
         ImageFormat::Jpeg,
@@ -16,39 +16,20 @@ fn main() -> anyhow::Result<()> {
     )?;
 
     loop {
-        let input = get_input();
+        controller.update();
 
-        if input.key_pressed(KeyCode::Space) {
+        if key_pressed(KeyCode::Space) {
             is_dark_mode = !is_dark_mode;
         }
 
-        if input.key_pressed(KeyCode::KeyD) {
+        if key_pressed(KeyCode::KeyD) {
             show_debug_info();
-        }
-
-        if let Some((x, y)) = input.cursor() {
-            cursor_pos = Vec2::new(x, y);
         }
 
         if is_dark_mode {
             clear_screen(Color::NEUTRAL_900);
         } else {
             clear_screen(Color::NEUTRAL_100);
-        }
-
-        if input.mouse_held(MouseButton::Left) {
-            let diff: Vec2 = input.mouse_diff().into();
-
-            mutate_camera_2d(|camera| {
-                camera.translation -= diff / camera.scale;
-            });
-        }
-
-        if input.scroll_diff().1 != 0.0 {
-            let diff = input.scroll_diff().1;
-            let diff = (diff * 0.1) + 1.0;
-
-            camera2d_zoom_at(cursor_pos, diff);
         }
 
         let dimensions = Vec2::new(100.0, 100.0);

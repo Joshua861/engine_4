@@ -33,14 +33,12 @@ fn main() -> anyhow::Result<()> {
     }
 
     loop {
-        let input = get_input();
-
-        if input.key_pressed(KeyCode::KeyM) {
+        if key_pressed(KeyCode::KeyM) {
             show_many = !show_many;
             orbit_controller.set_enabled(!show_many);
         }
 
-        if input.key_pressed(KeyCode::KeyY) {
+        if key_pressed(KeyCode::KeyY) {
             let mat = suzanne.material();
 
             mat.set_color("regular_color", Color::YELLOW_300);
@@ -48,7 +46,7 @@ fn main() -> anyhow::Result<()> {
             clear_color = Color::YELLOW_200;
         }
 
-        if input.key_pressed(KeyCode::KeyG) {
+        if key_pressed(KeyCode::KeyG) {
             let mat = suzanne.material();
 
             mat.set_color("regular_color", Color::SLATE_300);
@@ -56,7 +54,7 @@ fn main() -> anyhow::Result<()> {
             clear_color = Color::PURPLE_200;
         }
 
-        if input.key_pressed(KeyCode::KeyB) {
+        if key_pressed(KeyCode::KeyB) {
             let mat = suzanne.material();
 
             mat.set_color("regular_color", Color::BLUE_300.hue_rotate(-10.0));
@@ -64,31 +62,31 @@ fn main() -> anyhow::Result<()> {
             clear_color = Color::EMERALD_300;
         }
 
-        if input.key_held(KeyCode::KeyR) {
+        if key_held(KeyCode::KeyR) {
             clear_color = clear_color.hue_rotate_oklch(5.0);
         }
 
-        if input.key_pressed(KeyCode::KeyK) {
+        if key_pressed(KeyCode::KeyK) {
             suzanne.transform().mirror_y();
         }
 
-        if input.key_pressed(KeyCode::Comma) {
+        if key_pressed(KeyCode::Comma) {
             suzanne.transform().mirror_z();
         }
 
-        if input.key_pressed(KeyCode::KeyI) {
+        if key_pressed(KeyCode::KeyI) {
             mutate_camera_3d(|c| {
                 c.isometric = !c.isometric;
             });
         }
 
-        if input.key_pressed(KeyCode::KeyX) {
+        if key_pressed(KeyCode::KeyX) {
             show_grid = !show_grid;
         }
 
-        orbit_controller.update(input);
+        orbit_controller.update();
 
-        if input.key_pressed(KeyCode::KeyL) {
+        if key_pressed(KeyCode::KeyL) {
             light_on_camera = !light_on_camera;
 
             if !light_on_camera {

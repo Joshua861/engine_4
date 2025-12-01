@@ -124,24 +124,23 @@ fn main() -> anyhow::Result<()> {
 
     loop {
         clear_screen(Color::NEUTRAL_900);
-        let input = get_input();
 
-        if let Some((x, y)) = input.cursor() {
+        if let Some((x, y)) = cursor() {
             cursor_pos = Vec2::new(x, y);
         }
 
-        if input.key_pressed(KeyCode::KeyD) {
+        if key_pressed(KeyCode::KeyD) {
             show_debug_info();
         }
 
-        if input.mouse_pressed(MouseButton::Left) {
+        if mouse_pressed(MouseButton::Left) {
             let velocity = vector![rand::<f32>() * 100.0 - 50.0, rand::<f32>() * 100.0 - 50.0];
             let shape_type = ShapeType::from_index(objects.len());
             let (body, collider) = spawn_object(&mut world, cursor_pos, velocity, shape_type);
             objects.push((body, collider, shape_type));
         }
 
-        if input.mouse_held(MouseButton::Right) {
+        if mouse_held(MouseButton::Right) {
             for (body_handle, _, _) in &objects {
                 if let Some(body) = world.get_rigid_body_mut(*body_handle) {
                     let pos = body.translation();

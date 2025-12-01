@@ -2,7 +2,8 @@
 
 use bevy_math::{Vec2, Vec3};
 use glium::winit::event::MouseButton;
-use winit_input_helper::WinitInputHelper;
+
+use crate::get_state;
 
 pub struct OrbitCameraController {
     target: Vec3,
@@ -76,7 +77,8 @@ impl OrbitCameraController {
         self.phi = self.phi.clamp(min_phi, max_phi);
     }
 
-    pub fn update(&mut self, input: &WinitInputHelper) {
+    pub fn update(&mut self) {
+        let input = &get_state().input;
         if !self.enabled {
             return;
         }

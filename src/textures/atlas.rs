@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::utils::usize_rect::USizeRect;
 use bevy_math::USizeVec2;
 use glium::{
-    texture::TextureCreationError,
+    texture::{RawImage2d, TextureCreationError},
     uniforms::{MagnifySamplerFilter, MinifySamplerFilter},
 };
 
@@ -26,7 +26,7 @@ pub struct TextureAtlas {
     next_id: usize,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash, Debug)]
 pub struct SpriteKey(usize);
 
 impl TextureAtlas {
@@ -98,6 +98,23 @@ impl TextureAtlas {
             if tex_size != self.image.dimensions_u32() {
                 let new_texture = EngineTexture::from_engine_image(self.image.clone())?;
                 state.storage[self.texture] = new_texture;
+            } else {
+                let display = &state.display;
+                let raw_image = RawImage2d::from_raw_rgba(
+                    self.image.clone().into_bytes(),
+                    self.image.dimensions_u32().into(),
+                );
+
+                let texture = &mut state.storage[self.texture];
+                texture.gl_texture.write(
+                    glium::Rect {
+                        left: 0,
+                        bottom: 0,
+                        width: raw_image.width,
+                        height: raw_image.height,
+                    },
+                    raw_image,
+                );
             }
         }
 
@@ -170,15 +187,15 @@ impl TextureAtlas {
         }
     }
 
-    fn gen_key(&mut self) -> SpriteKey {
+    pub fn gen_key(&mut self) -> SpriteKey {
         let key = SpriteKey(self.next_id);
         self.next_id += 1;
         key
     }
 
-    pub fn cache_sprite(&mut self, sprite: &Image) -> SpriteKey {
+    pub fn cache_sprite(&mut self, image: &Image) -> SpriteKey {
         let key = self.gen_key();
-        self.cache_sprite_with_key(key, sprite);
+        self.cache_sprite_with_key(key, image);
         key
     }
 

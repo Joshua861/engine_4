@@ -1,21 +1,17 @@
 #version 140
 
-in vec2 position;
+in vec3 position;
 in vec2 tex_coords;
-
-in vec2 instance_position;
-in float instance_z;
-in vec2 instance_size;
+in vec4 color;
 
 out vec2 v_tex_coords;
+out vec4 v_color;
 
 uniform mat4 projection;
 
 void main() {
     v_tex_coords = tex_coords;
+    v_color = color;
 
-    vec2 scaled_pos = position * instance_size;
-    vec2 world_pos = scaled_pos + instance_position + instance_size;
-
-    gl_Position = projection * vec4(world_pos, instance_z, 1.0);
+    gl_Position = projection * vec4(position, 1.0);
 }

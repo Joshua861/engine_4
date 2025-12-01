@@ -21,9 +21,7 @@ fn main() -> anyhow::Result<()> {
     audio().play_mixer_realtime(&comp.into_mixer())?;
 
     loop {
-        let input = get_input();
-
-        if input.key_pressed(KeyCode::Space) {
+        if key_pressed(KeyCode::Space) {
             audio().play_sample("assets/sounds/vine-boom.mp3");
             circle_size += 300.0;
         }

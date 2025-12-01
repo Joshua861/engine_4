@@ -123,6 +123,7 @@ impl EngineTexture {
 
     pub fn from_engine_image(image: Image) -> Result<Self, TextureCreationError> {
         let dimensions = image.dimensions_u32().into();
+        dbg!(dimensions);
         let raw = RawImage2d::from_raw_rgba(image.into_bytes(), dimensions);
         Self::from_raw(raw)
     }

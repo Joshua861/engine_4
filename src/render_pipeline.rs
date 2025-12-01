@@ -299,18 +299,21 @@ impl RenderPipeline {
     ) {
         let view_proj = cameras.d3.view_proj();
         draw_queues.draw_queue_3d.draw(target, &view_proj);
+        target.clear_depth(1.0);
 
         let mut projection = cameras.d2.projection_matrix();
         if is_texture_target {
             projection = Mat4::from_scale(Vec3::new(1.0, -1.0, 1.0)) * projection;
         }
         draw_queues.world_draw_queue_2d.draw(target, &projection);
+        target.clear_depth(1.0);
 
         let mut flat_projection = cameras.flat;
         if is_texture_target {
             flat_projection = Mat4::from_scale(Vec3::new(1.0, -1.0, 1.0)) * flat_projection;
         }
         draw_queues.draw_queue_2d.draw(target, &flat_projection);
+        target.clear_depth(1.0);
     }
 
     fn draw_texture_to_target<T: Surface>(&self, target: &mut T, texture: TextureRef) {

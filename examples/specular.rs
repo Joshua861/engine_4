@@ -19,9 +19,8 @@ fn main() -> anyhow::Result<()> {
 
     loop {
         clear_screen(Color::PURPLE_300);
-        let input = get_input();
 
-        orbit_controller.update(input);
+        orbit_controller.update();
 
         model.draw();
 

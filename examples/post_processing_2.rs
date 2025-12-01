@@ -13,8 +13,7 @@ fn main() -> anyhow::Result<()> {
 
     loop {
         clear_screen(Color::SKY_500);
-        let input = get_input();
-        orbit_controller.update(input);
+        orbit_controller.update();
 
         obj.draw();
         bloom_screen(0.5, 2.0, 10.0);
