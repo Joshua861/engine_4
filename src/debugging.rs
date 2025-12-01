@@ -179,6 +179,11 @@ pub fn hide_debug_info() {
     get_debug_info_mut().show_window = false;
 }
 
+pub fn toggle_debug_info() {
+    let debug = get_debug_info_mut();
+    debug.show_window = !debug.show_window;
+}
+
 pub fn set_show_debug_info(to: bool) {
     get_debug_info_mut().show_window = to;
 }

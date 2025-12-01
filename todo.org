@@ -26,9 +26,9 @@
 - [ ] Transparency is fucked
   - [ ] Very fucked
   - [ ] Someone needs to do something about this
-- [ ] Circle anti aliasing between outline and fill
+- [ ] Circle anti aliasing between outline and fill is non existant
 - [X] Move draw param overrides to the material
-- [ ] https://github.com/sqrew/tunes
+- [X] https://github.com/sqrew/tunes
 - [ ] Dithering to reduce colour banding
 - [ ] Signed distance field / https://raytracing.github.io/books/RayTracingInOneWeekend.html
 - [X] Custom materials

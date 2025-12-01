@@ -2,7 +2,7 @@ use crate::{
     camera::Camera3D,
     collisions::AABB2D,
     post_processing::PostProcessingEffect,
-    prelude::FontRef,
+    prelude::{FontRef, avg_fps, draw_text},
     render_pipeline::{RenderTexture, RenderTextureRef},
     shapes_2d::*,
     textures::EngineTexture,
@@ -529,4 +529,8 @@ pub fn play_physics_timer() {
 pub fn toggle_physics_timer() {
     let state = get_state();
     state.is_physics_time_paused = !state.is_physics_time_paused;
+}
+
+pub fn draw_fps() {
+    draw_text(format!("{:.1}", avg_fps()), Vec2::new(10.0, 5.0));
 }
