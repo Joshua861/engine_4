@@ -323,6 +323,18 @@ pub fn draw_text(text: impl AsRef<str>, position: Vec2) -> TextDimensions {
     )
 }
 
+pub fn draw_text_size(text: impl AsRef<str>, position: Vec2, size: usize) -> TextDimensions {
+    draw_text_to(
+        text,
+        TextDrawParams {
+            position,
+            font_size: size,
+            ..Default::default()
+        },
+        get_state().draw_queue_2d(),
+    )
+}
+
 pub fn draw_text_world_ex(text: impl AsRef<str>, params: TextDrawParams) -> TextDimensions {
     draw_text_to(text, params, get_state().world_draw_queue_2d())
 }
@@ -332,6 +344,18 @@ pub fn draw_text_world(text: impl AsRef<str>, position: Vec2) -> TextDimensions 
         text,
         TextDrawParams {
             position,
+            ..Default::default()
+        },
+        get_state().world_draw_queue_2d(),
+    )
+}
+
+pub fn draw_text_size_world(text: impl AsRef<str>, position: Vec2, size: usize) -> TextDimensions {
+    draw_text_to(
+        text,
+        TextDrawParams {
+            position,
+            font_size: size,
             ..Default::default()
         },
         get_state().world_draw_queue_2d(),

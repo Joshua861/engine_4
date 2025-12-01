@@ -38,6 +38,7 @@ use text_rendering::EngineFont;
 use textures::EngineTexture;
 use textures::init_textures;
 use tunes::engine::AudioEngine;
+use user_storage::UserStorage;
 
 const BIG_NUMBER: f32 = 9999.9;
 const BIGGER_NUMBER: f32 = BIG_NUMBER * 2.0;
@@ -65,6 +66,7 @@ mod shapes_3d;
 mod slop;
 mod text_rendering;
 mod textures;
+mod user_storage;
 mod utils;
 
 pub(crate) static mut ENGINE_STATE: Option<EngineState> = None;
@@ -105,6 +107,7 @@ struct EngineState {
     delta_time: f32,
     last_frame_end_time: Instant,
     cursor_position: Vec2,
+    user_storage: UserStorage,
 }
 
 unsafe impl Sync for EngineState {}
@@ -167,6 +170,7 @@ pub fn init(title: &str) -> anyhow::Result<()> {
     let last_frame_end_time = Instant::now();
     let render_pipeline = RenderPipeline::screen();
     let audio_engine = AudioEngine::new()?;
+    let user_storage = UserStorage::new();
     // let bump_allocator = Bump::new();
 
     unsafe {
@@ -196,6 +200,7 @@ pub fn init(title: &str) -> anyhow::Result<()> {
             cursor_position: Vec2::ZERO,
             frame_count: 0,
             physics_time: 0.0,
+            user_storage,
         });
     }
 
