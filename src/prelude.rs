@@ -5,6 +5,7 @@ pub use crate::collisions;
 pub use crate::collisions::IntersectsWith;
 pub use crate::color::Color;
 // pub use crate::color::schemes::ColorScheme;
+pub use crate::animation::*;
 #[cfg(feature = "debugging")]
 pub use crate::debugging::grid::create_infinite_grid;
 #[cfg(feature = "debugging")]
@@ -25,13 +26,14 @@ pub use crate::shapes_3d::*;
 pub use crate::text_rendering::*;
 pub use crate::textures::atlas::*;
 pub use crate::textures::load_texture;
+pub use crate::transform::*;
 pub use crate::utils::usize_rect::USizeRect;
 pub use crate::utils::*;
 pub use anyhow;
 pub use bevy_math;
 pub use bevy_math::Quat;
 pub use bevy_math::ops::*;
-pub use bevy_math::prelude::{Mat2, Mat3, Mat4, Rect, Vec2, Vec3, Vec4};
+pub use bevy_math::prelude::{Mat2, Mat3, Mat4, Vec2, Vec3, Vec4};
 pub use bevy_math::prelude::{mat2, mat3, mat4, vec2, vec3, vec4};
 pub use egui_glium::egui_winit::egui;
 pub use egui_plot;

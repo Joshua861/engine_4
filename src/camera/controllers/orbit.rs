@@ -94,19 +94,19 @@ impl OrbitCameraController {
             self.is_orbiting = false;
         }
 
-        if self.is_orbiting {
-            if let Some((x, y)) = input.cursor() {
-                let current_mouse_pos = Vec2::new(x, y);
-                let mut mouse_diff = current_mouse_pos - self.last_mouse_pos;
-                mouse_diff.y = -mouse_diff.y;
+        if self.is_orbiting
+            && let Some((x, y)) = input.cursor()
+        {
+            let current_mouse_pos = Vec2::new(x, y);
+            let mut mouse_diff = current_mouse_pos - self.last_mouse_pos;
+            mouse_diff.y = -mouse_diff.y;
 
-                self.theta += mouse_diff.x * self.sensitivity;
-                self.phi += mouse_diff.y * self.sensitivity;
+            self.theta += mouse_diff.x * self.sensitivity;
+            self.phi += mouse_diff.y * self.sensitivity;
 
-                self.phi = self.phi.clamp(self.min_phi, self.max_phi);
+            self.phi = self.phi.clamp(self.min_phi, self.max_phi);
 
-                self.last_mouse_pos = current_mouse_pos;
-            }
+            self.last_mouse_pos = current_mouse_pos;
         }
 
         let diff = input.scroll_diff();

@@ -44,7 +44,7 @@ impl DebugInfo {
     }
 
     pub fn next_frame(&mut self) {
-        let current_frame = self.current_frame().clone();
+        let current_frame = *self.current_frame();
         self.max.index_count = self.max.index_count.max(current_frame.index_count);
         self.max.vertex_count = self.max.vertex_count.max(current_frame.vertex_count);
         self.max.draw_calls = self.max.draw_calls.max(current_frame.draw_calls);
@@ -148,6 +148,12 @@ impl DebugInfo {
 
             ui.label(format!("FPS: {:.1}", self.fps.avg()));
         });
+    }
+}
+
+impl Default for DebugInfo {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

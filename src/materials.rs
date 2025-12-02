@@ -146,22 +146,24 @@ impl Material {
 }
 
 impl UniformData {
-    fn to_gpu<'a>(&'a self) -> UniformValue<'a> {
+    fn to_gpu<'a>(self) -> UniformValue<'a> {
         match self {
-            Self::Float(f) => UniformValue::Float(*f),
+            Self::Float(f) => UniformValue::Float(f),
             Self::Mat3(m) => UniformValue::Mat3(m.to_cols_array_2d()),
             Self::Mat4(m) => UniformValue::Mat4(m.to_cols_array_2d()),
             Self::Texture(texture) => {
                 let texture = texture.get();
-                let mut behaviour = SamplerBehavior::default();
-                behaviour.magnify_filter = texture.magnify_filter;
-                behaviour.minify_filter = texture.minify_filter;
+                let behaviour = SamplerBehavior {
+                    magnify_filter: texture.magnify_filter,
+                    minify_filter: texture.minify_filter,
+                    ..Default::default()
+                };
 
                 UniformValue::Texture2d(&texture.gl_texture, Some(behaviour))
             }
-            Self::Vec2(v) => UniformValue::Vec2((*v).into()),
-            Self::Vec3(v) => UniformValue::Vec3((*v).into()),
-            Self::Vec4(v) => UniformValue::Vec4((*v).into()),
+            Self::Vec2(v) => UniformValue::Vec2(v.into()),
+            Self::Vec3(v) => UniformValue::Vec3(v.into()),
+            Self::Vec4(v) => UniformValue::Vec4(v.into()),
             Self::Color(c) => UniformValue::Vec4(c.for_gpu()),
         }
     }

@@ -1,8 +1,8 @@
 use bevy_math::Vec4;
 use palette::{Hsl, IntoColor, LinSrgb, Oklch, Srgb};
 
-pub mod u8;
 pub mod schemes;
+pub mod u8;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
@@ -38,6 +38,11 @@ impl Color {
     pub const fn to_vec4(&self) -> Vec4 {
         Vec4::new(self.r, self.g, self.b, self.a)
     }
+
+    pub fn from_vec4(v: Vec4) -> Self {
+        Color::from_rgba(v.x, v.y, v.z, v.w)
+    }
+
     pub fn splat(v: f32) -> Self {
         Self::new(v, v, v)
     }
@@ -46,7 +51,7 @@ impl Color {
         self
     }
 
-    fn to_hsl(&self) -> (f32, f32, f32) {
+    fn to_hsl(self) -> (f32, f32, f32) {
         let lin_rgb = LinSrgb::new(self.r, self.g, self.b);
         let srgb: Srgb = lin_rgb.into_color();
         let hsl: Hsl = srgb.into_color();
@@ -151,6 +156,7 @@ impl Color {
 }
 
 #[rustfmt::skip]
+#[allow(clippy::excessive_precision)]
 impl Color {
     pub const SLATE_50: Self = Self::new(0.9400013665754798, 0.9551989617830331, 0.9705415305631548);
     pub const SLATE_100: Self = Self::new(0.878307191251998, 0.9124754142945134, 0.9474050664454327);

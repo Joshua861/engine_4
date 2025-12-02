@@ -139,26 +139,27 @@ impl Raycast for super::Polygon {
             let v1 = self.vertices[i];
             let v2 = self.vertices[(i + 1) % self.vertices.len()];
 
-            if let Some(t) = ray_segment_intersection(ray, v1, v2) {
-                if t >= 0.0 && t < min_distance {
-                    let point = ray.point_at(t);
+            if let Some(t) = ray_segment_intersection(ray, v1, v2)
+                && t >= 0.0
+                && t < min_distance
+            {
+                let point = ray.point_at(t);
 
-                    let edge = v2 - v1;
-                    let edge_normal = Vec2::new(-edge.y, edge.x).normalize();
+                let edge = v2 - v1;
+                let edge_normal = Vec2::new(-edge.y, edge.x).normalize();
 
-                    let normal = if edge_normal.dot(ray.direction) < 0.0 {
-                        edge_normal
-                    } else {
-                        -edge_normal
-                    };
+                let normal = if edge_normal.dot(ray.direction) < 0.0 {
+                    edge_normal
+                } else {
+                    -edge_normal
+                };
 
-                    min_distance = t;
-                    closest_hit = Some(RaycastHit {
-                        point,
-                        distance: t,
-                        normal,
-                    });
-                }
+                min_distance = t;
+                closest_hit = Some(RaycastHit {
+                    point,
+                    distance: t,
+                    normal,
+                });
             }
         }
 
@@ -202,7 +203,7 @@ fn ray_segment_intersection(ray: &Ray, v1: Vec2, v2: Vec2) -> Option<f32> {
     let t = cross_2d(to_segment, segment) / ray_cross_segment;
     let u = cross_2d(to_segment, ray.direction) / ray_cross_segment;
 
-    if t >= 0.0 && u >= 0.0 && u <= 1.0 {
+    if t >= 0.0 && (0.0..=1.0).contains(&u) {
         Some(t)
     } else {
         None

@@ -65,24 +65,31 @@
 - [X] transparant textures?
 - [ ] controller support
 - [ ] drag and drop files?
-- [ ] Animation support
-  - [ ] Needs some sort of retained state.
-  - [ ] Maybe generic over types that implement some trait.
-    - [ ] Implement for all numerics, transform3D, colour, vectors.
-  - [ ] Struct contains start, end, time, and interpolation function.
-  - [ ] Interpolation function trait.
-    - [ ] So you could have structs with configurable interpolation.
+- [-] Animation support
+  - [X] Needs some sort of retained state.
+  - [X] Maybe generic over types that implement some trait.
+    - [X] Implement for all numerics, transform3D, colour, vectors.
+  - [X] Struct contains start, end, time, and interpolation function.
+  - [X] Interpolation function trait.
+    - [X] So you could have structs with configurable interpolation.
   - [ ] sprite animation (needs spritesheets/atlasses)
+  - [ ] https://docs.rs/macroquad/latest/macroquad/experimental/animation/index.html
   - [ ] Animation state machine
+  - [ ] pause animation controller
 - [ ] egui_dock
 - [ ] expose egui charts if not already
+- [ ] let users access intermediary depth textures only if they want it
+- [X] impl mul TransformXD for VecX
+- [X] impl mul Transform * Transform
+- [X] .translate_point method
+- [ ] area perimiter methods on shapes
+- [ ] draw line through many points
 - [ ] Macros for all this *Ref stuff
-- [ ] draw text
-  - [ ] draw_fps function
-- [ ] 2d mouse camera controller, like whats in the examples but built into the engine
-- [ ] Custom keybind/action map struct generic over action enum/struct
-- [ ] https://docs.rs/macroquad/latest/macroquad/experimental/animation/index.html
-- [ ] https://docs.rs/macroquad/latest/macroquad/experimental/collections/storage/index.html
+- [X] draw text
+  - [X] draw_fps function
+- [X] 2d mouse camera controller, like whats in the examples but built into the engine
+- [X] Custom keybind/action map struct generic over action enum/struct
+- [X] https://docs.rs/macroquad/latest/macroquad/experimental/collections/storage/index.html
 - [ ] multiple cameras outputting to textures
   - [ ] maybe a use_cameras function
 - [X] Render pass

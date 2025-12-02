@@ -84,6 +84,8 @@ pub struct RenderPipeline {
     pub camera_override: Option<Cameras>,
 }
 
+// i dont care
+#[allow(clippy::large_enum_variant)]
 pub enum RenderStep {
     Drawing(DrawQueues),
     PostProcessing(PostProcessingStep),
@@ -345,7 +347,7 @@ impl EngineState {
         let size = texture.dimensions;
         self.texture_pipeline = Some(RenderPipeline::new(
             RenderTarget::Texture(texture),
-            Some(self.cameras_for_resolution(size.x as u32, size.y as u32)),
+            Some(self.cameras_for_resolution(size.x, size.y)),
         ));
     }
 

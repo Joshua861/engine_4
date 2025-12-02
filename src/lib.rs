@@ -1,5 +1,4 @@
 #![allow(static_mut_refs)]
-
 use std::time::Instant;
 
 use bevy_math::Mat4;
@@ -43,6 +42,7 @@ use user_storage::UserStorage;
 const BIG_NUMBER: f32 = 9999.9;
 const BIGGER_NUMBER: f32 = BIG_NUMBER * 2.0;
 
+mod animation;
 mod api;
 mod camera;
 pub mod collisions;
@@ -66,6 +66,7 @@ mod shapes_3d;
 mod slop;
 mod text_rendering;
 mod textures;
+mod transform;
 mod user_storage;
 mod utils;
 

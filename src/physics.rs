@@ -31,6 +31,12 @@ impl World<(), ()> {
     }
 }
 
+impl Default for World<(), ()> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<H: PhysicsHooks, E: EventHandler> World<H, E> {
     pub fn with_hooks_and_event_handler(hooks: H, event_handler: E) -> Self {
         let rigid_body_set = RigidBodySet::new();

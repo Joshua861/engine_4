@@ -63,6 +63,12 @@ impl FontRef {
     }
 }
 
+impl Default for FontRef {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Deref for FontRef {
     type Target = EngineFont;
     fn deref(&self) -> &Self::Target {
@@ -93,6 +99,7 @@ impl EngineFont {
         })
     }
 
+    #[allow(unused)]
     pub(crate) fn descent(&self, font_size: f32) -> f32 {
         self.font
             .horizontal_line_metrics(font_size)
@@ -128,10 +135,6 @@ impl EngineFont {
         };
 
         self.characters.insert(glyph, character_info);
-    }
-
-    pub(crate) fn get(&self, glyph: Glyph) -> Option<CharacterInfo> {
-        self.characters.get(&glyph).copied()
     }
 
     pub(crate) fn contains(&self, glyph: Glyph) -> bool {

@@ -4,7 +4,7 @@ use crate::{
     camera::Camera3D,
     collisions::AABB2D,
     post_processing::PostProcessingEffect,
-    prelude::{FontRef, avg_fps, draw_text},
+    prelude::{FontRef, Transform2D, avg_fps, draw_text},
     render_pipeline::{RenderTexture, RenderTextureRef},
     shapes_2d::*,
     textures::EngineTexture,
@@ -555,4 +555,8 @@ pub fn storage_get_state_mut<T: Any>() -> &'static mut T {
 
 pub fn storage_try_get_state_mut<T: Any>() -> Option<&'static mut T> {
     get_state().user_storage.try_get_mut()
+}
+
+pub fn random_color() -> Color {
+    Color::new(rand(), rand(), rand())
 }
