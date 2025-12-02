@@ -1,0 +1,117 @@
+#![feature(prelude_import)]
+#[macro_use]
+extern crate std;
+#[prelude_import]
+use std::prelude::rust_2024::*;
+use si_macros::gen_types;
+pub trait Distance {
+    fn to_meters(&self) -> Meters;
+}
+pub struct ExaMeters(f32);
+impl ExaMeters {
+    pub const SCALE_FACTOR: f32 = 1000000000000000f32;
+}
+impl Distance for ExaMeters {
+    fn to_meters(&self) -> Meters {
+        Meters(self.0 * Self::SCALE_FACTOR)
+    }
+}
+pub struct PetaMeters(f32);
+impl PetaMeters {
+    pub const SCALE_FACTOR: f32 = 1000000000000f32;
+}
+impl Distance for PetaMeters {
+    fn to_meters(&self) -> Meters {
+        Meters(self.0 * Self::SCALE_FACTOR)
+    }
+}
+pub struct TeraMeters(f32);
+impl TeraMeters {
+    pub const SCALE_FACTOR: f32 = 1000000000000f32;
+}
+impl Distance for TeraMeters {
+    fn to_meters(&self) -> Meters {
+        Meters(self.0 * Self::SCALE_FACTOR)
+    }
+}
+pub struct GigaMeters(f32);
+impl GigaMeters {
+    pub const SCALE_FACTOR: f32 = 1000000000f32;
+}
+impl Distance for GigaMeters {
+    fn to_meters(&self) -> Meters {
+        Meters(self.0 * Self::SCALE_FACTOR)
+    }
+}
+pub struct MegaMeters(f32);
+impl MegaMeters {
+    pub const SCALE_FACTOR: f32 = 1000000f32;
+}
+impl Distance for MegaMeters {
+    fn to_meters(&self) -> Meters {
+        Meters(self.0 * Self::SCALE_FACTOR)
+    }
+}
+pub struct KiloMeters(f32);
+impl KiloMeters {
+    pub const SCALE_FACTOR: f32 = 1000f32;
+}
+impl Distance for KiloMeters {
+    fn to_meters(&self) -> Meters {
+        Meters(self.0 * Self::SCALE_FACTOR)
+    }
+}
+pub struct HectoMeters(f32);
+impl HectoMeters {
+    pub const SCALE_FACTOR: f32 = 100f32;
+}
+impl Distance for HectoMeters {
+    fn to_meters(&self) -> Meters {
+        Meters(self.0 * Self::SCALE_FACTOR)
+    }
+}
+pub struct DekaMeters(f32);
+impl DekaMeters {
+    pub const SCALE_FACTOR: f32 = 10f32;
+}
+impl Distance for DekaMeters {
+    fn to_meters(&self) -> Meters {
+        Meters(self.0 * Self::SCALE_FACTOR)
+    }
+}
+pub struct Meters(f32);
+impl Meters {
+    pub const SCALE_FACTOR: f32 = 1f32;
+}
+impl Distance for Meters {
+    fn to_meters(&self) -> Meters {
+        Meters(self.0 * Self::SCALE_FACTOR)
+    }
+}
+pub struct DeciMeters(f32);
+impl DeciMeters {
+    pub const SCALE_FACTOR: f32 = 0.1f32;
+}
+impl Distance for DeciMeters {
+    fn to_meters(&self) -> Meters {
+        Meters(self.0 * Self::SCALE_FACTOR)
+    }
+}
+pub struct CentiMeters(f32);
+impl CentiMeters {
+    pub const SCALE_FACTOR: f32 = 0.01f32;
+}
+impl Distance for CentiMeters {
+    fn to_meters(&self) -> Meters {
+        Meters(self.0 * Self::SCALE_FACTOR)
+    }
+}
+pub struct MilliMeters(f32);
+impl MilliMeters {
+    pub const SCALE_FACTOR: f32 = 0.001f32;
+}
+impl Distance for MilliMeters {
+    fn to_meters(&self) -> Meters {
+        Meters(self.0 * Self::SCALE_FACTOR)
+    }
+}
