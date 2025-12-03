@@ -11,12 +11,14 @@ use winit_input_helper::WinitInputHelper;
 
 use crate::get_state;
 
+mod gamepad;
+
 pub(crate) struct Input {
     helper: WinitInputHelper,
     action_map: HashMap<Action, Button>,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Button {
     Mouse(MouseButton),
     Keyboard(KeyCode),
@@ -400,6 +402,7 @@ pub fn action_released(action: Action) -> bool {
 pub fn action_held(action: Action) -> bool {
     get_state().input.action_held(action)
 }
+
 /// Binds a keyboard key to an action.
 ///
 /// When the key is pressed, `action_pressed()` and related functions will return true for this action.

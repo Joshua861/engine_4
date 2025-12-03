@@ -9,7 +9,7 @@ fn main() -> anyhow::Result<()> {
     )?;
 
     loop {
-        draw_sprite(sprite, Vec2::ZERO, 500.0);
+        draw_texture(sprite, Vec2::ZERO, 500.0);
 
         if should_quit() {
             break;

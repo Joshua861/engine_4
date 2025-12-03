@@ -1,3 +1,4 @@
+use bevy_math::VectorSpace;
 use engine_4::prelude::*;
 
 actions! {
@@ -37,7 +38,7 @@ fn main() -> anyhow::Result<()> {
             let scale = window_height().min(window_width()) / 2.0;
             let dimensions = texture.normalized_dimensions * scale;
             draw_rect_outline_world(-dimensions / 2.0, dimensions, 2.0, Color::GRAY_800);
-            draw_sprite_world(texture, -dimensions / 2.0, scale);
+            draw_texture_world(texture, -dimensions / 2.0, scale);
         } else {
             for key in input_text() {
                 if let Key::Character(s) = key {
@@ -53,7 +54,7 @@ fn main() -> anyhow::Result<()> {
                 }
             }
 
-            let position = vec2(10.0, 40.0);
+            let position = vec2(10.0, 30.0);
             if text.is_empty() {
                 draw_text_ex(
                     "Start typing...",
@@ -68,13 +69,19 @@ fn main() -> anyhow::Result<()> {
             }
 
             draw_circle_world(Vec2::ZERO, 20.0, Color::RED_300);
+            draw_circle_outline_world(
+                Vec2::ZERO,
+                min_window_dimension() / 4.0,
+                Color::GRAY_800,
+                20.0,
+            );
 
             let text = "Hello world";
             let mut params = TextDrawParams {
                 font: None,
                 position: Vec2::new(
-                    physics_time().sin() * window_width() / 4.0,
-                    physics_time().cos() * window_height() / 4.0,
+                    physics_time().sin() * min_window_dimension() / 4.0,
+                    physics_time().cos() * min_window_dimension() / 4.0,
                 ),
                 font_size: 100,
                 color: Color::PINK_300,

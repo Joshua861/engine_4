@@ -1,4 +1,5 @@
 #![allow(static_mut_refs)]
+#![feature(duration_millis_float)]
 use std::time::Instant;
 
 use bevy_math::Mat4;
@@ -23,10 +24,12 @@ use glium::{
         window::Window,
     },
 };
+use image::Image;
 use input::Input;
 use materials::Material;
 use object_3d::Mesh;
 use object_3d::Object3D;
+use prelude::TextureAtlas;
 use prelude::init_fonts;
 use prelude::init_materials;
 use programs::init_programs;
@@ -38,9 +41,6 @@ use textures::EngineTexture;
 use textures::init_textures;
 use tunes::engine::AudioEngine;
 use user_storage::UserStorage;
-
-const BIG_NUMBER: f32 = 9999.9;
-const BIGGER_NUMBER: f32 = BIG_NUMBER * 2.0;
 
 mod animation;
 mod api;
@@ -122,6 +122,8 @@ pub(crate) struct EngineStorage {
     objects: Vec<Object3D>,
     fonts: Vec<EngineFont>,
     meshes: Vec<Mesh>,
+    texture_atlasses: Vec<TextureAtlas>,
+    images: Vec<Image>,
 }
 
 impl EngineStorage {
@@ -134,6 +136,8 @@ impl EngineStorage {
             render_textures: vec![],
             fonts: vec![],
             meshes: vec![],
+            texture_atlasses: vec![],
+            images: vec![],
         }
     }
 }
@@ -213,6 +217,8 @@ pub fn init(title: &str) -> anyhow::Result<()> {
 }
 
 pub fn next_frame() {
+    #[cfg(feature = "debugging")]
+    let engine_start_time = Instant::now();
     let state = get_state();
 
     state.debug_info.next_frame();
@@ -277,6 +283,12 @@ pub fn next_frame() {
 
     if let Some(c) = state.input.cursor() {
         state.cursor_position = c.into();
+    }
+
+    #[cfg(feature = "debugging")]
+    {
+        let engine_time = engine_start_time.elapsed();
+        state.debug_info.current_frame_mut().engine_time = engine_time.as_millis_f64();
     }
 }
 

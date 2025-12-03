@@ -70,7 +70,13 @@ impl AABB2D {
     pub fn is_visible_in_world(&self) -> bool {
         let camera = &mut get_state().camera_2d;
         let (view_min, view_max) = camera.visible_bounds();
-        let view_bounds = AABB2D::new(view_min, view_max);
+
+        let margin = window_height().max(window_width()) / camera.scale;
+        let view_bounds = AABB2D::new(
+            view_min - Vec2::splat(margin),
+            view_max + Vec2::splat(margin),
+        );
+
         self.intersects(&view_bounds)
     }
 }
@@ -435,7 +441,10 @@ fn on_segment(p: Vec2, q: Vec2, r: Vec2) -> bool {
     q.x <= p.x.max(r.x) && q.x >= p.x.min(r.x) && q.y <= p.y.max(r.y) && q.y >= p.y.min(r.y)
 }
 
-use crate::{get_state, shapes_2d};
+use crate::{
+    api::{window_height, window_width},
+    get_state, shapes_2d,
+};
 
 pub trait ToCollider<T> {
     fn to_collider(&self) -> T;

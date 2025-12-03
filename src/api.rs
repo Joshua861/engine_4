@@ -1,5 +1,6 @@
 use std::any::Any;
 
+use crate::utils::EngineCreate;
 use crate::{
     camera::Camera3D,
     collisions::AABB2D,
@@ -226,26 +227,24 @@ pub fn run_ui(mut f: impl FnMut(&Context)) {
     });
 }
 
-pub fn draw_sprite(sprite_ref: TextureRef, position: Vec2, scale: f32) {
-    let sprite = sprite_ref.get();
-    draw_sprite_scaled(sprite_ref, position, sprite.normalized_dimensions * scale);
+pub fn draw_texture(texture: TextureRef, position: Vec2, scale: f32) {
+    draw_texture_scaled(texture, position, texture.normalized_dimensions * scale);
 }
 
-pub fn draw_sprite_scaled(sprite: TextureRef, position: Vec2, scale: Vec2) {
+pub fn draw_texture_scaled(texture: TextureRef, position: Vec2, scale: Vec2) {
     get_state().draw_queue_2d().add_sprite(
-        sprite,
+        texture,
         Transform2D::from_scale_translation(scale, position),
         Color::WHITE,
         None,
     );
 }
 
-pub fn draw_sprite_world(sprite_ref: TextureRef, position: Vec2, scale: f32) {
-    let sprite = sprite_ref.get();
-    draw_sprite_scaled_world(sprite_ref, position, sprite.normalized_dimensions * scale);
+pub fn draw_texture_world(texture: TextureRef, position: Vec2, scale: f32) {
+    draw_texture_scaled_world(texture, position, texture.normalized_dimensions * scale);
 }
 
-pub fn draw_sprite_scaled_world(sprite: TextureRef, position: Vec2, scale: Vec2) {
+pub fn draw_texture_scaled_world(texture: TextureRef, position: Vec2, scale: Vec2) {
     let bounds = AABB2D::new(position - scale, position + scale);
 
     if !bounds.is_visible_in_world() {
@@ -253,14 +252,19 @@ pub fn draw_sprite_scaled_world(sprite: TextureRef, position: Vec2, scale: Vec2)
     }
 
     get_state().world_draw_queue_2d().add_sprite(
-        sprite,
+        texture,
         Transform2D::from_scale_translation(scale, position),
         Color::WHITE,
         None,
     );
 }
 
-pub fn draw_sprite_world_ex(sprite: TextureRef, transform: Transform2D, color: Color) {
+pub fn draw_texture_world_ex(
+    texture: TextureRef,
+    transform: Transform2D,
+    color: Color,
+    region: Option<bevy_math::Rect>,
+) {
     let bounds = AABB2D::new(
         transform.translation() - transform.scale(),
         transform.translation() + transform.scale(),
@@ -272,13 +276,18 @@ pub fn draw_sprite_world_ex(sprite: TextureRef, transform: Transform2D, color: C
 
     get_state()
         .world_draw_queue_2d()
-        .add_sprite(sprite, transform, color, None);
+        .add_sprite(texture, transform, color, region);
 }
 
-pub fn draw_sprite_ex(sprite: TextureRef, transform: Transform2D, color: Color) {
+pub fn draw_texture_ex(
+    sprite: TextureRef,
+    transform: Transform2D,
+    color: Color,
+    region: Option<bevy_math::Rect>,
+) {
     get_state()
         .draw_queue_2d()
-        .add_sprite(sprite, transform, color, None);
+        .add_sprite(sprite, transform, color, region);
 }
 
 pub fn screen_to_world(screen_pos: Vec2) -> Vec2 {
@@ -493,7 +502,7 @@ pub fn window_width() -> f32 {
 }
 
 pub fn draw_fullscreen_texture(texture: TextureRef) {
-    draw_sprite_scaled(texture, Vec2::ZERO, window_size());
+    draw_texture_scaled(texture, Vec2::ZERO, window_size());
 }
 
 pub fn audio() -> &'static mut AudioEngine {
@@ -533,6 +542,14 @@ pub fn toggle_physics_timer() {
     state.is_physics_time_paused = !state.is_physics_time_paused;
 }
 
+pub fn is_physics_time_paused() -> bool {
+    get_state().is_physics_time_paused
+}
+
+pub fn is_physics_time_paused_mut() -> &'static mut bool {
+    &mut get_state().is_physics_time_paused
+}
+
 pub fn draw_fps() {
     draw_text(format!("{:.1}", avg_fps()), Vec2::new(10.0, 5.0));
 }
@@ -559,4 +576,12 @@ pub fn storage_try_get_state_mut<T: Any>() -> Option<&'static mut T> {
 
 pub fn random_color() -> Color {
     Color::new(rand(), rand(), rand())
+}
+
+pub fn max_window_dimension() -> f32 {
+    window_height().max(window_width())
+}
+
+pub fn min_window_dimension() -> f32 {
+    window_height().min(window_width())
 }

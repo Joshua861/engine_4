@@ -30,6 +30,7 @@ rapier2d = { version = "0.30.1", features = ["simd-stable"] }
 tunes = { version = "1.0.2", features = ["gpu"] }
 winit_input_helper = "0.17.0"
 engine_4_macros = { path = "./crates/engine_4_macros" }
+gilrs = "0.11.0"
 
 [profile.dev]
 opt-level = 1

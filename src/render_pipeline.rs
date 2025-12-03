@@ -1,11 +1,10 @@
-use std::ops::{Deref, DerefMut};
-
 use bevy_math::{Mat4, UVec2, Vec2, Vec3};
+use engine_4_macros::gen_ref_type;
 use glium::{Surface, framebuffer::SimpleFrameBuffer, texture::DepthTexture2d, uniform};
 use log::warn;
 
 use crate::{
-    BIG_NUMBER, EngineState, api::empty_render_texture, camera::Cameras, color::Color,
+    EngineState, api::empty_render_texture, camera::Cameras, color::Color,
     draw_queue_2d::DrawQueue2D, draw_queue_3d::DrawQueue3D, get_state,
     post_processing::PostProcessingEffect, programs::ProgramRef, textures::TextureRef,
 };
@@ -29,46 +28,15 @@ impl RenderTexture {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
-pub struct RenderTextureRef(pub usize);
+gen_ref_type!(RenderTexture, RenderTextureRef, render_textures);
 
 impl RenderTextureRef {
-    pub(crate) fn get(&self) -> &'static RenderTexture {
-        &get_state().storage.render_textures[self.0]
-    }
-
-    pub fn get_mut(&self) -> &'static mut RenderTexture {
-        &mut get_state().storage.render_textures[self.0]
-    }
-
     pub fn dimensions(&self) -> UVec2 {
         self.get().dimensions
     }
 
     pub fn framebuffer(&self) -> SimpleFrameBuffer<'_> {
         self.get_mut().framebuffer()
-    }
-}
-
-impl Deref for RenderTextureRef {
-    type Target = RenderTexture;
-    fn deref(&self) -> &Self::Target {
-        &get_state().storage.render_textures[self.0]
-    }
-}
-
-impl DerefMut for RenderTextureRef {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut get_state().storage.render_textures[self.0]
-    }
-}
-
-impl RenderTexture {
-    pub fn create(self) -> RenderTextureRef {
-        let state = get_state();
-        let id = state.storage.render_textures.len();
-        state.storage.render_textures.push(self);
-        RenderTextureRef(id)
     }
 }
 
@@ -100,7 +68,7 @@ pub struct DrawQueues {
 impl DrawQueues {
     pub fn empty() -> Self {
         let draw_queue_2d = DrawQueue2D::empty();
-        let world_draw_queue_2d = DrawQueue2D::with_z_config(-BIG_NUMBER, 0.01);
+        let world_draw_queue_2d = DrawQueue2D::empty();
         let draw_queue_3d = DrawQueue3D::empty();
 
         Self {

@@ -2,9 +2,8 @@ use engine_4::prelude::*;
 
 fn main() -> anyhow::Result<()> {
     init("Demo")?;
-    use_nearest_filtering();
+    use_linear_filtering();
 
-    let mut is_dark_mode = false;
     let mut controller = PanningCameraController::new();
     let guy_texture = load_texture(
         include_bytes!("../assets/textures/guy.jpg"),
@@ -18,45 +17,30 @@ fn main() -> anyhow::Result<()> {
     loop {
         controller.update();
 
-        if key_pressed(KeyCode::Space) {
-            is_dark_mode = !is_dark_mode;
-        }
+        draw_fullscreen_texture(guy_texture);
+        vignette_screen(Color::BLACK, 0.2);
 
         if key_pressed(KeyCode::KeyD) {
-            show_debug_info();
-        }
-
-        if is_dark_mode {
-            clear_screen(Color::NEUTRAL_900);
-        } else {
-            clear_screen(Color::NEUTRAL_100);
+            toggle_debug_info();
         }
 
         let dimensions = Vec2::new(100.0, 100.0);
-        for y in 0..1000 {
-            for x in 0..300 {
+        for y in 0..100 {
+            for x in 0..100 {
                 let texture = if x % 2 == y % 2 {
                     guy_texture
                 } else {
                     pasta_texture
                 };
 
-                let x = x as f32 * dimensions.x as f32;
+                let x = x as f32 * dimensions.x;
                 let y = y as f32 * dimensions.y;
 
-                draw_sprite_scaled_world(texture, Vec2::new(x, y), dimensions);
+                draw_texture_scaled_world(texture, Vec2::new(x, y), dimensions);
             }
         }
 
-        run_ui(|ctx| {
-            egui::Window::new("Hello, world").show(ctx, |ui| {
-                ui.label("This is a perfect engine");
-
-                if ui.button("Click me!").clicked() {
-                    is_dark_mode = !is_dark_mode;
-                }
-            });
-        });
+        run_ui(|_| {});
 
         if should_quit() {
             break;

@@ -1,7 +1,6 @@
 use std::f32::consts::FRAC_PI_3;
 
 use engine_4::prelude::*;
-use nalgebra::Transform2;
 
 fn main() -> anyhow::Result<()> {
     init("Demo")?;
@@ -91,8 +90,8 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        draw_sprite_world(guy_texture, Vec2::new(0.0, 0.0), 50.0);
-        draw_sprite_world_ex(
+        draw_texture_world(guy_texture, Vec2::new(0.0, 0.0), 50.0);
+        draw_texture_world_ex(
             guy_texture,
             Transform2D::from_scale_rotation_translation(
                 Vec2::new(100.0, 30.0),
@@ -100,6 +99,7 @@ fn main() -> anyhow::Result<()> {
                 Vec2::new(100.0, 0.0),
             ),
             Color::SKY_300,
+            None,
         );
 
         {

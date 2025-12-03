@@ -16,6 +16,7 @@ let
       xorg.libX11
       xorg.libXcursor
       xorg.libXi
+      libudev-zero
       xorg.libXrandr
       alsa-lib
       # Additional system libraries that might be needed
@@ -32,6 +33,7 @@ pkgs.mkShell {
     # System libraries
     libGL
     mesa
+    libudev-zero
     vulkan-loader
     vulkan-validation-layers
     libxkbcommon
@@ -62,5 +64,7 @@ pkgs.mkShell {
       alias cr="cargo run"
       alias crr="cargo run --release"
       alias ca="cargo add"
+      alias cb="cargo build"
+      alias ce="cargo run --example"
   '';
 }

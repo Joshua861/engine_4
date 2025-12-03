@@ -1,8 +1,6 @@
-use std::{
-    collections::BTreeMap,
-    ops::{Deref, DerefMut, Index, IndexMut},
-};
+use std::collections::BTreeMap;
 
+use crate::utils::EngineCreate;
 use crate::{
     EngineStorage,
     color::Color,
@@ -14,6 +12,7 @@ use crate::{
     textures::TextureRef,
 };
 use bevy_math::{Mat3, Mat4, Vec2, Vec3, Vec4};
+use engine_4_macros::gen_ref_type;
 use glium::uniforms::{SamplerBehavior, UniformValue};
 
 pub const DEFAULT_MATERIAL: MaterialRef = MaterialRef(0);
@@ -43,16 +42,6 @@ impl Material {
             uniforms: BTreeMap::new(),
             draw_param_overrides: None,
         }
-    }
-
-    pub fn create(self) -> MaterialRef {
-        let state = get_state();
-
-        let id = state.storage.materials.len();
-        let id = MaterialRef(id);
-        state.storage.materials.push(self);
-
-        id
     }
 
     pub fn with_draw_param_overrides(mut self, params: glium::DrawParameters<'static>) -> Self {
@@ -178,44 +167,7 @@ impl glium::uniforms::Uniforms for Material {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct MaterialRef(usize);
-
-impl Index<MaterialRef> for EngineStorage {
-    type Output = Material;
-    fn index(&self, index: MaterialRef) -> &Self::Output {
-        &self.materials[index.0]
-    }
-}
-
-impl IndexMut<MaterialRef> for EngineStorage {
-    fn index_mut(&mut self, index: MaterialRef) -> &mut Self::Output {
-        &mut self.materials[index.0]
-    }
-}
-
-impl MaterialRef {
-    pub fn get(&self) -> &Material {
-        &get_state().storage.materials[self.0]
-    }
-
-    pub fn get_mut(&self) -> &mut Material {
-        &mut get_state().storage.materials[self.0]
-    }
-}
-
-impl Deref for MaterialRef {
-    type Target = Material;
-    fn deref(&self) -> &Self::Target {
-        &get_state().storage[*self]
-    }
-}
-
-impl DerefMut for MaterialRef {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut get_state().storage[*self]
-    }
-}
+gen_ref_type!(Material, MaterialRef, materials);
 
 pub fn create_flat_3d_material(color: Color) -> MaterialRef {
     let material = Material::new(FLAT_3D_PROGRAM).with_color("color", color);

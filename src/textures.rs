@@ -1,9 +1,7 @@
-use std::{
-    io::Cursor,
-    ops::{Deref, DerefMut, Index, IndexMut},
-};
+use std::io::Cursor;
 
 use bevy_math::{UVec2, Vec2};
+use engine_4_macros::gen_ref_type;
 use glium::{
     Texture2d, implement_vertex,
     texture::{RawImage2d, TextureCreationError},
@@ -11,6 +9,7 @@ use glium::{
 };
 use image::ImageFormat;
 
+use crate::utils::EngineCreate;
 use crate::{EngineDisplay, EngineStorage, get_state, image::Image};
 
 pub mod atlas;
@@ -98,20 +97,12 @@ impl EngineTexture {
         }
     }
 
-    fn create_normalized_dimensions(width: u32, height: u32) -> Vec2 {
+    pub(crate) fn create_normalized_dimensions(width: u32, height: u32) -> Vec2 {
         let mut v = Vec2::new(width as f32, height as f32);
         let max = v.x.max(v.y);
         v.x /= max;
         v.y /= max;
         v
-    }
-
-    pub fn create(self) -> TextureRef {
-        let state = get_state();
-        let id = state.storage.textures.len();
-        state.storage.textures.push(self);
-
-        TextureRef(id)
     }
 
     pub fn empty(width: u32, height: u32) -> Result<Self, TextureCreationError> {
@@ -121,7 +112,6 @@ impl EngineTexture {
 
     pub fn from_engine_image(image: Image) -> Result<Self, TextureCreationError> {
         let dimensions = image.dimensions_u32().into();
-        dbg!(dimensions);
         let raw = RawImage2d::from_raw_rgba(image.into_bytes(), dimensions);
         Self::from_raw(raw)
     }
@@ -143,54 +133,14 @@ impl EngineTexture {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
-pub struct TextureRef(pub usize);
+gen_ref_type!(EngineTexture, TextureRef, textures);
 
 impl TextureRef {
-    pub(crate) fn get(&self) -> &'static EngineTexture {
-        &get_state().storage.textures[self.0]
-    }
-
-    pub fn get_mut(&self) -> &'static mut EngineTexture {
-        &mut get_state().storage.textures[self.0]
-    }
-
     pub fn dimensions(&self) -> UVec2 {
         self.get().dimensions
     }
 
     pub fn normalized_dimensions(&self) -> Vec2 {
         self.get().normalized_dimensions
-    }
-
-    pub fn new() -> Self {
-        let id = get_state().storage.textures.len();
-        Self(id)
-    }
-}
-
-impl Deref for TextureRef {
-    type Target = EngineTexture;
-    fn deref(&self) -> &Self::Target {
-        &get_state().storage.textures[self.0]
-    }
-}
-
-impl DerefMut for TextureRef {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut get_state().storage.textures[self.0]
-    }
-}
-
-impl Index<TextureRef> for EngineStorage {
-    type Output = EngineTexture;
-    fn index(&self, index: TextureRef) -> &Self::Output {
-        &self.textures[index.0]
-    }
-}
-
-impl IndexMut<TextureRef> for EngineStorage {
-    fn index_mut(&mut self, index: TextureRef) -> &mut Self::Output {
-        &mut self.textures[index.0]
     }
 }

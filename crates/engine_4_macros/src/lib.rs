@@ -111,3 +111,91 @@ pub fn bind(input: TokenStream) -> TokenStream {
 
     tokens.into()
 }
+
+struct RefTypeParams {
+    ty: Ident,
+    ty_ref: Ident,
+    storage_name: Ident,
+}
+
+impl Parse for RefTypeParams {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let ty = input.parse()?;
+        let _ = input.parse::<Token![,]>();
+        let ty_ref = input.parse()?;
+        let _ = input.parse::<Token![,]>();
+        let storage_name = input.parse()?;
+
+        Ok(Self {
+            ty,
+            ty_ref,
+            storage_name,
+        })
+    }
+}
+
+#[proc_macro]
+pub fn gen_ref_type(input: TokenStream) -> TokenStream {
+    let RefTypeParams {
+        ty,
+        ty_ref,
+        storage_name,
+    } = parse_macro_input!(input as RefTypeParams);
+
+    quote! {
+        #[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
+        pub struct #ty_ref(pub usize);
+
+        impl #ty_ref {
+            pub(crate) fn get(&self) -> &'static #ty {
+                &get_state().storage.#storage_name[self.0]
+            }
+
+            pub(crate) fn get_mut(&self) -> &'static mut #ty {
+                &mut get_state().storage.#storage_name[self.0]
+            }
+
+            pub fn new() -> Self {
+                let id = get_state().storage.#storage_name.len();
+                Self(id)
+            }
+        }
+
+        impl crate::utils::EngineCreate<#ty_ref> for #ty {
+            fn create(self) -> #ty_ref {
+                let state = get_state();
+                let id = state.storage.#storage_name.len();
+                state.storage.#storage_name.push(self);
+
+                #ty_ref(id)
+            }
+        }
+
+        impl std::ops::Deref for #ty_ref {
+            type Target = #ty;
+            fn deref(&self) -> &Self::Target {
+                &get_state().storage.#storage_name[self.0]
+            }
+        }
+
+        impl std::ops::DerefMut for #ty_ref {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                &mut get_state().storage.#storage_name[self.0]
+            }
+        }
+
+        impl std::ops::Index<#ty_ref> for crate::EngineStorage {
+            type Output = #ty;
+            fn index(&self, index: #ty_ref) -> &Self::Output {
+                &self.#storage_name[index.0]
+            }
+        }
+
+        impl std::ops::IndexMut<#ty_ref> for crate::EngineStorage {
+            fn index_mut(&mut self, index: #ty_ref) -> &mut Self::Output {
+                &mut self.#storage_name[index.0]
+            }
+        }
+    }
+    .into()
+}

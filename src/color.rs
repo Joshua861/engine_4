@@ -102,6 +102,10 @@ impl Color {
         Self::from_rgba(lin_rgb.red, lin_rgb.green, lin_rgb.blue, alpha)
     }
 
+    pub fn from_oklch(lightness: f32, chroma: f32, hue: f32) -> Self {
+        Self::from_oklch_with_alpha(lightness, chroma, hue, 1.)
+    }
+
     pub fn lighten(self, factor: f32) -> Self {
         let (h, s, l) = self.to_hsl();
         let new_l = (l + factor * (1.0 - l)).clamp(0.0, 1.0);

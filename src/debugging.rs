@@ -21,6 +21,7 @@ pub struct FrameInfo {
     pub index_count: usize,
     pub draw_calls: usize,
     pub drawn_objects: usize,
+    pub engine_time: f64,
 }
 
 impl FrameInfo {
@@ -29,6 +30,7 @@ impl FrameInfo {
         index_count: 0,
         draw_calls: 0,
         drawn_objects: 0,
+        engine_time: 0.0,
     };
 }
 
@@ -49,6 +51,7 @@ impl DebugInfo {
         self.max.vertex_count = self.max.vertex_count.max(current_frame.vertex_count);
         self.max.draw_calls = self.max.draw_calls.max(current_frame.draw_calls);
         self.max.drawn_objects = self.max.drawn_objects.max(current_frame.drawn_objects);
+        self.max.engine_time = self.max.engine_time.max(current_frame.engine_time);
 
         self.frame_offset = (self.frame_offset + 1) % FRAME_BACKLOG;
         self.fps.tick();
@@ -93,11 +96,18 @@ impl DebugInfo {
                 [i as f64, frame.drawn_objects as f64]
             })
             .collect();
+        let engine_time_points: PlotPoints = (0..FRAME_BACKLOG)
+            .map(|i| {
+                let frame = &self.frames[(i + self.frame_offset) % FRAME_BACKLOG];
+                [i as f64, frame.engine_time]
+            })
+            .collect();
 
         let vertex_line = Line::new(vertex_points);
         let index_line = Line::new(index_points);
         let draw_call_line = Line::new(draw_call_points);
         let drawn_object_line = Line::new(drawn_object_points);
+        let engine_time_line = Line::new(engine_time_points);
 
         Window::new("Debug info").show(ui, |ui| {
             for (id, max, label, line) in [
@@ -125,6 +135,12 @@ impl DebugInfo {
                     "Drawn object count",
                     drawn_object_line,
                 ),
+                (
+                    "engine_time_plot",
+                    self.max.engine_time as usize,
+                    "Engine time (ms)",
+                    engine_time_line,
+                ),
             ] {
                 Plot::new(id)
                     .height(100.0)
@@ -147,6 +163,10 @@ impl DebugInfo {
             ui.label(format!("Objects: {}", state.storage.objects.len()));
 
             ui.label(format!("FPS: {:.1}", self.fps.avg()));
+            ui.label(format!(
+                "Engine time: {:.1}ms",
+                self.current_frame().engine_time
+            ));
         });
     }
 }

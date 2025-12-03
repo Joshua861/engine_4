@@ -1,10 +1,8 @@
-use std::{
-    collections::HashMap,
-    hash::Hash,
-    ops::{Deref, DerefMut},
-};
+use std::{collections::HashMap, hash::Hash};
 
+use crate::utils::EngineCreate;
 use bevy_math::{IVec2, Rect, Vec2};
+use engine_4_macros::gen_ref_type;
 use fontdue::{Metrics, layout::TextStyle};
 use glium::uniforms::{MagnifySamplerFilter, MinifySamplerFilter};
 
@@ -44,41 +42,77 @@ pub struct Glyph {
     size: usize, // using usize because i just dont like the idea of using a hashmap of f32 keys, right? that sounds bad right?
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
-pub struct FontRef(pub usize);
+gen_ref_type!(EngineFont, FontRef, fonts);
 
 #[allow(unused)]
 impl FontRef {
-    pub(crate) fn get(&self) -> &'static EngineFont {
-        &get_state().storage.fonts[self.0]
+    pub fn draw_text(&self, text: impl AsRef<str>, position: Vec2, size: usize) -> TextDimensions {
+        draw_text_ex(
+            text,
+            TextDrawParams {
+                font: Some(*self),
+                font_size: size,
+                position,
+                ..Default::default()
+            },
+        )
     }
 
-    pub(crate) fn get_mut(&self) -> &'static mut EngineFont {
-        &mut get_state().storage.fonts[self.0]
+    pub fn draw_text_world(
+        &self,
+        text: impl AsRef<str>,
+        position: Vec2,
+        size: usize,
+    ) -> TextDimensions {
+        draw_text_world_ex(
+            text,
+            TextDrawParams {
+                font: Some(*self),
+                font_size: size,
+                position,
+                ..Default::default()
+            },
+        )
     }
 
-    pub fn new() -> Self {
-        let id = get_state().storage.fonts.len();
-        Self(id)
+    pub fn draw_text_world_ex(
+        &self,
+        text: impl AsRef<str>,
+        position: Vec2,
+        size: usize,
+        color: Color,
+        do_dpi_scaling: bool,
+    ) -> TextDimensions {
+        draw_text_world_ex(
+            text,
+            TextDrawParams {
+                font: Some(*self),
+                font_size: size,
+                position,
+                color,
+                do_dpi_scaling,
+            },
+        )
     }
-}
 
-impl Default for FontRef {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Deref for FontRef {
-    type Target = EngineFont;
-    fn deref(&self) -> &Self::Target {
-        &get_state().storage.fonts[self.0]
-    }
-}
-
-impl DerefMut for FontRef {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut get_state().storage.fonts[self.0]
+    pub fn draw_text_ex(
+        &self,
+        text: impl AsRef<str>,
+        position: Vec2,
+        size: usize,
+        color: Color,
+        do_dpi_scaling: bool,
+    ) -> TextDimensions {
+        draw_text_ex(
+            text,
+            TextDrawParams {
+                font: Some(*self),
+                font_size: size,
+                position,
+                color,
+                do_dpi_scaling,
+            },
+        )
     }
 }
 
@@ -213,13 +247,6 @@ impl EngineFont {
         self.atlas.use_nearest_filtering();
     }
 
-    pub fn create(self) -> FontRef {
-        let state = get_state();
-        let id = state.storage.fonts.len();
-        state.storage.fonts.push(self);
-        FontRef(id)
-    }
-
     pub fn texture(&mut self) -> TextureRef {
         self.atlas.texture().unwrap()
     }
@@ -245,7 +272,7 @@ impl Default for TextDrawParams {
             font: None,
             font_size: 16,
             color: Color::WHITE,
-            do_dpi_scaling: true,
+            do_dpi_scaling: false,
             position: Vec2::ZERO,
         }
     }
@@ -255,7 +282,7 @@ pub(crate) fn init_fonts() {
     let _ = load_font(include_bytes!("../assets/fonts/jetbrains.ttf"));
 }
 
-pub fn draw_text_to(
+fn draw_text_to(
     text: impl AsRef<str>,
     params: TextDrawParams,
     draw_queue: &mut DrawQueue2D,

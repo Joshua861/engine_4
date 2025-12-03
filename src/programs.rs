@@ -1,5 +1,5 @@
+use engine_4_macros::gen_ref_type;
 use glium::Program;
-use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 use crate::{EngineDisplay, EngineStorage, get_state};
 
@@ -28,44 +28,7 @@ pub const GOURAUD_3D_PROGRAM: ProgramRef = ProgramRef(4);
 pub const TEXTURED_3D_PROGRAM: ProgramRef = ProgramRef(5);
 pub const BLINN_PHONG_3D_PROGRAM: ProgramRef = ProgramRef(6);
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ProgramRef(usize);
-
-impl Index<ProgramRef> for EngineStorage {
-    type Output = Program;
-    fn index(&self, index: ProgramRef) -> &Self::Output {
-        &self.programs[index.0]
-    }
-}
-
-impl IndexMut<ProgramRef> for EngineStorage {
-    fn index_mut(&mut self, index: ProgramRef) -> &mut Self::Output {
-        &mut self.programs[index.0]
-    }
-}
-
-impl ProgramRef {
-    pub fn get(&self) -> &Program {
-        &get_state().storage.programs[self.0]
-    }
-
-    pub fn get_mut(&self) -> &mut Program {
-        &mut get_state().storage.programs[self.0]
-    }
-}
-
-impl Deref for ProgramRef {
-    type Target = Program;
-    fn deref(&self) -> &Self::Target {
-        &get_state().storage[*self]
-    }
-}
-
-impl DerefMut for ProgramRef {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut get_state().storage[*self]
-    }
-}
+gen_ref_type!(Program, ProgramRef, programs);
 
 pub(crate) fn init_programs(
     display: &EngineDisplay,

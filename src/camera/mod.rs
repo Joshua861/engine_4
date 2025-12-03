@@ -1,7 +1,8 @@
 use bevy_math::{Mat3, Mat4, Vec2, Vec3, Vec4};
 use glium::winit::window::Window;
 
-use crate::{BIGGER_NUMBER, EngineState};
+use crate::EngineState;
+const BIG_NUMBER: f32 = 9999.9;
 
 pub mod controllers;
 
@@ -162,8 +163,8 @@ impl Camera2D {
             half_width,
             half_height,
             -half_height,
-            -BIGGER_NUMBER,
-            BIGGER_NUMBER,
+            -BIG_NUMBER,
+            BIG_NUMBER,
         );
 
         let view_mat4 = Mat4::from_cols(

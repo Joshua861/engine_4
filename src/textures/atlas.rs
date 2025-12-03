@@ -1,23 +1,31 @@
 use std::collections::HashMap;
+use std::io::Cursor;
 
+use super::{EngineTexture, TextureRef};
+use crate::api::{draw_texture_ex, draw_texture_world_ex, window_size};
+use crate::color::Color;
+use crate::get_state;
+use crate::image::{Image, ImageRef};
+use crate::prelude::Transform2D;
+use crate::utils::EngineCreate;
 use crate::utils::usize_rect::USizeRect;
-use bevy_math::USizeVec2;
+
+use bevy_math::{USizeVec2, Vec2};
+use engine_4_macros::gen_ref_type;
 use glium::{
     texture::{RawImage2d, TextureCreationError},
     uniforms::{MagnifySamplerFilter, MinifySamplerFilter},
 };
-
-use crate::{get_state, image::Image};
-
-use super::{EngineTexture, TextureRef};
+use image::ImageFormat;
 
 #[derive(Clone, Copy)]
 pub struct Sprite {
     pub rect: USizeRect,
+    pub normalized_dimensions: Vec2,
 }
 
 pub struct TextureAtlas {
-    texture: TextureRef,
+    pub texture: TextureRef,
     pub sprites: HashMap<SpriteKey, Sprite>,
     cursor: USizeVec2,
     max_line_height: usize,
@@ -25,6 +33,8 @@ pub struct TextureAtlas {
     image: Image,
     next_id: usize,
 }
+
+gen_ref_type!(TextureAtlas, TextureAtlasRef, texture_atlasses);
 
 #[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash, Debug)]
 pub struct SpriteKey(usize);
@@ -181,12 +191,16 @@ impl TextureAtlas {
                 key,
                 Sprite {
                     rect: USizeRect::new(x, y, x + dim.x, y + dim.y),
+                    normalized_dimensions: EngineTexture::create_normalized_dimensions(
+                        dim.x as u32,
+                        dim.y as u32,
+                    ),
                 },
             );
         }
     }
 
-    pub fn gen_key(&mut self) -> SpriteKey {
+    fn gen_key(&mut self) -> SpriteKey {
         let key = SpriteKey(self.next_id);
         self.next_id += 1;
         key
@@ -201,4 +215,111 @@ impl TextureAtlas {
     pub fn unregister_sprite(&mut self, key: SpriteKey) {
         self.sprites.remove(&key);
     }
+
+    pub fn draw(&mut self, sprite: SpriteKey, position: Vec2, scale: f32) -> Option<()> {
+        let sprite = self.get(sprite)?;
+
+        draw_texture_ex(
+            self.texture().ok()?,
+            Transform2D::from_scale_translation(sprite.normalized_dimensions * scale, position),
+            Color::WHITE,
+            Some(sprite.rect.as_rect()),
+        );
+
+        Some(())
+    }
+
+    pub fn draw_fullscreen(&mut self, sprite: SpriteKey) -> Option<()> {
+        self.draw_scaled(sprite, Vec2::ZERO, window_size())
+    }
+
+    pub fn draw_world(&mut self, sprite: SpriteKey, position: Vec2, scale: f32) -> Option<()> {
+        let sprite = self.get(sprite)?;
+
+        draw_texture_world_ex(
+            self.texture().ok()?,
+            Transform2D::from_scale_translation(sprite.normalized_dimensions * scale, position),
+            Color::WHITE,
+            Some(sprite.rect.as_rect()),
+        );
+
+        Some(())
+    }
+
+    pub fn draw_scaled(&mut self, sprite: SpriteKey, position: Vec2, scale: Vec2) -> Option<()> {
+        let sprite = self.get(sprite)?;
+
+        draw_texture_ex(
+            self.texture().ok()?,
+            Transform2D::from_scale_translation(scale, position),
+            Color::WHITE,
+            Some(sprite.rect.as_rect()),
+        );
+
+        Some(())
+    }
+
+    pub fn draw_scaled_world(
+        &mut self,
+        sprite: SpriteKey,
+        position: Vec2,
+        scale: Vec2,
+    ) -> Option<()> {
+        let sprite = self.get(sprite)?;
+
+        draw_texture_ex(
+            self.texture().ok()?,
+            Transform2D::from_scale_translation(scale, position),
+            Color::WHITE,
+            Some(sprite.rect.as_rect()),
+        );
+
+        Some(())
+    }
+
+    pub fn draw_ex(
+        &mut self,
+        sprite: SpriteKey,
+        transform: Transform2D,
+        color: Color,
+    ) -> Option<()> {
+        let sprite = self.get(sprite)?;
+
+        draw_texture_ex(
+            self.texture().ok()?,
+            transform,
+            color,
+            Some(sprite.rect.as_rect()),
+        );
+
+        Some(())
+    }
+
+    pub fn draw_world_ex(
+        &mut self,
+        sprite: SpriteKey,
+        transform: Transform2D,
+        color: Color,
+    ) -> Option<()> {
+        let sprite = self.get(sprite)?;
+
+        draw_texture_ex(
+            self.texture().ok()?,
+            transform,
+            color,
+            Some(sprite.rect.as_rect()),
+        );
+
+        Some(())
+    }
+}
+
+pub fn create_spritesheet() -> Result<TextureAtlasRef, TextureCreationError> {
+    TextureAtlas::new().map(|a| a.create())
+}
+
+pub fn load_image(bytes: &[u8], format: ImageFormat) -> anyhow::Result<ImageRef> {
+    let image = image::load(Cursor::new(bytes), format)?.to_rgba8();
+    let dim = image.dimensions();
+    Ok(Image::from_bytes(dim.0 as usize, dim.1 as usize, image.into_raw())?.create())
 }

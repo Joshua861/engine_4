@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 
+use crate::get_state;
 use bevy_math::{USizeVec2, UVec2};
+use engine_4_macros::gen_ref_type;
 
 use crate::color::u8::Pixel;
 use crate::utils::usize_rect::USizeRect;
@@ -11,6 +13,8 @@ pub struct Image {
     height: usize,
     buf: Vec<Pixel>,
 }
+
+gen_ref_type!(Image, ImageRef, images);
 
 impl Image {
     pub fn new(width: usize, height: usize, buf: Vec<Pixel>) -> Self {
@@ -26,18 +30,18 @@ impl Image {
         Self { width, height, buf }
     }
 
-    pub fn from_bytes(width: usize, height: usize, buf: Vec<u8>) -> Option<Self> {
+    pub fn from_bytes(width: usize, height: usize, buf: Vec<u8>) -> anyhow::Result<Self> {
         let len = buf.len();
 
         if width * height * 4 != len {
             dbg!(width, height, len);
-            None
+            Err(anyhow::anyhow!("Image size mismatch"))
         } else {
             let size = width * height;
             let ptr = buf.as_ptr() as *const Pixel;
             std::mem::forget(buf); // prevent free
             let buf = unsafe { Vec::from_raw_parts(ptr as *mut Pixel, size, size) };
-            Some(Self { width, height, buf })
+            Ok(Self { width, height, buf })
         }
     }
 

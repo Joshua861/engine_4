@@ -10,17 +10,19 @@
 - [ ] SI Unit system
 - [ ] clipping/masking
 - [ ] drop shadows 2d
-- [ ] Reduce build time
+- [X] Reduce build time
+- [ ] fix culling
 - [ ] cull glyph textures out of view
 - [ ] test transform 2 and 3D
 - [ ] Unity particle system
 - [ ] Compute shaders.
-- [ ] frame time in debug
+- [X] frame time in debug
 - [ ] color schemes? like built in struct called colour scheme with gruvbox and
   cattpucin and stuff?
 - [X] Fix examples now get_input() doesnt exist SPC / get_input
 - [ ] use bump allocators for per-frame data that gets cleared
 - [ ] texture atlasses
+- [ ] clipboard interaction
 - [ ] Serde feature to make everything publicly facing serializable.
   - [ ] automatic saving and loading support with efficient binary format
 - [ ] Transparency is fucked
@@ -55,6 +57,7 @@
     - [X] Or render to a lower resolution texture and scale it up for a pixelated effect.
 - [X] draw hexagon poly thing
 - [ ] arbritrary rotation and custom material for all 2d shapes
+- [X] good api for creating and managing and drawing spritesheets
 - [-] TEXT RENDERING!!!
   - [X] fonts
   - [ ] layout / text wrapping / text alignment
@@ -64,6 +67,7 @@
   - [ ] sdf?
 - [X] transparant textures?
 - [ ] controller support
+- [ ] probably split into multiple crates
 - [ ] drag and drop files?
 - [-] Animation support
   - [X] Needs some sort of retained state.

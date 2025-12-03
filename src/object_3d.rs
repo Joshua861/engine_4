@@ -1,13 +1,11 @@
-use std::{
-    io::Cursor,
-    ops::{Deref, DerefMut, Index, IndexMut},
-};
+use std::io::Cursor;
 
+use crate::utils::EngineCreate;
+use engine_4_macros::gen_ref_type;
 use glium::{IndexBuffer, VertexBuffer};
 use obj::{FromRawVertex, load_obj, raw::object::Polygon};
 
 use crate::{
-    EngineStorage,
     color::Color,
     draw_queue_2d::MaterialVertex3D,
     draw_queue_3d::ObjectToDraw,
@@ -111,10 +109,6 @@ impl Object3D {
         self.mesh.vertices = VertexBuffer::new(&state.display, &new_vertices).unwrap();
     }
 
-    pub fn create(self) -> Object3DRef {
-        create_object(self)
-    }
-
     pub fn from_mesh_and_material(mesh: MeshRef, material: MaterialRef) -> Object3DRef {
         Self {
             mesh,
@@ -123,14 +117,6 @@ impl Object3D {
         }
         .create()
     }
-}
-
-pub fn create_object(o: Object3D) -> Object3DRef {
-    let state = get_state();
-    let id = state.storage.objects.len();
-    let id = Object3DRef(id);
-    state.storage.objects.push(o);
-    id
 }
 
 impl FromRawVertex<u32> for MaterialVertex3D {
@@ -252,31 +238,9 @@ impl FromRawVertex<u32> for MaterialVertex3D {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Object3DRef(usize);
-
-impl Index<Object3DRef> for EngineStorage {
-    type Output = Object3D;
-    fn index(&self, index: Object3DRef) -> &Self::Output {
-        &self.objects[index.0]
-    }
-}
-
-impl IndexMut<Object3DRef> for EngineStorage {
-    fn index_mut(&mut self, index: Object3DRef) -> &mut Self::Output {
-        &mut self.objects[index.0]
-    }
-}
+gen_ref_type!(Object3D, Object3DRef, objects);
 
 impl Object3DRef {
-    pub fn get(&self) -> &Object3D {
-        &get_state().storage.objects[self.0]
-    }
-
-    pub fn get_mut(&self) -> &mut Object3D {
-        &mut get_state().storage.objects[self.0]
-    }
-
     pub fn draw(&self) {
         get_state()
             .draw_queue_3d()
@@ -324,19 +288,6 @@ impl Object3DRef {
     }
 }
 
-impl Deref for Object3DRef {
-    type Target = Object3D;
-    fn deref(&self) -> &Self::Target {
-        &get_state().storage[*self]
-    }
-}
-
-impl DerefMut for Object3DRef {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut get_state().storage[*self]
-    }
-}
-
 pub fn test_triangle() -> anyhow::Result<Object3DRef> {
     let vertices = vec![
         MaterialVertex3D {
@@ -380,51 +331,4 @@ pub struct Mesh {
     pub indices: IndexBuffer<u32>,
 }
 
-impl Mesh {
-    pub fn create(self) -> MeshRef {
-        let state = get_state();
-
-        let id = MeshRef(state.storage.meshes.len());
-        state.storage.meshes.push(self);
-        id
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct MeshRef(usize);
-
-impl Index<MeshRef> for EngineStorage {
-    type Output = Mesh;
-    fn index(&self, index: MeshRef) -> &Self::Output {
-        &self.meshes[index.0]
-    }
-}
-
-impl IndexMut<MeshRef> for EngineStorage {
-    fn index_mut(&mut self, index: MeshRef) -> &mut Self::Output {
-        &mut self.meshes[index.0]
-    }
-}
-
-impl MeshRef {
-    pub fn get(&self) -> &Mesh {
-        &get_state().storage.meshes[self.0]
-    }
-
-    pub fn get_mut(&self) -> &mut Mesh {
-        &mut get_state().storage.meshes[self.0]
-    }
-}
-
-impl Deref for MeshRef {
-    type Target = Mesh;
-    fn deref(&self) -> &Self::Target {
-        &get_state().storage[*self]
-    }
-}
-
-impl DerefMut for MeshRef {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut get_state().storage[*self]
-    }
-}
+gen_ref_type!(Mesh, MeshRef, meshes);
