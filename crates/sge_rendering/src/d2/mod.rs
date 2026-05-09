@@ -62,6 +62,7 @@ pub enum RendererType {
     Screen,
     World,
     Scene,
+    Other,
 }
 
 #[derive(Clone, Copy)]
@@ -179,6 +180,10 @@ impl Renderer2D {
         }
         batch.max_index += vertices.len() as u32;
         batch.indices.append(&mut indices);
+    }
+
+    pub fn current_draw_n(&self) -> usize {
+        self.draws().len()
     }
 
     pub fn add_circle(&mut self, center: Vec2, radius: Vec2, color: Color) {

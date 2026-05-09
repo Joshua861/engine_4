@@ -3,9 +3,10 @@ use crate::get_render_state;
 use crate::post_processing::PostProcessingEffect;
 use crate::{DrawQueues, d2::DrawQueue2D};
 use glium::Texture2d;
+use glium::framebuffer::DepthRenderBuffer;
 use glium::{
     Surface,
-    framebuffer::SimpleFrameBuffer,
+    framebuffer::{RenderBuffer, SimpleFrameBuffer},
     texture::{DepthTexture2d, TextureCreationError},
     uniform,
 };
@@ -21,18 +22,32 @@ pub struct RenderTexture {
     pub dimensions: UVec2,
     pub color_texture: TextureRef,
     pub depth_texture: DepthTexture2d,
+    pub msaa_color: RenderBuffer,
+    pub msaa_depth: DepthRenderBuffer,
 }
 
 impl RenderTexture {
     pub fn framebuffer(&mut self) -> SimpleFrameBuffer<'_> {
         let window = get_window_state();
-        let texture = self.color_texture.get();
-        SimpleFrameBuffer::with_depth_buffer(
-            &window.display,
-            &texture.gl_texture,
-            &self.depth_texture,
-        )
-        .unwrap()
+        SimpleFrameBuffer::with_depth_buffer(&window.display, &self.msaa_color, &self.msaa_depth)
+            .unwrap()
+    }
+
+    pub fn resolve(&self) {
+        let display = get_display();
+        let msaa_fbo = SimpleFrameBuffer::new(display, &self.msaa_color).unwrap();
+        let resolved_fbo =
+            SimpleFrameBuffer::new(display, &self.color_texture.get().gl_texture).unwrap();
+        msaa_fbo.blit_whole_color_to(
+            &resolved_fbo,
+            &glium::BlitTarget {
+                left: 0,
+                bottom: 0,
+                width: self.dimensions.x as i32,
+                height: self.dimensions.y as i32,
+            },
+            glium::uniforms::MagnifySamplerFilter::Linear,
+        );
     }
 }
 
@@ -212,6 +227,7 @@ impl RenderPipeline {
                         &mut cameras,
                         is_texture_target,
                     );
+                    a.resolve();
                 }
                 RenderStep::PostProcessing(effects) => {
                     for effect in effects.0 {
@@ -307,12 +323,29 @@ pub(crate) fn empty_render_texture(
 ) -> Result<RenderTexture, TextureCreationError> {
     let window = get_window_state();
     let facade = &window.display;
+    let samples = 4;
     let texture = Texture2d::empty(facade, width, height)?;
     let texture = SgeTexture::new(texture).create();
     Ok(RenderTexture {
         dimensions: UVec2::new(width, height),
         depth_texture: DepthTexture2d::empty(facade, width, height)?,
         color_texture: texture,
+        msaa_color: RenderBuffer::new_multisample(
+            facade,
+            glium::texture::UncompressedFloatFormat::U8U8U8U8,
+            width,
+            height,
+            samples,
+        )
+        .unwrap(),
+        msaa_depth: DepthRenderBuffer::new_multisample(
+            facade,
+            glium::texture::DepthFormat::I24,
+            width,
+            height,
+            samples,
+        )
+        .unwrap(),
     })
 }
 

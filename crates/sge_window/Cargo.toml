@@ -13,3 +13,4 @@ sge_error_union.workspace = true
 glium.workspace = true
 sge_global.workspace = true
 glutin-winit.workspace = true
+log.workspace = true

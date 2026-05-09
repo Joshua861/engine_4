@@ -24,6 +24,7 @@ use glium::{
     },
 };
 use glutin_winit::{DisplayBuilder, GlWindow};
+use log::info;
 use sge_error_union::ErrorUnion;
 use sge_vectors::{UVec2, Vec2};
 
@@ -126,6 +127,17 @@ pub fn init(opts: WindowOptions) -> Result<(), WindowCreationError> {
         .expect("Failed to set swap interval");
 
     let display = Display::from_context_surface(gl_context, gl_surface)?;
+
+    #[cfg(debug_assertions)]
+    {
+        use glium::CapabilitiesSource;
+
+        let samples = display
+            .get_context()
+            .get_capabilities()
+            .max_framebuffer_samples;
+        info!("Max samples: {:?}", samples);
+    }
 
     let state = WindowState {
         window_size: physical_size_to_vec2(window.inner_size()),

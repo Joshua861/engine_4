@@ -44,7 +44,7 @@ impl State {
         draw_ui(ui, vec2(0.0, 0.0));
 
         if self.show_debug_info {
-            draw_debug_info();
+            draw_simple_debug_info();
         }
     }
 
