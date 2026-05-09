@@ -68,7 +68,7 @@ pub fn init_custom(mut opts: Opts) -> Result<(), InitError> {
     get_window_state().window.request_redraw();
     #[cfg(feature = "input")]
     sge_input::init()?;
-    sge_camera::init(size.width, size.height, false);
+    sge_camera::init(size.x, size.y, false);
     #[cfg(feature = "egui")]
     sge_egui::init();
     #[cfg(feature = "debugging")]

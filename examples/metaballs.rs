@@ -9,6 +9,8 @@ async fn main() -> anyhow::Result<()> {
     let mut balls = Metaballs::new()?;
     let mut velocities: ConstantArray<Vec2, N> = ConstantArray::new();
 
+    let mut cool_stuff = false;
+
     for i in 0..N {
         velocities[i] = vec2(rand_range(-10.0..10.0), rand_range(-10.0..10.0));
         balls.add_metaball(Metaball::new(vec2(0.0, 0.0), 100.0))?;
@@ -19,9 +21,11 @@ async fn main() -> anyhow::Result<()> {
     loop {
         clear_screen(Color::NEUTRAL_900);
 
-        draw_fps_bg();
-
         balls.draw_world();
+
+        if key_pressed(KeyCode::Space) {
+            cool_stuff = !cool_stuff;
+        }
 
         // random bullshit just wiggle them around and stuff
         for i in 0..N {
@@ -49,6 +53,14 @@ async fn main() -> anyhow::Result<()> {
                 balls[i].center[1] = window_size.y;
             }
         }
+
+        if cool_stuff {
+            for _ in 0..3 {
+                chromatic_abberation_screen(50.0);
+                hue_rotate_screen(180.0);
+            }
+        }
+        draw_fps_bg();
 
         if should_quit() {
             break;

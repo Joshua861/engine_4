@@ -199,12 +199,18 @@ pub use sge_vectors::{
     vec3, vec4,
 };
 pub use sge_window::{
-    SgeDisplay, WindowCreationError, WindowOptions, WindowState, availible_monitors,
-    current_monitor, dpi_scaling, fullscreen, get_display, get_display_mut, get_window_state,
-    grab_cursor, has_focus, is_decorated, max_window_dimension, min_window_dimension,
-    opengl_context, opengl_version, release_cursor, set_cursor_grab, set_cursor_visible,
-    set_decorations, set_window_content_protected, set_window_cursor_hittest, set_window_icon,
-    set_window_level, set_window_theme, use_alias_cursor_icon, use_all_resize_cursor_icon,
+    IntoWindowSize, SgeDisplay, WindowCreationError, WindowOptions, WindowState,
+    availible_monitors, cancel_window_request_user_attention, current_monitor, dpi_scaling,
+    end_of_frame, fullscreen, get_display, get_display_mut, get_window_state, grab_cursor,
+    is_fullscreen, is_window_decorated, is_window_focused, is_window_maximized,
+    is_window_minimised, is_window_minimized, is_window_resizable, is_window_visible,
+    max_window_dimension, min_window_dimension, opengl_context, opengl_version, primary_monitor,
+    release_cursor, request_window_inner_size, resize_increments, set_cursor_grab,
+    set_cursor_position, set_cursor_visible, set_fullscreen, set_max_window_inner_size,
+    set_min_window_inner_size, set_window_blur, set_window_content_protected,
+    set_window_cursor_hittest, set_window_decorations, set_window_icon, set_window_level,
+    set_window_maximized, set_window_resizable, set_window_theme, set_window_title,
+    set_window_visible, use_alias_cursor_icon, use_all_resize_cursor_icon,
     use_all_scroll_cursor_icon, use_cell_cursor_icon, use_col_resize_cursor_icon,
     use_context_menu_cursor_icon, use_copy_cursor_icon, use_crosshair_cursor_icon, use_cursor_icon,
     use_default_cursor_icon, use_dnd_ask_cursor_icon, use_e_resize_cursor_icon,
@@ -216,8 +222,10 @@ pub use sge_window::{
     use_row_resize_cursor_icon, use_s_resize_cursor_icon, use_se_resize_cursor_icon,
     use_sw_resize_cursor_icon, use_text_cursor_icon, use_vertical_text_cursor_icon,
     use_w_resize_cursor_icon, use_wait_cursor_icon, use_zoom_in_cursor_icon,
-    use_zoom_out_cursor_icon, window_center, window_height, window_size, window_size_u32,
-    window_theme, window_title, window_width,
+    use_zoom_out_cursor_icon, window_aspect_ratio, window_center, window_enabled_buttons,
+    window_height, window_id, window_inner_position, window_inner_size, window_outer_position,
+    window_outer_size, window_request_user_attention, window_size, window_size_u32, window_theme,
+    window_title, window_width,
 };
 pub mod graph_networks {
     pub use sge_graph_networks::*;

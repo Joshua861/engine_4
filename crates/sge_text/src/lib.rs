@@ -404,6 +404,27 @@ pub struct TextDrawParams {
     pub do_dpi_scaling: bool,
 }
 
+#[bon::bon]
+impl TextDrawParams {
+    #[builder]
+    pub fn builder(
+        font: Option<FontRef>,
+        font_size: Option<usize>,
+        color: Option<Color>,
+        position: Option<Vec2>,
+        do_dpi_scaling: Option<bool>,
+    ) -> Self {
+        let d = Self::default();
+        Self {
+            font,
+            font_size: font_size.unwrap_or(d.font_size),
+            color: color.unwrap_or(d.color),
+            position: position.unwrap_or(d.position),
+            do_dpi_scaling: do_dpi_scaling.unwrap_or(d.do_dpi_scaling),
+        }
+    }
+}
+
 impl Default for TextDrawParams {
     fn default() -> Self {
         Self {

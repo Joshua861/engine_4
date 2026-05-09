@@ -1,8 +1,8 @@
 pub use area::*;
 pub mod area;
 
-use sge_error_union::ErrorUnion;
 pub use rendering::*;
+use sge_error_union::ErrorUnion;
 pub mod rendering;
 
 pub use vertex::*;

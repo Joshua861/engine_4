@@ -13,6 +13,7 @@ use glium::{
         surface::{SurfaceAttributesBuilder, SwapInterval, WindowSurface},
     },
     winit::{
+        self,
         dpi::PhysicalSize,
         error::ExternalError,
         event_loop::EventLoop,
@@ -24,7 +25,7 @@ use glium::{
 };
 use glutin_winit::{DisplayBuilder, GlWindow};
 use sge_error_union::ErrorUnion;
-use sge_vectors::Vec2;
+use sge_vectors::{UVec2, Vec2};
 
 pub type SgeDisplay = Display<WindowSurface>;
 
@@ -151,8 +152,9 @@ pub fn window_center() -> Vec2 {
     window_size() / 2.0
 }
 
-pub fn window_size_u32() -> PhysicalSize<u32> {
-    get_window_state().window.inner_size()
+pub fn window_size_u32() -> UVec2 {
+    let size = get_window_state().window_size;
+    UVec2::new(size.x as u32, size.y as u32)
 }
 
 pub fn window_height() -> f32 {
@@ -385,11 +387,15 @@ pub fn is_fullscreen() -> bool {
     get_window_state().window.fullscreen().is_some()
 }
 
-pub fn set_decorations(decorations: bool) {
+pub fn set_fullscreen(fullscreen: Option<Fullscreen>) {
+    get_window_state().window.set_fullscreen(fullscreen);
+}
+
+pub fn set_window_decorations(decorations: bool) {
     get_window_state().window.set_decorations(decorations);
 }
 
-pub fn is_decorated() -> bool {
+pub fn is_window_decorated() -> bool {
     get_window_state().window.is_decorated()
 }
 
@@ -401,7 +407,7 @@ pub fn set_window_icon(icon: Option<glium::winit::window::Icon>) {
     get_window_state().window.set_window_icon(icon);
 }
 
-pub fn has_focus() -> bool {
+pub fn is_window_focused() -> bool {
     get_window_state().window.has_focus()
 }
 
@@ -431,4 +437,152 @@ pub fn opengl_context() -> &'static std::rc::Rc<glium::backend::Context> {
 
 pub fn opengl_version() -> &'static Version {
     opengl_context().get_opengl_version()
+}
+
+pub fn window_enabled_buttons() -> glium::winit::window::WindowButtons {
+    get_window_state().window.enabled_buttons()
+}
+
+pub fn is_window_minimised() -> Option<bool> {
+    get_window_state().window.is_minimized()
+}
+
+pub fn set_window_maximized(maximized: bool) {
+    get_window_state().window.set_maximized(maximized);
+}
+
+pub fn window_inner_size() -> Vec2 {
+    physical_size_to_vec2(get_window_state().window.inner_size())
+}
+
+pub fn request_window_inner_size(size: impl IntoWindowSize) -> Option<PhysicalSize<u32>> {
+    get_window_state()
+        .window
+        .request_inner_size(size.into_window_size())
+}
+
+pub fn window_inner_position() -> Option<Vec2> {
+    get_window_state()
+        .window
+        .inner_position()
+        .ok()
+        .map(|pos| Vec2::new(pos.x as f32, pos.y as f32))
+}
+
+pub fn window_id() -> glium::winit::window::WindowId {
+    get_window_state().window.id()
+}
+
+pub fn is_window_maximized() -> bool {
+    get_window_state().window.is_maximized()
+}
+
+pub fn is_window_minimized() -> Option<bool> {
+    get_window_state().window.is_minimized()
+}
+
+pub fn is_window_resizable() -> bool {
+    get_window_state().window.is_resizable()
+}
+
+pub fn is_window_visible() -> Option<bool> {
+    get_window_state().window.is_visible()
+}
+
+pub fn primary_monitor() -> Option<glium::winit::monitor::MonitorHandle> {
+    get_window_state().window.primary_monitor()
+}
+
+pub fn window_request_user_attention(request_type: glium::winit::window::UserAttentionType) {
+    get_window_state()
+        .window
+        .request_user_attention(Some(request_type));
+}
+
+pub fn cancel_window_request_user_attention() {
+    get_window_state().window.request_user_attention(None);
+}
+
+pub fn resize_increments() -> Option<Vec2> {
+    get_window_state()
+        .window
+        .resize_increments()
+        .map(|increments| Vec2::new(increments.width as f32, increments.height as f32))
+}
+
+pub fn set_window_blur(enabled: bool) {
+    get_window_state().window.set_blur(enabled);
+}
+
+pub fn set_cursor_position(position: Vec2) -> Result<(), ExternalError> {
+    get_window_state()
+        .window
+        .set_cursor_position(winit::dpi::PhysicalPosition::new(
+            position.x as f64,
+            position.y as f64,
+        ))
+}
+
+pub fn set_max_window_inner_size(size: impl IntoWindowSize) {
+    get_window_state()
+        .window
+        .set_max_inner_size(Some(size.into_window_size()));
+}
+
+pub fn set_min_window_inner_size(size: impl IntoWindowSize) {
+    get_window_state()
+        .window
+        .set_min_inner_size(Some(size.into_window_size()));
+}
+
+pub fn set_window_resizable(resizable: bool) {
+    get_window_state().window.set_resizable(resizable);
+}
+
+pub fn set_window_title(title: impl Into<String>) {
+    get_window_state().window.set_title(&title.into());
+}
+
+pub fn set_window_visible(visible: bool) {
+    get_window_state().window.set_visible(visible);
+}
+
+pub fn window_outer_size() -> Vec2 {
+    physical_size_to_vec2(get_window_state().window.outer_size())
+}
+
+pub fn window_outer_position() -> Option<Vec2> {
+    get_window_state()
+        .window
+        .outer_position()
+        .ok()
+        .map(|pos| Vec2::new(pos.x as f32, pos.y as f32))
+}
+
+pub trait IntoWindowSize {
+    fn into_window_size(self) -> winit::dpi::Size;
+}
+
+impl IntoWindowSize for winit::dpi::LogicalSize<f64> {
+    fn into_window_size(self) -> winit::dpi::Size {
+        self.into()
+    }
+}
+
+impl IntoWindowSize for winit::dpi::PhysicalSize<u32> {
+    fn into_window_size(self) -> winit::dpi::Size {
+        self.into()
+    }
+}
+
+impl IntoWindowSize for sge_vectors::Vec2 {
+    fn into_window_size(self) -> winit::dpi::Size {
+        winit::dpi::LogicalSize::new(self.x as f64, self.y as f64).into()
+    }
+}
+
+impl IntoWindowSize for sge_vectors::UVec2 {
+    fn into_window_size(self) -> winit::dpi::Size {
+        winit::dpi::PhysicalSize::new(self.x, self.y).into()
+    }
 }

@@ -29,3 +29,4 @@ sge_window.workspace = true
 termcolor.workspace = true
 thiserror.workspace = true
 sge_api.workspace = true
+bon.workspace = true

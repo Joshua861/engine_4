@@ -18,6 +18,8 @@
 - [ ] get screen to world ray
 - [X] take screenshot
 - [X] load image from texture
+- [ ] draw something behind something else
+- [ ] animate in by checking if the state exists, or if the state was updated last frame and then transitioning in. could do anything...
 - [ ] load image from screen
 - [ ] add post frame callback
 - [ ] play_sound_looped
