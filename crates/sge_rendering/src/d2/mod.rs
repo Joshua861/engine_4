@@ -498,4 +498,50 @@ impl Renderer2D {
         batch.max_index += vertices.len() as u32;
         batch.indices.append(&mut indices);
     }
+
+    pub fn add_sector(
+        &mut self,
+        center: Vec2,
+        radius: Vec2,
+        color: Color,
+        start_angle: f32,
+        end_angle: f32,
+    ) {
+        debugger_add_drawn_objects(1);
+        self.current_circle_batch()
+            .instances
+            .push(CircleInstance::new_sector(
+                center,
+                0.0,
+                radius,
+                color,
+                start_angle,
+                end_angle,
+            ));
+    }
+
+    pub fn add_sector_with_outline(
+        &mut self,
+        center: Vec2,
+        radius: Vec2,
+        fill_color: Color,
+        outline_thickness: f32,
+        outline_color: Color,
+        start_angle: f32,
+        end_angle: f32,
+    ) {
+        debugger_add_drawn_objects(1);
+        self.current_circle_batch()
+            .instances
+            .push(CircleInstance::new_sector_with_outline(
+                center,
+                0.0,
+                radius,
+                fill_color,
+                outline_thickness,
+                outline_color,
+                start_angle,
+                end_angle,
+            ));
+    }
 }

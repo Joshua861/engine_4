@@ -123,6 +123,10 @@ pub fn oscillate(min: f32, max: f32) -> f32 {
     (time().sin() + 1.0) * 0.5 * (max - min) + min
 }
 
+pub fn oscillate_t(min: f32, max: f32, time: f32) -> f32 {
+    (time.sin() + 1.0) * 0.5 * (max - min) + min
+}
+
 pub fn once_per_second() -> bool {
     let state = get_time_state();
 

@@ -128,6 +128,12 @@ pub use search::*;
 mod flow;
 pub use flow::*;
 
+mod loading_spinner;
+pub use loading_spinner::*;
+
+mod dock;
+pub use dock::*;
+
 use sge_window::window_width;
 
 pub fn media_query<T>(small: T, medium: T, large: T) -> T {

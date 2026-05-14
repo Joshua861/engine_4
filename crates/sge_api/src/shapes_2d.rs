@@ -10,6 +10,7 @@ use sge_rendering::{
     wdq2d,
 };
 use sge_shapes::d2::*;
+pub use sge_types::Orientation;
 use sge_types::{ColorVertex2D, Pattern};
 use sge_vectors::{Vec2, vec2};
 
@@ -105,6 +106,42 @@ impl Shape2DExt for CircleWithOutline {
             self.fill_color,
             thickness,
             color,
+        );
+    }
+}
+
+impl Shape2DExt for Sector {
+    fn draw_to(&self, mut renderer: Renderer2D) {
+        renderer.add_sector(
+            self.center,
+            self.radius,
+            self.fill_color,
+            self.start_angle,
+            self.end_angle,
+        );
+    }
+
+    fn draw_outline_to(&self, mut renderer: Renderer2D, thickness: f32, color: Color) {
+        renderer.add_sector_with_outline(
+            self.center,
+            self.radius,
+            Color::TRANSPARENT,
+            thickness,
+            color,
+            self.start_angle,
+            self.end_angle,
+        );
+    }
+
+    fn draw_with_outline_to(&self, mut renderer: Renderer2D, thickness: f32, color: Color) {
+        renderer.add_sector_with_outline(
+            self.center,
+            self.radius,
+            self.fill_color,
+            thickness,
+            color,
+            self.start_angle,
+            self.end_angle,
         );
     }
 }
@@ -421,6 +458,134 @@ draw_variants! {
             let shape = Circle { center, radius: radius + Vec2::splat(thickness), color: fill };
             if shape.bounds().is_visible_in_world() {
                 renderer.add_circle_with_outline(center, radius, fill, thickness, outline);
+            }
+        }
+    }
+}
+
+draw_variants! {
+    fn sector(
+        center: Vec2, radius: f32, start_angle: f32, end_angle: f32, color: Color
+    ) {
+        screen(renderer) {
+            renderer.add_sector(center, Vec2::splat(radius), color, start_angle, end_angle);
+        }
+        world(renderer) {
+            let shape = Sector { center, radius: Vec2::splat(radius), fill_color: color, start_angle, end_angle, outline_color: color, outline_thickness: 0.0 };
+            if shape.bounds().is_visible_in_world() {
+                renderer.add_sector(center, Vec2::splat(radius), color, start_angle, end_angle);
+            }
+        }
+    }
+}
+
+draw_variants! {
+    fn sector_outline(
+        center: Vec2, radius: f32, start_angle: f32, end_angle: f32,
+        outline_color: Color, thickness: f32,
+    ) {
+        screen(renderer) {
+            renderer.add_sector_with_outline(
+                center, Vec2::splat(radius),
+                Color::new(0.0, 0.0, 0.0).with_alpha(0.0), thickness, outline_color,
+                start_angle, end_angle,
+            );
+        }
+        world(renderer) {
+            let shape = Sector { center, radius: Vec2::splat(radius), fill_color: Color::TRANSPARENT, start_angle, end_angle, outline_color, outline_thickness: thickness };
+            if shape.bounds().is_visible_in_world() {
+                renderer.add_sector_with_outline(
+                    center, Vec2::splat(radius),
+                    Color::new(0.0, 0.0, 0.0).with_alpha(0.0), thickness, outline_color,
+                    start_angle, end_angle,
+                );
+            }
+        }
+    }
+}
+
+draw_variants! {
+    fn sector_with_outline(
+        center: Vec2, radius: f32, start_angle: f32, end_angle: f32,
+        fill_color: Color, outline_color: Color, thickness: f32,
+    ) {
+        screen(renderer) {
+            renderer.add_sector_with_outline(
+                center, Vec2::splat(radius), fill_color, thickness, outline_color,
+                start_angle, end_angle,
+            );
+        }
+        world(renderer) {
+            let shape = Sector { center, radius: Vec2::splat(radius), fill_color, start_angle, end_angle, outline_color, outline_thickness: thickness };
+            if shape.bounds().is_visible_in_world() {
+                renderer.add_sector_with_outline(
+                    center, Vec2::splat(radius), fill_color, thickness, outline_color,
+                    start_angle, end_angle,
+                );
+            }
+        }
+    }
+}
+
+draw_variants! {
+    fn ellipse_sector(
+        center: Vec2, radius: Vec2, start_angle: f32, end_angle: f32, color: Color
+    ) {
+        screen(renderer) {
+            renderer.add_sector(center, radius, color, start_angle, end_angle);
+        }
+        world(renderer) {
+            let shape = Sector { center, radius, fill_color: color, start_angle, end_angle, outline_color: color, outline_thickness: 0.0 };
+            if shape.bounds().is_visible_in_world() {
+                renderer.add_sector(center, radius, color, start_angle, end_angle);
+            }
+        }
+    }
+}
+
+draw_variants! {
+    fn ellipse_sector_outline(
+        center: Vec2, radius: Vec2, start_angle: f32, end_angle: f32,
+        outline_color: Color, thickness: f32,
+    ) {
+        screen(renderer) {
+            renderer.add_sector_with_outline(
+                center, radius,
+                Color::new(0.0, 0.0, 0.0).with_alpha(0.0), thickness, outline_color,
+                start_angle, end_angle,
+            );
+        }
+        world(renderer) {
+            let shape = Sector { center, radius: radius, fill_color: Color::TRANSPARENT, start_angle, end_angle, outline_color, outline_thickness: thickness };
+            if shape.bounds().is_visible_in_world() {
+                renderer.add_sector_with_outline(
+                    center, radius,
+                    Color::new(0.0, 0.0, 0.0).with_alpha(0.0), thickness, outline_color,
+                    start_angle, end_angle,
+                );
+            }
+        }
+    }
+}
+
+draw_variants! {
+    fn ellipse_sector_with_outline(
+        center: Vec2, radius: Vec2, start_angle: f32, end_angle: f32,
+        fill_color: Color, outline_color: Color, thickness: f32,
+    ) {
+        screen(renderer) {
+            renderer.add_sector_with_outline(
+                center, radius, fill_color, thickness, outline_color,
+                start_angle, end_angle,
+            );
+        }
+        world(renderer) {
+            let shape = Sector { center, radius, fill_color, start_angle, end_angle, outline_color, outline_thickness: thickness };
+            if shape.bounds().is_visible_in_world() {
+                renderer.add_sector_with_outline(
+                    center, radius, fill_color, thickness, outline_color,
+                    start_angle, end_angle,
+                );
             }
         }
     }
@@ -1062,35 +1227,6 @@ draw_variants!(
         draw_line_to(start, end, thickness, color, renderer);
     }
 );
-
-#[derive(Debug, Clone, Copy)]
-pub enum Orientation {
-    Vertical,
-    Horizontal,
-}
-
-impl Orientation {
-    pub fn main(self, vec2: Vec2) -> f32 {
-        match self {
-            Orientation::Vertical => vec2.y,
-            Orientation::Horizontal => vec2.x,
-        }
-    }
-
-    pub fn cross(self, vec2: Vec2) -> f32 {
-        match self {
-            Orientation::Vertical => vec2.x,
-            Orientation::Horizontal => vec2.y,
-        }
-    }
-
-    pub fn create_vec2(self, main: f32, cross: f32) -> Vec2 {
-        match self {
-            Orientation::Vertical => vec2(cross, main),
-            Orientation::Horizontal => vec2(main, cross),
-        }
-    }
-}
 
 #[derive(Debug, Clone, Copy)]
 pub struct GradientPoint {

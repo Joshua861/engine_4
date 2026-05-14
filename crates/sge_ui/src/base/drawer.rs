@@ -104,3 +104,7 @@ impl UiNode for Drawer {
         }
     }
 }
+
+pub fn drawer_state(id: usize) -> &'static mut DrawerState {
+    State::from_id(id).get_or_default()
+}

@@ -35,6 +35,10 @@ impl Debug for Color {
     }
 }
 
+const fn convert(n: f32) -> u8 {
+    (n * 255.0).round() as u8
+}
+
 impl Color {
     pub const fn new(r: f32, g: f32, b: f32) -> Self {
         Self { r, g, b, a: 1.0 }
@@ -52,10 +56,16 @@ impl Color {
     }
 
     pub fn to_u8(&self) -> (u8, u8, u8) {
-        const fn convert(n: f32) -> u8 {
-            (n * 255.0).round() as u8
-        }
         (convert(self.r), convert(self.g), convert(self.b))
+    }
+
+    pub fn to_rgba_u8(&self) -> (u8, u8, u8, u8) {
+        (
+            convert(self.r),
+            convert(self.g),
+            convert(self.b),
+            convert(self.a),
+        )
     }
 
     pub const fn from_rgba_u8(r: u8, g: u8, b: u8, a: u8) -> Self {

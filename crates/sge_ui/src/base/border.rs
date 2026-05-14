@@ -14,6 +14,7 @@ pub enum BorderType {
     Solid,
     Dashed(f32),
     Dotted,
+    Rectangle,
 }
 
 impl BorderStyle {}
@@ -25,7 +26,7 @@ impl Default for BorderStyle {
 }
 
 #[derive(Debug)]
-enum Side {
+pub enum Side {
     Top,
     Bottom,
     Left,
@@ -62,7 +63,7 @@ impl BorderStyle {
         self
     }
 
-    fn draw(&self, a: Vec2, b: Vec2, side: Side) {
+    pub fn draw(&self, a: Vec2, b: Vec2, side: Side) {
         match self.ty {
             BorderType::Solid => {
                 let ((x_a, y_a), (x_b, y_b)) = match side {
@@ -79,6 +80,28 @@ impl BorderStyle {
                 let d = b + (self.thickness * mul_b);
 
                 draw_custom_shape(vec![a, c, d, b], self.color);
+            }
+            BorderType::Rectangle => {
+                let (point_a, point_b) = match side {
+                    Side::Top => (
+                        a + Vec2::new(0.0, self.thickness),
+                        b + Vec2::new(0.0, self.thickness),
+                    ),
+                    Side::Left => (
+                        a + Vec2::new(self.thickness, 0.0),
+                        b + Vec2::new(self.thickness, 0.0),
+                    ),
+                    Side::Bottom => (
+                        a - Vec2::new(0.0, self.thickness),
+                        b - Vec2::new(0.0, self.thickness),
+                    ),
+                    Side::Right => (
+                        a - Vec2::new(self.thickness, 0.0),
+                        b - Vec2::new(self.thickness, 0.0),
+                    ),
+                };
+
+                draw_custom_shape(vec![a, point_a, point_b, b], self.color);
             }
             BorderType::Dashed(_) | BorderType::Dotted => {
                 let half_thickness = self.thickness / 2.0;

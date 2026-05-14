@@ -7,7 +7,12 @@ description = "UI library for SGE"
 license = "MIT"
 repository = "https://github.com/LilyRL/sge"
 
+[features]
+material = ["dep:material-colors"]
+default = ["material"]
+
 [dependencies]
+material-colors = { version = "0.4.2", optional = true }
 sge_vectors.workspace = true
 bon.workspace = true
 glium.workspace = true

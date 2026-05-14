@@ -933,6 +933,43 @@ impl Shape2D for RadialGradient {
     fn set_rotation(&mut self, _angle: f32) {}
 }
 
+#[derive(Clone, Debug)]
+pub struct Sector {
+    pub center: Vec2,
+    pub radius: Vec2,
+    pub fill_color: Color,
+    pub outline_thickness: f32,
+    pub outline_color: Color,
+    pub start_angle: f32,
+    pub end_angle: f32,
+}
+
+impl HasBounds2D for Sector {
+    fn bounds(&self) -> Aabb2d {
+        Aabb2d::from_center_size(self.center, self.radius * 2.0)
+    }
+}
+
+impl Shape2D for Sector {
+    fn gen_mesh(&self, _starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
+        unimplemented!()
+    }
+
+    fn set_rotation(&mut self, _: f32) {}
+
+    fn set_color(&mut self, color: Color) {
+        self.fill_color = color;
+    }
+
+    fn get_color(&self) -> Color {
+        self.fill_color
+    }
+
+    fn set_pos(&mut self, pos: Vec2) {
+        self.center = pos;
+    }
+}
+
 pub const QUAD_INDICES: [u32; 6] = [0, 1, 2, 1, 2, 3];
 
 pub const UNIT_QUAD: [ColorVertex2D; 4] = [

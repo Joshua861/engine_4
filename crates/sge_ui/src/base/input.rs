@@ -153,7 +153,7 @@ impl UiNode for TextInput {
                     inner.top_left + vec2(dimensions.size.x, 0.0)
                 },
                 Vec2::new(CURSOR_WIDTH, dimensions.size.y),
-                Color::NEUTRAL_200,
+                self.color,
             );
         }
 

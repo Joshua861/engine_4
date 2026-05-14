@@ -15,6 +15,7 @@ const NODES: &[(&str, fn() -> UiRef)] = &[
     ("Chart/line", line_chart),
     ("Circle", circle),
     ("Color selector", color_selector),
+    ("Dock", dock),
     ("Drawer", drawer),
     ("Drop file", drop_file),
     ("Fill/active", active_fill),
@@ -37,6 +38,7 @@ const NODES: &[(&str, fn() -> UiRef)] = &[
     ("Layout/grid", grid),
     ("Layout/row", row),
     ("Loading Bar", loading_bar),
+    ("Loading Spinner", loading_spinner),
     ("Modal", modal),
     ("Outline", outline),
     ("Progress Bar", progress_bar),
@@ -191,13 +193,16 @@ fn align() -> UiRef {
 }
 
 fn border() -> UiRef {
-    let b = BorderStyle::new(20.0, SCHEME.bg2);
-    let c = BorderStyle::new(20.0, SCHEME.bg3);
+    let a = BorderStyle::new(20.0, SCHEME.bg2);
+    let b = BorderStyle::new(20.0, SCHEME.bg3);
+    let c = BorderStyle::custom(20.0, SCHEME.bg2, BorderType::Rectangle);
+    let d = BorderStyle::custom(20.0, SCHEME.bg3, BorderType::Rectangle);
 
     Col::with_gap(
         20.0,
         [
-            Border::tblr(c, c, b, b, BoxFill::new(SCHEME.bg1, EMPTY)).square(200.0),
+            Border::tblr(b, b, a, a, BoxFill::new(SCHEME.bg1, EMPTY)).square(200.0),
+            Border::tblr(c, c, d, d, BoxFill::new(SCHEME.bg1, EMPTY)).square(200.0),
             Border::all_style(
                 BorderStyle::custom(10.0, SCHEME.bg3, BorderType::Dashed(30.0)),
                 EMPTY,
@@ -503,6 +508,10 @@ fn loading_bar() -> UiRef {
     LoadingBar::new(Color::SKY_400, Color::SKY_400.darken(0.05)).sized_wh(300.0, 30.0)
 }
 
+fn loading_spinner() -> UiRef {
+    LoadingSpinner::new(SCHEME.fg1).square(100.0)
+}
+
 fn progress_bar() -> UiRef {
     struct LoadingBarExampleState {
         progress: usize,
@@ -531,6 +540,7 @@ fn progress_bar() -> UiRef {
                 state.progress as f32,
                 5.0,
                 RoundedFill::new(SCHEME.fg1, 10.0, EMPTY),
+                EMPTY,
                 id!(),
             )
             .padding(5.0)
@@ -735,6 +745,61 @@ fn rich_text_page() -> UiRef {
 
 fn hyperlink() -> UiRef {
     flat::Hyperlink::new("https://google.com")
+}
+
+fn dock() -> UiRef {
+    fn d(a: UiRef, b: UiRef, orientation: Orientation, split: Split, id: usize) -> UiRef {
+        Dock::new(
+            BorderStyle::custom(1.0, SCHEME.bg3, BorderType::Rectangle),
+            BorderStyle::custom(2.0, SCHEME.bg4, BorderType::Rectangle),
+            orientation,
+            split,
+            id,
+            Center::new(a),
+            Center::new(b),
+        )
+    }
+
+    d(
+        d(
+            d(
+                text("A"),
+                text("B"),
+                Orientation::Vertical,
+                Split::Proportion(0.5),
+                id!(),
+            ),
+            d(
+                text("C"),
+                text("D"),
+                Orientation::Vertical,
+                Split::FixedSizeB(100.0),
+                id!(),
+            ),
+            Orientation::Horizontal,
+            Split::Proportion(0.2),
+            id!(),
+        ),
+        d(
+            text("E"),
+            d(
+                text("F"),
+                text("G"),
+                Orientation::Horizontal,
+                Split::Proportion(0.5),
+                id!(),
+            ),
+            Orientation::Horizontal,
+            Split::Proportion(0.8),
+            id!(),
+        ),
+        Orientation::Vertical,
+        Split::Proportion(0.5),
+        id!(),
+    )
+    .border(SCHEME.bg3, 1.0)
+    .padding_bottom(60.0)
+    .max_height(window_height())
 }
 
 fn tooltip() -> UiRef {

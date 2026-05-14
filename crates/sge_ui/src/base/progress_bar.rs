@@ -8,6 +8,7 @@ pub struct ProgressBar {
     pub(crate) max: f32,
     pub(crate) value: f32,
     pub(crate) fill: Child,
+    pub(crate) bg: Child,
     pub(crate) state: State<ProgressBarState>,
     pub(crate) interpolation_speed: f32,
 }
@@ -18,11 +19,12 @@ pub(crate) struct ProgressBarState {
 }
 
 impl ProgressBar {
-    pub fn new(value: f32, max: f32, fill: UiRef, id: usize) -> UiRef {
+    pub fn new(value: f32, max: f32, fill: UiRef, bg: Child, id: usize) -> UiRef {
         ProgressBar {
             max,
             value,
             fill,
+            bg,
             state: State::from_id(id),
             interpolation_speed: 20.0,
         }
@@ -34,6 +36,7 @@ impl ProgressBar {
         value: f32,
         max: f32,
         fill: UiRef,
+        bg: Child,
         interpolation_speed: f32,
         id: usize,
     ) -> UiRef {
@@ -41,6 +44,7 @@ impl ProgressBar {
             max,
             value,
             fill,
+            bg,
             state: State::from_id(id),
             interpolation_speed,
         }
@@ -62,6 +66,12 @@ impl UiNode for ProgressBar {
 
         let fill_area = Area::new(area.top_left, vec2(width, area.height()));
         self.fill.draw(fill_area, ui);
+
+        let bg_area = Area::new(
+            area.top_left + vec2(width, 0.0),
+            vec2(area.width() - width, area.height()),
+        );
+        self.bg.draw(bg_area, ui);
 
         area.size
     }

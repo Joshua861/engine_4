@@ -167,6 +167,7 @@ default = [
     "precise_cursor_movement",
     "text",
     "ui",
+    "material_ui",
     "network",
     "clipboard"
 ]
@@ -184,6 +185,7 @@ text = ["dep:sge_text"]
 ui = ["extra_fonts", "dep:sge_ui"]
 network = ["sge_exec/network"]
 clipboard = ["sge_input/clipboard"]
+material_ui = ["sge_ui/material"]
 
 [workspace]
 members = [

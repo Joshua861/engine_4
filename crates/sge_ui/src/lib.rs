@@ -66,6 +66,9 @@ pub fn init_ui() {
     update();
 
     set_ui_state(UiState::new());
+
+    #[cfg(feature = "material")]
+    library::material::init();
 }
 
 sge_global::global!(UiState, ui_state);

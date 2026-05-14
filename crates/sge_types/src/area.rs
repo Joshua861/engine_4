@@ -1,6 +1,8 @@
 use sge_vectors::Vec2;
 use sge_window::window_size;
 
+use crate::Orientation;
+
 #[derive(Copy, Clone, Debug)]
 pub struct Area {
     pub top_left: Vec2,
@@ -28,6 +30,18 @@ impl Area {
             width: self.size.x as u32,
             height: self.size.y as u32,
         }
+    }
+
+    pub fn square(self) -> Self {
+        let size = self.size.min_element();
+        Self {
+            top_left: self.top_left,
+            size: Vec2::splat(size),
+        }
+    }
+
+    pub fn half_size(&self) -> Vec2 {
+        self.size / 2.0
     }
 
     pub fn resize(&self, new_size: Vec2) -> Self {
@@ -98,52 +112,79 @@ impl Area {
         self.size.y
     }
 
-    pub fn shrink(&self, amount: f32) -> Self {
+    pub fn shrink(self, amount: f32) -> Self {
         Self {
             top_left: self.top_left + Vec2::splat(amount),
             size: self.size - Vec2::splat(amount * 2.0),
         }
     }
 
-    pub fn shrink_vec2(&self, amount: Vec2) -> Self {
+    pub fn shrink_vec2(self, amount: Vec2) -> Self {
         Self {
             top_left: self.top_left + amount,
             size: self.size - amount * 2.0,
         }
     }
 
-    pub fn with_padding(&self, padding: f32) -> Self {
+    pub fn with_padding(self, padding: f32) -> Self {
         Self {
             top_left: self.top_left + Vec2::splat(padding),
             size: self.size - Vec2::splat(padding * 2.0),
         }
     }
 
-    pub fn with_left_padding(&self, padding: f32) -> Self {
+    pub fn with_left_padding(self, padding: f32) -> Self {
         Self {
             top_left: self.top_left + Vec2::new(padding, 0.0),
             size: self.size - Vec2::new(padding, 0.0),
         }
     }
 
-    pub fn with_right_padding(&self, padding: f32) -> Self {
+    pub fn with_right_padding(self, padding: f32) -> Self {
         Self {
             top_left: self.top_left,
             size: self.size - Vec2::new(padding, 0.0),
         }
     }
 
-    pub fn with_top_padding(&self, padding: f32) -> Self {
+    pub fn with_top_padding(self, padding: f32) -> Self {
         Self {
             top_left: self.top_left + Vec2::new(0.0, padding),
             size: self.size - Vec2::new(0.0, padding),
         }
     }
 
-    pub fn with_bottom_padding(&self, padding: f32) -> Self {
+    pub fn with_bottom_padding(self, padding: f32) -> Self {
         Self {
             top_left: self.top_left,
             size: self.size - Vec2::new(0.0, padding),
+        }
+    }
+
+    pub fn split_at(self, split: f32, orientation: Orientation) -> (Self, Self) {
+        match orientation {
+            Orientation::Horizontal => {
+                let left = Self {
+                    top_left: self.top_left,
+                    size: Vec2::new(split, self.size.y),
+                };
+                let right = Self {
+                    top_left: Vec2::new(self.top_left.x + split, self.top_left.y),
+                    size: Vec2::new(self.size.x - split, self.size.y),
+                };
+                (left, right)
+            }
+            Orientation::Vertical => {
+                let top = Self {
+                    top_left: self.top_left,
+                    size: Vec2::new(self.size.x, split),
+                };
+                let bottom = Self {
+                    top_left: Vec2::new(self.top_left.x, self.top_left.y + split),
+                    size: Vec2::new(self.size.x, self.size.y - split),
+                };
+                (top, bottom)
+            }
         }
     }
 }

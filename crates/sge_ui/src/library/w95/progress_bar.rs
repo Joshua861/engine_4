@@ -9,7 +9,13 @@ impl ProgressBar {
             size,
             Card::thin(
                 0.0,
-                base::ProgressBar::new(value, max, BoxFill::new(super::SECONDARY, EMPTY), id),
+                base::ProgressBar::new(
+                    value,
+                    max,
+                    BoxFill::new(super::SECONDARY, EMPTY),
+                    EMPTY,
+                    id,
+                ),
             ),
         )
     }

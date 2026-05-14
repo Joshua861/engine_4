@@ -25,6 +25,8 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+// can ignore this if you only care about screenshots
+
 fn draw_screenshots(screenshots: &[TextureRef]) {
     use ui::*;
 
@@ -50,7 +52,6 @@ fn draw_screenshots(screenshots: &[TextureRef]) {
     draw_ui_in_area(ui, window_area());
 }
 
-// can ignore this if you only care about screenshots
 async fn draw_pattern() {
     let mut hue = 0.0;
     let mut offset = vec2(0.0, 0.0);
