@@ -49,8 +49,8 @@ impl Drawer {
 }
 
 #[derive(Debug, Default)]
-pub(crate) struct DrawerState {
-    pub(crate) open: bool,
+pub struct DrawerState {
+    pub open: bool,
 }
 
 impl UiNode for Drawer {

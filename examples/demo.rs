@@ -139,7 +139,7 @@ async fn main() -> anyhow::Result<()> {
             let points: Vec<Vec2> = (0..10)
                 .map(|_| Vec2::new(rand::<f32>() * 300.0 + 400.0, rand::<f32>() * 300.0 + 100.0))
                 .collect();
-            draw_custom_shape(points, Color::YELLOW_500);
+            draw_custom_shape(&points, Color::YELLOW_500);
         }
 
         if show_debug_info {

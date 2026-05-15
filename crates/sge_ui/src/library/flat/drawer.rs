@@ -64,18 +64,18 @@ impl Drawer {
         let icon = if state.open { open_icon } else { closed_icon };
 
         crate::base::Drawer::new_full(
-            HoverBoxFill::new(
-                bg,
-                bg.lighten(0.1),
-                Padding::tblr(
+            Fill::builder()
+                .color(bg)
+                .hover_color(bg.lighten(0.1))
+                .child(Padding::tblr(
                     10.0,
                     15.0,
                     10.0,
                     10.0,
                     Text::nowrap(format!("{}  {}", icon, title)),
-                ),
-            )
-            .fit_vertical(),
+                ))
+                .build()
+                .fit_vertical(),
             BoxFill::new(bg, Padding::all(10.0, contents)),
             default_open,
             id,

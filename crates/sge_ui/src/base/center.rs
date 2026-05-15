@@ -95,4 +95,12 @@ impl UiRef {
     pub fn center(self) -> UiRef {
         Center::new(self)
     }
+
+    pub fn center_horizontal(self) -> UiRef {
+        Center::horizontal(self)
+    }
+
+    pub fn center_vertical(self) -> UiRef {
+        Center::vertical(self)
+    }
 }

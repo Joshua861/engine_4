@@ -1,4 +1,5 @@
-use sge_programs::{CBEZIER_PROGRAM, METABALL_PROGRAM};
+use glium::{BlendingFunction, LinearBlendingFactor};
+use sge_programs::{FLAT_PROGRAM, METABALL_PROGRAM, SDF_PROGRAM, TEXTURED_PROGRAM};
 use sge_types::Vertex2D;
 
 use super::*;
@@ -41,8 +42,23 @@ impl DrawQueue2D {
 
         for command in &self.draws {
             match command {
-                DrawCommand::Shapes(batch) => {
-                    if !batch.vertices.is_empty() {
+                DrawCommand::Sdf(batch) => {
+                    if !batch.instances.is_empty() {
+                        self.draw_quad_instanced(
+                            frame,
+                            projection,
+                            &batch
+                                .instances
+                                .iter()
+                                .map(|i| i.to_gpu())
+                                .collect::<Vec<_>>(),
+                            SDF_PROGRAM.get(),
+                            batch.scissor,
+                        );
+                    }
+                }
+                DrawCommand::Mesh(batch) => {
+                    if !batch.vertices.is_empty() && !batch.indices.is_empty() {
                         self.draw_mesh_batch(frame, projection, batch, FLAT_PROGRAM.get());
                     }
                 }
@@ -56,64 +72,9 @@ impl DrawQueue2D {
                         self.draw_line_batch(frame, projection, batch);
                     }
                 }
-                DrawCommand::Circles(batch) => {
-                    if !batch.instances.is_empty() {
-                        self.draw_quad_instanced(
-                            frame,
-                            projection,
-                            &batch.instances,
-                            CIRCLE_PROGRAM.get(),
-                            batch.scissor,
-                        );
-                    }
-                }
-                DrawCommand::Radial(batch) => {
-                    if !batch.instances.is_empty() {
-                        self.draw_quad_instanced(
-                            frame,
-                            projection,
-                            &batch.instances,
-                            RADIAL_PROGRAM.get(),
-                            batch.scissor,
-                        );
-                    }
-                }
-                DrawCommand::Rounded(batch) => {
-                    if !batch.instances.is_empty() {
-                        self.draw_quad_instanced(
-                            frame,
-                            projection,
-                            &batch.instances,
-                            ROUNDED_PROGRAM.get(),
-                            batch.scissor,
-                        );
-                    }
-                }
                 DrawCommand::Sprites(batch) => {
                     if !batch.vertices.is_empty() {
                         self.draw_sprite_batch(frame, projection, batch);
-                    }
-                }
-                DrawCommand::QuadraticBezier(batch) => {
-                    if !batch.instances.is_empty() {
-                        self.draw_quad_instanced(
-                            frame,
-                            projection,
-                            &batch.instances,
-                            QBEZIER_PROGRAM.get(),
-                            batch.scissor,
-                        );
-                    }
-                }
-                DrawCommand::CubicBezier(batch) => {
-                    if !batch.instances.is_empty() {
-                        self.draw_quad_instanced(
-                            frame,
-                            projection,
-                            &batch.instances,
-                            CBEZIER_PROGRAM.get(),
-                            batch.scissor,
-                        );
                     }
                 }
                 DrawCommand::Metaballs(batch_ptr) => {
@@ -129,7 +90,7 @@ impl DrawQueue2D {
                     ];
 
                     let display = get_display();
-                    let params = Self::common_draw_params(None);
+                    let params = Self::common_draw_params(None, false);
                     let vertex_buffer = VertexBuffer::new(display, &quad).unwrap();
                     let index_buffer = IndexBuffer::new(
                         display,
@@ -162,42 +123,15 @@ impl DrawQueue2D {
         }
     }
 
-    fn common_draw_params(scissor: Option<glium::Rect>) -> DrawParameters<'static> {
-        DrawParameters {
-            point_size: Some(1.0),
-            line_width: Some(1.0),
-            blend: Blend {
-                color: glium::BlendingFunction::Addition {
-                    source: glium::LinearBlendingFactor::SourceAlpha,
-                    destination: glium::LinearBlendingFactor::OneMinusSourceAlpha,
-                },
-                alpha: glium::BlendingFunction::Addition {
-                    source: glium::LinearBlendingFactor::One,
-                    destination: glium::LinearBlendingFactor::OneMinusSourceAlpha,
-                },
-                constant_value: (1.0, 1.0, 1.0, 1.0),
-            },
-            depth: Depth {
-                test: DepthTest::Overwrite,
-                write: false,
-                ..Default::default()
-            },
-            dithering: get_dithering(),
-            polygon_mode: get_polygon_mode(),
-            scissor,
-            ..Default::default()
-        }
-    }
-
     fn draw_mesh_batch<T: Surface>(
         &self,
         frame: &mut T,
         projection: &Mat4,
-        batch: &ShapeBatch,
+        batch: &MeshBatch,
         program: &glium::Program,
     ) {
         let display = get_display();
-        let params = Self::common_draw_params(batch.scissor);
+        let params = Self::common_draw_params(batch.scissor, false);
         let vertex_buffer = VertexBuffer::new(display, &batch.vertices).unwrap();
         let index_buffer = IndexBuffer::new(
             display,
@@ -219,9 +153,53 @@ impl DrawQueue2D {
             .unwrap();
     }
 
+    fn common_draw_params(
+        scissor: Option<glium::Rect>,
+        alpha_blend: bool,
+    ) -> DrawParameters<'static> {
+        DrawParameters {
+            point_size: Some(1.0),
+            line_width: Some(1.0),
+            blend: if alpha_blend {
+                Blend {
+                    color: glium::BlendingFunction::Addition {
+                        source: glium::LinearBlendingFactor::One,
+                        destination: glium::LinearBlendingFactor::OneMinusSourceAlpha,
+                    },
+                    alpha: glium::BlendingFunction::Addition {
+                        source: glium::LinearBlendingFactor::One,
+                        destination: glium::LinearBlendingFactor::OneMinusSourceAlpha,
+                    },
+                    constant_value: (1.0, 1.0, 1.0, 1.0),
+                }
+            } else {
+                Blend {
+                    color: glium::BlendingFunction::Addition {
+                        source: glium::LinearBlendingFactor::SourceAlpha,
+                        destination: glium::LinearBlendingFactor::OneMinusSourceAlpha,
+                    },
+                    alpha: glium::BlendingFunction::Addition {
+                        source: glium::LinearBlendingFactor::One,
+                        destination: glium::LinearBlendingFactor::OneMinusSourceAlpha,
+                    },
+                    constant_value: (1.0, 1.0, 1.0, 1.0),
+                }
+            },
+            depth: Depth {
+                test: DepthTest::Overwrite,
+                write: false,
+                ..Default::default()
+            },
+            dithering: get_dithering(),
+            polygon_mode: get_polygon_mode(),
+            scissor,
+            ..Default::default()
+        }
+    }
+
     fn draw_point_batch<T: Surface>(&self, frame: &mut T, projection: &Mat4, batch: &PointBatch) {
         let display = get_display();
-        let params = Self::common_draw_params(batch.scissor);
+        let params = Self::common_draw_params(batch.scissor, false);
         let vertex_buffer = VertexBuffer::new(display, &batch.vertices).unwrap();
         let index_buffer = IndexBuffer::new(
             display,
@@ -250,7 +228,7 @@ impl DrawQueue2D {
 
     fn draw_line_batch<T: Surface>(&self, frame: &mut T, projection: &Mat4, batch: &LineBatch) {
         let display = get_display();
-        let mut params = Self::common_draw_params(batch.scissor);
+        let mut params = Self::common_draw_params(batch.scissor, false);
         params.multisampling = false;
         let vertex_buffer = VertexBuffer::new(display, &batch.vertices).unwrap();
         let index_buffer = IndexBuffer::new(
@@ -291,7 +269,7 @@ impl DrawQueue2D {
         S: Surface,
     {
         let display = get_display();
-        let params = Self::common_draw_params(scissor);
+        let params = Self::common_draw_params(scissor, true);
         let quad_buffer = VertexBuffer::new(display, &UNIT_QUAD).unwrap();
         let instance_buffer = VertexBuffer::dynamic(display, instances).unwrap();
         let index_buffer = IndexBuffer::new(
@@ -337,7 +315,7 @@ impl DrawQueue2D {
             projection: projection.to_cols_array_2d()
         };
 
-        let params = Self::common_draw_params(batch.scissor);
+        let params = Self::common_draw_params(batch.scissor, false);
 
         debugger_add_draw_calls(1);
         debugger_add_indices(index_buffer.len());

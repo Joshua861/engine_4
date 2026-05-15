@@ -28,19 +28,15 @@ macro_rules! include_program {
     }};
 }
 
-pub const FLAT_PROGRAM: ProgramRef = ProgramRef(0);
-pub const CIRCLE_PROGRAM: ProgramRef = ProgramRef(1);
-pub const TEXTURED_PROGRAM: ProgramRef = ProgramRef(2);
-pub const FLAT_3D_PROGRAM: ProgramRef = ProgramRef(3);
-pub const GOURAUD_3D_PROGRAM: ProgramRef = ProgramRef(4);
-pub const TEXTURED_3D_PROGRAM: ProgramRef = ProgramRef(5);
-pub const BLINN_PHONG_3D_PROGRAM: ProgramRef = ProgramRef(6);
-pub const ROUNDED_PROGRAM: ProgramRef = ProgramRef(7);
-pub const COPY_PROGRAM: ProgramRef = ProgramRef(8);
-pub const RADIAL_PROGRAM: ProgramRef = ProgramRef(9);
-pub const QBEZIER_PROGRAM: ProgramRef = ProgramRef(10);
-pub const CBEZIER_PROGRAM: ProgramRef = ProgramRef(11);
-pub const METABALL_PROGRAM: ProgramRef = ProgramRef(12);
+pub const SDF_PROGRAM: ProgramRef = ProgramRef(0);
+pub const TEXTURED_PROGRAM: ProgramRef = ProgramRef(1);
+pub const FLAT_3D_PROGRAM: ProgramRef = ProgramRef(2);
+pub const GOURAUD_3D_PROGRAM: ProgramRef = ProgramRef(3);
+pub const TEXTURED_3D_PROGRAM: ProgramRef = ProgramRef(4);
+pub const BLINN_PHONG_3D_PROGRAM: ProgramRef = ProgramRef(5);
+pub const COPY_PROGRAM: ProgramRef = ProgramRef(6);
+pub const METABALL_PROGRAM: ProgramRef = ProgramRef(7);
+pub const FLAT_PROGRAM: ProgramRef = ProgramRef(8);
 
 pub struct SgeProgram {
     glium: Program,
@@ -82,15 +78,8 @@ pub fn init() -> Result<(), ProgramCreationError> {
 
     let program = include_program_internal!(
         display,
-        "../shaders/flat/vertex.glsl",
-        "../shaders/flat/fragment.glsl"
-    )?;
-    storage.push(program);
-
-    let program = include_program_internal!(
-        display,
-        "../shaders/circle/vertex.glsl",
-        "../shaders/circle/fragment.glsl"
+        "../shaders/sdf/vertex.glsl",
+        "../shaders/sdf/fragment.glsl"
     )?;
     storage.push(program);
 
@@ -131,13 +120,6 @@ pub fn init() -> Result<(), ProgramCreationError> {
 
     let program = include_program_internal!(
         display,
-        "../shaders/rounded/vertex.glsl",
-        "../shaders/rounded/fragment.glsl"
-    )?;
-    storage.push(program);
-
-    let program = include_program_internal!(
-        display,
         "../shaders/copy/vertex.glsl",
         "../shaders/copy/fragment.glsl"
     )?;
@@ -145,29 +127,15 @@ pub fn init() -> Result<(), ProgramCreationError> {
 
     let program = include_program_internal!(
         display,
-        "../shaders/radial/vertex.glsl",
-        "../shaders/radial/fragment.glsl"
-    )?;
-    storage.push(program);
-
-    let program = include_program_internal!(
-        display,
-        "../shaders/qbezier/vertex.glsl",
-        "../shaders/qbezier/fragment.glsl"
-    )?;
-    storage.push(program);
-
-    let program = include_program_internal!(
-        display,
-        "../shaders/cbezier/vertex.glsl",
-        "../shaders/cbezier/fragment.glsl"
-    )?;
-    storage.push(program);
-
-    let program = include_program_internal!(
-        display,
         "../shaders/metaball/vertex.glsl",
         "../shaders/metaball/fragment.glsl"
+    )?;
+    storage.push(program);
+
+    let program = include_program_internal!(
+        display,
+        "../shaders/flat/vertex.glsl",
+        "../shaders/flat/fragment.glsl"
     )?;
     storage.push(program);
 

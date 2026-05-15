@@ -34,13 +34,7 @@ impl ProgressBar {
             Border::all(
                 4.0,
                 color,
-                base::ProgressBar::new(
-                    value,
-                    max,
-                    RoundedFill::new(color, radius, EMPTY),
-                    EMPTY,
-                    id,
-                ),
+                base::ProgressBar::new(value, max, Fill::rounded(color, radius, EMPTY), EMPTY, id),
             )
             .fill(bg),
         )

@@ -79,7 +79,7 @@ impl BorderStyle {
                 let c = a + (self.thickness * mul_a);
                 let d = b + (self.thickness * mul_b);
 
-                draw_custom_shape(vec![a, c, d, b], self.color);
+                draw_custom_shape(&[a, c, d, b], self.color);
             }
             BorderType::Rectangle => {
                 let (point_a, point_b) = match side {
@@ -101,7 +101,7 @@ impl BorderStyle {
                     ),
                 };
 
-                draw_custom_shape(vec![a, point_a, point_b, b], self.color);
+                draw_custom_shape(&[a, point_a, point_b, b], self.color);
             }
             BorderType::Dashed(_) | BorderType::Dotted => {
                 let half_thickness = self.thickness / 2.0;

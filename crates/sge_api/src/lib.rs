@@ -43,8 +43,8 @@ pub fn draw_to<T: Drawable>(v: &T, renderer: Renderer2D) {
     v.draw_to(renderer)
 }
 
-impl Drawable for Metaballs {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_metaball_batch(self);
-    }
-}
+// impl Drawable for Metaballs {
+//     fn draw_to(&self, mut renderer: Renderer2D) {
+//         renderer.add_metaball_batch(self);
+//     }
+// }

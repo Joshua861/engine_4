@@ -2,10 +2,12 @@ use std::f32::consts::{FRAC_PI_2, TAU};
 
 use bon::bon;
 use rayon::{iter::ParallelIterator, slice::ParallelSliceMut};
-use sge_api::shapes_2d::Shape2DExt;
+use sge_api::shapes_2d::{Shape2DExt, draw_sdf, draw_sdf_world};
 use sge_color::Color;
 use sge_rng::rand;
+use sge_shapes::d2::Shape2D;
 use sge_time::{time, time_since};
+use sge_types::SdfInstance;
 use sge_vectors::Vec2;
 
 pub struct ParticleSystem {
@@ -21,7 +23,7 @@ impl ParticleSystem {
         }
     }
 
-    pub fn spawn_oneshot(&mut self, batch: &ParticleOneshot<impl Shape2DExt + 'static>, pos: Vec2) {
+    pub fn spawn_oneshot(&mut self, batch: &ParticleOneshot, pos: Vec2) {
         batch.generate(&mut self.particles, pos);
     }
 
@@ -97,7 +99,7 @@ impl Default for ParticleSystem {
 }
 
 pub struct Particle {
-    pub shape: Box<dyn Shape2DExt>,
+    pub shape: SdfInstance,
     pub pos: Vec2,
     pub additional_velocity: Vec2,
     pub angular_velocity: f32,
@@ -128,23 +130,23 @@ impl Particle {
         self.pos += self.additional_velocity;
         self.pos += Vec2::new(self.direction.cos(), self.direction.sin()) * self.speed;
         self.rotation += self.rotation_speed;
-        self.shape.set_color(self.current_color());
-        self.shape.set_rotation(self.rotation);
-        self.shape.set_pos(self.pos);
+        self.shape.fill_color_a = self.current_color();
+        self.shape.rotation = self.rotation;
+        self.shape.set_position(self.pos);
     }
 
     fn draw(&self) {
-        self.shape.draw();
+        draw_sdf(self.shape);
     }
 
     fn draw_world(&self) {
-        self.shape.draw_world();
+        draw_sdf_world(self.shape);
     }
 }
 
 #[derive(Clone)]
-pub struct ParticleOneshot<T: Shape2DExt> {
-    pub shape: T,
+pub struct ParticleOneshot {
+    pub shape: SdfInstance,
     pub color_randomness: Color,
     pub quantity: usize,
     pub quantity_randomness: f32,
@@ -166,11 +168,11 @@ pub struct ParticleOneshot<T: Shape2DExt> {
 }
 
 #[bon]
-impl<T: Shape2DExt + 'static> ParticleOneshot<T> {
+impl ParticleOneshot {
     #[allow(clippy::too_many_arguments)]
     #[builder]
     pub fn builder(
-        shape: T,
+        shape: &impl Shape2D,
         color_randomness: Option<Color>,
         quantity: Option<usize>,
         quantity_randomness: Option<f32>,
@@ -191,7 +193,7 @@ impl<T: Shape2DExt + 'static> ParticleOneshot<T> {
         position_randomness: Option<Vec2>,
     ) -> Self {
         Self {
-            shape,
+            shape: shape.sdf(),
             color_randomness: color_randomness.unwrap_or(Color::BLACK),
             quantity: quantity.unwrap_or(10),
             quantity_randomness: quantity_randomness.unwrap_or(0.0),
@@ -217,13 +219,13 @@ impl<T: Shape2DExt + 'static> ParticleOneshot<T> {
         let quantity = self.quantity as f32 + (rand::<f32>() - 0.5) * self.quantity_randomness;
 
         for _ in 0..quantity as usize {
+            let mut shape = self.shape;
             let direction =
                 self.direction + (rand::<f32>() - 0.5) * self.direction_randomness - FRAC_PI_2;
             let speed = self.speed + (rand::<f32>() - 0.5) * self.speed_randomness;
             let rotation_speed =
                 self.rotation_speed + (rand::<f32>() - 0.5) * self.rotation_speed_randomness;
-            let mut shape = dyn_clone::clone(&self.shape);
-            let color = shape.get_color();
+            let color = shape.fill_color_a;
             let color = Color::from_rgba(
                 color.r + (rand::<f32>() - 0.5) * self.color_randomness.r,
                 color.g + (rand::<f32>() - 0.5) * self.color_randomness.g,
@@ -231,7 +233,7 @@ impl<T: Shape2DExt + 'static> ParticleOneshot<T> {
                 color.a + (rand::<f32>() - 0.5) * self.color_randomness.a,
             );
             shape.set_color(color);
-            shape.set_pos(pos);
+            shape.set_position(pos);
             let initial_rotation =
                 if self.rotation_speed == 0.0 && self.rotation_speed_randomness == 0.0 {
                     rand::<f32>() * TAU
@@ -253,7 +255,7 @@ impl<T: Shape2DExt + 'static> ParticleOneshot<T> {
                 );
 
             let particle = Particle {
-                shape: Box::new(shape),
+                shape: self.shape,
                 additional_velocity: Vec2::ZERO,
                 direction,
                 speed,
@@ -275,7 +277,7 @@ impl<T: Shape2DExt + 'static> ParticleOneshot<T> {
 
 #[derive(Clone)]
 pub struct ParticleEmitter {
-    pub shape: Box<dyn Shape2DExt>,
+    pub shape: SdfInstance,
     pub color_randomness: Color,
     pub size_randomness: f32,
     pub direction: f32,
@@ -302,7 +304,7 @@ pub struct ParticleEmitter {
 impl ParticleEmitter {
     #[allow(clippy::too_many_arguments)]
     #[builder]
-    pub fn new<T: Shape2DExt + 'static>(
+    pub fn new<T: Shape2D>(
         shape: T,
         color_randomness: Option<Color>,
         size_randomness: Option<f32>,
@@ -326,7 +328,7 @@ impl ParticleEmitter {
         spawn_interval_randomness: Option<f32>,
     ) -> Self {
         Self {
-            shape: Box::new(shape),
+            shape: shape.sdf(),
             color_randomness: color_randomness.unwrap_or(Color::BLACK),
             size_randomness: size_randomness.unwrap_or(0.0),
             direction: direction.unwrap_or(0.0),
@@ -363,7 +365,7 @@ impl ParticleEmitter {
             vary(color.a, self.color_randomness.a),
         );
         shape.set_color(color);
-        shape.set_pos(pos);
+        shape.set_position(pos);
         let initial_rotation =
             if self.rotation_speed == 0.0 && self.rotation_speed_randomness == 0.0 {
                 rand::<f32>() * TAU

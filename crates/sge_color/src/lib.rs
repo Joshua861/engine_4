@@ -55,6 +55,10 @@ impl Color {
         Self::new(convert(r), convert(g), convert(b))
     }
 
+    pub fn from_gpu(v: [f32; 4]) -> Self {
+        Self::from_rgba(v[0], v[1], v[2], v[3])
+    }
+
     pub fn to_u8(&self) -> (u8, u8, u8) {
         (convert(self.r), convert(self.g), convert(self.b))
     }

@@ -1,12 +1,10 @@
 #version 140
 
-// All signed distance fields courtesy of Inigo Quilez the goat
-// https://iquilezles.org/articles/distfunctions2d/
-
 in vec2 v_local_pos;
 in vec2 v_dimensions;
 flat in int v_shape_type;
 flat in float v_corner_radius;
+flat in float v_rotation;
 flat in float v_shape_params[8];
 flat in int v_fill_type;
 in vec4 v_fill_color_a;
@@ -27,6 +25,10 @@ float dot2(vec2 v) {
     return dot(v, v);
 }
 
+vec4 alpha_blend(vec4 dst, vec4 src) {
+    return src + dst * (1.0 - src.a);
+}
+
 float sdf_box(vec2 p, vec2 b) {
     vec2 d = abs(p) - b;
     return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
@@ -38,41 +40,10 @@ float sdf_rounded_box(vec2 p, vec2 b, float r) {
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
 }
 
-float sdf_ellipse(vec2 p, vec2 ab) {
-    p = abs(p);
-    if (p.x > p.y) {
-        p = p.yx;
-        ab = ab.yx;
-    }
-    float l = ab.y * ab.y - ab.x * ab.x;
-    float m = ab.x * p.x / l;
-    float m2 = m * m;
-    float n = ab.y * p.y / l;
-    float n2 = n * n;
-    float c = (m2 + n2 - 1.0) / 3.0;
-    float c3 = c * c * c;
-    float q = c3 + m2 * n2 * 2.0;
-    float d = c3 + m2 * n2;
-    float g = m + m * n2;
-    float co;
-    if (d < 0.0) {
-        float h = acos(q / c3) / 3.0;
-        float s = cos(h);
-        float t = sin(h) * 1.732050808;
-        float rx = sqrt(-c * (s + t + 2.0) + m2);
-        float ry = sqrt(-c * (s - t + 2.0) + m2);
-        co = (ry + sign(l) * rx + abs(g) / (rx * ry) - m) / 2.0;
-    } else {
-        float h = 2.0 * m * n * sqrt(d);
-        float s = sign(q + h) * pow(abs(q + h), 1.0 / 3.0);
-        float u = sign(q - h) * pow(abs(q - h), 1.0 / 3.0);
-        float rx = -s - u - c * 4.0 + 2.0 * m2;
-        float ry = (s - u) * 1.732050808;
-        float rm = sqrt(rx * rx + ry * ry);
-        co = (ry / sqrt(rm - rx) + 2.0 * g / rm - m) / 2.0;
-    }
-    vec2 r2 = ab * vec2(co, sqrt(1.0 - co * co));
-    return length(r2 - p) * sign(p.y - r2.y);
+float sdf_ellipse(vec2 p, vec2 r)
+{
+    vec2 q = p / r;
+    return (length(q) - 1.0) * min(r.x, r.y);
 }
 
 float sdf_triangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
@@ -108,10 +79,10 @@ float sdf_quad(vec2 p, vec2 a, vec2 b, vec2 c, vec2 dd) {
 
 float sdf_sector(vec2 p, float radius, float angle_start, float angle_end) {
     float mid = (angle_start + angle_end) * 0.5;
-    float half = abs(angle_end - angle_start) * 0.5;
+    float h = abs(angle_end - angle_start) * 0.5;
     float cs = cos(-mid), sn = sin(-mid);
     p = vec2(cs * p.x - sn * p.y, sn * p.x + cs * p.y);
-    vec2 sc = vec2(sin(half), cos(half));
+    vec2 sc = vec2(sin(h), cos(h));
     p.x = abs(p.x);
     float l = length(p) - radius;
     float m = length(p - sc * clamp(dot(p, sc), 0.0, radius));
@@ -123,10 +94,10 @@ float sdf_ring(vec2 p, float radius, float thickness, float angle_start, float a
     float base = abs(length(p) - radius) - thickness * 0.5;
     if (full_ring) return base;
     float mid = (angle_start + angle_end) * 0.5;
-    float half = abs(angle_end - angle_start) * 0.5;
+    float h = abs(angle_end - angle_start) * 0.5;
     float cs = cos(-mid), sn = sin(-mid);
     vec2 rp = vec2(cs * p.x - sn * p.y, sn * p.x + cs * p.y);
-    vec2 sc = vec2(sin(half), cos(half));
+    vec2 sc = vec2(sin(h), cos(h));
     rp.x = abs(rp.x);
     float m = length(rp - sc * clamp(dot(rp, sc), 0.0, radius));
     float mask = m * sign(sc.y * rp.x - sc.x * rp.y);
@@ -315,10 +286,10 @@ float eval_sdf(vec2 p) {
     }
     else if (v_shape_type == 6) {
         float mid = (v_shape_params[0] + v_shape_params[1]) * 0.5;
-        float half = abs(v_shape_params[1] - v_shape_params[0]) * 0.5;
+        float h = abs(v_shape_params[1] - v_shape_params[0]) * 0.5;
         float cs = cos(-mid), sn = sin(-mid);
         vec2 rp = vec2(cs * p.x - sn * p.y, sn * p.x + cs * p.y);
-        vec2 sc = vec2(sin(half), cos(half));
+        vec2 sc = vec2(sin(h), cos(h));
         rp.x = abs(rp.x);
         float ra = v_dimensions.x;
         float rb = v_shape_params[2];
@@ -379,6 +350,7 @@ vec2 rotate2d(vec2 p, float angle) {
 
 vec4 eval_fill(vec2 p) {
     vec2 uv = p / max(v_dimensions, vec2(0.001));
+    uv = uv * 0.5 + 0.5;
     vec2 rp = rotate2d(uv + v_fill_offset, v_fill_angle) * v_fill_scale;
 
     if (v_fill_type == 0) {
@@ -416,49 +388,58 @@ vec4 eval_fill(vec2 p) {
         float r = length(uv) * v_fill_scale;
         float t = step(0.5, fract(r));
         return mix(v_fill_color_a, v_fill_color_b, t);
+    } else if (v_fill_type == 8) {
+        float r = length(uv) * v_fill_scale;
+        float t = clamp(r, 0.0, 1.0);
+        return mix(v_fill_color_a, v_fill_color_b, t);
     }
 
     return v_fill_color_a;
 }
 
 void main() {
-    vec2 p = v_local_pos;
+    float aa = fwidth(eval_sdf(rotate2d(v_local_pos, -v_rotation)));
+    vec2 p = rotate2d(v_local_pos, -v_rotation);
+    float dist = eval_sdf(p);
 
-    float d = eval_sdf(p);
+    vec4 shadow_layer = vec4(0.0);
+    if (v_shadow_color.a > 0.0 && v_shadow_radius > 0.0) {
+        vec2 shadow_p = rotate2d(v_local_pos - v_shadow_offset, -v_rotation);
+        float shadow_dist = eval_sdf(shadow_p);
+        float shadow_alpha = smoothstep(v_shadow_radius + aa, -v_shadow_radius - aa, shadow_dist);
 
-    float aa = max(fwidth(d), 0.0001);
+        float outside_shape = step(0.0, dist);
+        shadow_alpha *= outside_shape;
 
-    vec2 shadow_p = p - v_shadow_offset;
-    float shadow_d = eval_sdf(shadow_p);
-    float shadow_alpha = v_shadow_color.a
-            * (1.0 - smoothstep(-v_shadow_radius, v_shadow_radius, shadow_d));
-    vec4 out_color = vec4(v_shadow_color.rgb, shadow_alpha);
+        shadow_layer = vec4(v_shadow_color.rgb, v_shadow_color.a * shadow_alpha);
+    }
 
-    vec4 fill = eval_fill(p);
-    float fill_a = fill.a * (1.0 - smoothstep(-aa, aa, d));
-    vec4 fill_col = vec4(fill.rgb, fill_a);
+    float fill_mask = smoothstep(aa, -aa, dist);
+    vec4 fill_color = eval_fill(p);
+    fill_color.a *= fill_mask;
 
-    float stroke_d;
-    bool has_stroke = v_stroke_type != 0 && v_stroke_width > 0.0;
-    if (has_stroke) {
-        if (v_stroke_type == 1) {
-            stroke_d = -(d + v_stroke_width);
-        } else if (v_stroke_type == 2) {
-            stroke_d = d - v_stroke_width;
+    vec4 stroke_layer = vec4(0.0);
+    if (v_stroke_width > 0.0 && v_stroke_color.a > 0.0) {
+        float stroke_dist;
+        if (v_stroke_type == 0) {
+            stroke_dist = abs(dist + v_stroke_width * 0.5) - v_stroke_width * 0.5;
+        } else if (v_stroke_type == 1) {
+            stroke_dist = abs(dist - v_stroke_width * 0.5) - v_stroke_width * 0.5;
         } else {
-            stroke_d = abs(d) - v_stroke_width * 0.5;
+            stroke_dist = abs(dist) - v_stroke_width * 0.5;
         }
+        float stroke_mask = smoothstep(aa, -aa, stroke_dist);
+        stroke_layer = vec4(v_stroke_color.rgb, v_stroke_color.a * stroke_mask);
     }
 
-    out_color = mix(out_color, fill_col, fill_a);
+    vec4 fill_final = vec4(fill_color.rgb * fill_color.a, fill_color.a);
+    vec4 stroke_final = vec4(v_stroke_color.rgb * stroke_layer.a, stroke_layer.a);
+    vec4 shadow_final = vec4(v_shadow_color.rgb * shadow_layer.a, shadow_layer.a);
 
-    if (has_stroke) {
-        float stroke_alpha = v_stroke_color.a * (1.0 - smoothstep(-aa, aa, stroke_d));
-        vec4 stroke_col = vec4(v_stroke_color.rgb, stroke_alpha);
-        out_color = mix(out_color, stroke_col, stroke_alpha);
-    }
+    vec4 final_color = vec4(0.0);
+    final_color = alpha_blend(final_color, shadow_final);
+    final_color = alpha_blend(final_color, fill_final);
+    final_color = alpha_blend(final_color, stroke_final);
 
-    if (out_color.a < 0.001) discard;
-
-    frag_color = out_color;
+    frag_color = final_color;
 }
