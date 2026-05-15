@@ -22,97 +22,7 @@ pub use image::{self, ImageFormat};
 pub use log::{self, Level, LevelFilter, debug, error, info, trace, warn};
 pub use sge_animation::*;
 pub use sge_api::area::AreaExt;
-pub use sge_api::shapes_2d::{
-    GradientPoint, Orientation, Shape2DExt, ToCollider, draw_arrow, draw_arrow_to,
-    draw_arrow_world, draw_capped_line, draw_capped_line_to, draw_capped_line_world, draw_circle,
-    draw_circle_line, draw_circle_line_to, draw_circle_line_world, draw_circle_outline,
-    draw_circle_outline_to, draw_circle_outline_world, draw_circle_path, draw_circle_path_to,
-    draw_circle_path_world, draw_circle_to, draw_circle_with_outline, draw_circle_with_outline_to,
-    draw_circle_with_outline_world, draw_circle_world, draw_connected_path, draw_connected_path_to,
-    draw_connected_path_world, draw_cubic_bezier, draw_cubic_bezier_to, draw_cubic_bezier_world,
-    draw_custom_shape, draw_custom_shape_outline, draw_custom_shape_outline_to,
-    draw_custom_shape_outline_world, draw_custom_shape_to, draw_custom_shape_with_outline,
-    draw_custom_shape_with_outline_to, draw_custom_shape_with_outline_world,
-    draw_custom_shape_world, draw_dashed_line, draw_dashed_line_to, draw_dashed_line_world,
-    draw_ellipse, draw_ellipse_outline, draw_ellipse_outline_to, draw_ellipse_outline_world,
-    draw_ellipse_sector, draw_ellipse_sector_outline, draw_ellipse_sector_outline_to,
-    draw_ellipse_sector_outline_world, draw_ellipse_sector_to, draw_ellipse_sector_with_outline,
-    draw_ellipse_sector_with_outline_to, draw_ellipse_sector_with_outline_world,
-    draw_ellipse_sector_world, draw_ellipse_to, draw_ellipse_with_outline,
-    draw_ellipse_with_outline_to, draw_ellipse_with_outline_world, draw_ellipse_world,
-    draw_gradient_path, draw_gradient_path_to, draw_gradient_path_world, draw_half_capped_line,
-    draw_half_capped_line_to, draw_half_capped_line_world, draw_hexagon, draw_hexagon_outline,
-    draw_hexagon_outline_to, draw_hexagon_outline_world, draw_hexagon_pointy,
-    draw_hexagon_pointy_outline, draw_hexagon_pointy_outline_to, draw_hexagon_pointy_outline_world,
-    draw_hexagon_pointy_to, draw_hexagon_pointy_with_outline, draw_hexagon_pointy_with_outline_to,
-    draw_hexagon_pointy_with_outline_world, draw_hexagon_pointy_world, draw_hexagon_to,
-    draw_hexagon_with_outline, draw_hexagon_with_outline_to, draw_hexagon_with_outline_world,
-    draw_hexagon_world, draw_line, draw_line_gradient, draw_line_gradient_ex,
-    draw_line_gradient_ex_to, draw_line_gradient_ex_world, draw_line_gradient_to,
-    draw_line_gradient_world, draw_line_rotation, draw_line_rotation_to, draw_line_rotation_world,
-    draw_line_to, draw_line_world, draw_multi_point_gradient, draw_multi_point_gradient_to,
-    draw_multi_point_gradient_world, draw_path, draw_path_to, draw_path_world, draw_pixel,
-    draw_pixel_line, draw_pixel_line_to, draw_pixel_line_world, draw_pixel_to, draw_pixel_world,
-    draw_poly, draw_poly_outline, draw_poly_outline_to, draw_poly_outline_world, draw_poly_to,
-    draw_poly_with_outline, draw_poly_with_outline_to, draw_poly_with_outline_world,
-    draw_poly_world, draw_quadratic_bezier, draw_quadratic_bezier_to, draw_quadratic_bezier_world,
-    draw_radial_gradient, draw_radial_gradient_circle, draw_radial_gradient_circle_offset,
-    draw_radial_gradient_circle_offset_to, draw_radial_gradient_circle_offset_world,
-    draw_radial_gradient_circle_to, draw_radial_gradient_circle_with_outline,
-    draw_radial_gradient_circle_with_outline_offset,
-    draw_radial_gradient_circle_with_outline_offset_to,
-    draw_radial_gradient_circle_with_outline_offset_world,
-    draw_radial_gradient_circle_with_outline_to, draw_radial_gradient_circle_with_outline_world,
-    draw_radial_gradient_circle_world, draw_radial_gradient_ellipse,
-    draw_radial_gradient_ellipse_offset, draw_radial_gradient_ellipse_offset_to,
-    draw_radial_gradient_ellipse_offset_world, draw_radial_gradient_ellipse_to,
-    draw_radial_gradient_ellipse_with_outline, draw_radial_gradient_ellipse_with_outline_offset,
-    draw_radial_gradient_ellipse_with_outline_offset_to,
-    draw_radial_gradient_ellipse_with_outline_offset_world,
-    draw_radial_gradient_ellipse_with_outline_to, draw_radial_gradient_ellipse_with_outline_world,
-    draw_radial_gradient_ellipse_world, draw_radial_gradient_to, draw_radial_gradient_world,
-    draw_rect, draw_rect_gradient, draw_rect_gradient_horizontal, draw_rect_gradient_horizontal_to,
-    draw_rect_gradient_horizontal_world, draw_rect_gradient_tl_br, draw_rect_gradient_tl_br_to,
-    draw_rect_gradient_tl_br_world, draw_rect_gradient_to, draw_rect_gradient_tr_bl,
-    draw_rect_gradient_tr_bl_to, draw_rect_gradient_tr_bl_world, draw_rect_gradient_vertical,
-    draw_rect_gradient_vertical_to, draw_rect_gradient_vertical_world, draw_rect_gradient_world,
-    draw_rect_outline, draw_rect_outline_rotation, draw_rect_outline_rotation_to,
-    draw_rect_outline_rotation_world, draw_rect_outline_to, draw_rect_outline_world,
-    draw_rect_rotation, draw_rect_rotation_to, draw_rect_rotation_world, draw_rect_to,
-    draw_rect_with_outline, draw_rect_with_outline_rotation, draw_rect_with_outline_rotation_to,
-    draw_rect_with_outline_rotation_world, draw_rect_with_outline_to, draw_rect_with_outline_world,
-    draw_rect_world, draw_right_angled_arrow, draw_right_angled_arrow_to,
-    draw_right_angled_arrow_world, draw_right_angled_sharp_arrow, draw_right_angled_sharp_arrow_to,
-    draw_right_angled_sharp_arrow_world, draw_right_angled_solid_arrow,
-    draw_right_angled_solid_arrow_to, draw_right_angled_solid_arrow_world, draw_rounded_rect,
-    draw_rounded_rect_to, draw_rounded_rect_with_outline, draw_rounded_rect_with_outline_to,
-    draw_rounded_rect_with_outline_world, draw_rounded_rect_world, draw_rounded_square,
-    draw_rounded_square_to, draw_rounded_square_world, draw_sector, draw_sector_outline,
-    draw_sector_outline_to, draw_sector_outline_world, draw_sector_to, draw_sector_with_outline,
-    draw_sector_with_outline_to, draw_sector_with_outline_world, draw_sector_world,
-    draw_shape_with_pattern, draw_shape_with_pattern_to, draw_shape_with_pattern_world,
-    draw_sharp_arrow, draw_sharp_arrow_to, draw_sharp_arrow_world, draw_solid_arrow,
-    draw_solid_arrow_to, draw_solid_arrow_world, draw_square, draw_square_gradient_all,
-    draw_square_gradient_all_to, draw_square_gradient_all_world, draw_square_gradient_horizontal,
-    draw_square_gradient_horizontal_to, draw_square_gradient_horizontal_world,
-    draw_square_gradient_tl_br, draw_square_gradient_tl_br_to, draw_square_gradient_tl_br_world,
-    draw_square_gradient_tr_bl, draw_square_gradient_tr_bl_to, draw_square_gradient_tr_bl_world,
-    draw_square_gradient_vertical, draw_square_gradient_vertical_to,
-    draw_square_gradient_vertical_world, draw_square_outline, draw_square_outline_rotation,
-    draw_square_outline_rotation_to, draw_square_outline_rotation_world, draw_square_outline_to,
-    draw_square_outline_world, draw_square_rotation, draw_square_rotation_to,
-    draw_square_rotation_world, draw_square_to, draw_square_with_outline,
-    draw_square_with_outline_rotation, draw_square_with_outline_rotation_to,
-    draw_square_with_outline_rotation_world, draw_square_with_outline_to,
-    draw_square_with_outline_world, draw_square_world, draw_tri, draw_tri_outline,
-    draw_tri_outline_rotation, draw_tri_outline_rotation_to, draw_tri_outline_rotation_world,
-    draw_tri_outline_to, draw_tri_outline_world, draw_tri_rotation, draw_tri_rotation_to,
-    draw_tri_rotation_world, draw_tri_to, draw_tri_with_outline, draw_tri_with_outline_rotation,
-    draw_tri_with_outline_rotation_to, draw_tri_with_outline_rotation_world,
-    draw_tri_with_outline_to, draw_tri_with_outline_world, draw_tri_world, draw_triangle_gradient,
-    draw_triangle_gradient_to, draw_triangle_gradient_world, draw_zig_zag, draw_zig_zag_ex,
-    draw_zig_zag_ex_to, draw_zig_zag_ex_world, draw_zig_zag_to, draw_zig_zag_world,
-};
+pub use sge_api::shapes_2d::*;
 pub use sge_api::{Drawable, draw, draw_world};
 pub use sge_camera::{
     camera2d_zoom_at, cameras_for_resolution, get_camera_2d, get_camera_2d_mut, get_camera_3d,
@@ -192,8 +102,8 @@ pub use sge_time::{
     toggle_physics_timer,
 };
 pub use sge_types::{
-    Area, BufferError, ColorVertex2D, MaterialVertex3D, Pattern, SpriteVertex, TexturedVertex2D,
-    Verbosity, Vertex3D, window_area,
+    Area, BufferError, ColorVertex2D, MaterialVertex3D, Pattern, Sdf, SdfFill, SdfShape, SdfStroke,
+    SpriteVertex, TexturedVertex2D, Verbosity, Vertex3D, window_area,
 };
 pub use sge_types::{Metaball, Metaballs};
 pub use sge_utils::RotatingArray;
@@ -341,34 +251,6 @@ mod debug_visualisations {
     pub use sge_debug_visualisations::*;
 }
 
-#[cfg(feature = "ecs")]
-pub use sge_ecs::bevy_ecs;
-#[cfg(feature = "ecs")]
-pub mod ecs {
-    pub use sge_ecs::bevy_ecs::prelude::{
-        Add, Added, Allow, AnyOf, AppTypeRegistry, ApplyDeferred, BevyError, Bundle, Changed,
-        ChildOf, ChildSpawner, ChildSpawnerCommands, Children, Command, Commands, Component,
-        ContainsEntity, Deferred, Despawn, DetectChanges, DetectChangesMut, Entity, EntityCommand,
-        EntityCommands, EntityEvent, EntityMapper, EntityMut, EntityRef, EntityWorldMut, Event,
-        FilteredResources, FilteredResourcesMut, FromWorld, Has, If, In, InMut, InRef, Insert,
-        IntoScheduleConfigs, IntoSystem, IntoSystemSet, Local, Message, MessageMutator,
-        MessageReader, MessageWriter, Messages, Mut, Name, NameOrEntity, NonSend, NonSendMut,
-        Observer, On, Or, ParallelCommands, ParamSet, Populated, Query, QueryBuilder, QueryState,
-        ReadOnlySystem, Ref, ReflectComponent, ReflectEvent, ReflectFromWorld, ReflectResource,
-        RelationshipTarget, Remove, RemovedComponents, Replace, Res, ResMut, Resource, Result,
-        Schedule, Schedules, Single, Spawn, SpawnIter, SpawnRelated, SpawnWith, System,
-        SystemCondition, SystemIn, SystemInput, SystemParamBuilder, SystemParamFunction, SystemSet,
-        With, WithOneRelated, WithRelated, Without, any_component_removed, any_match_filter,
-        any_with_component, children, condition_changed, condition_changed_to, not, on_message,
-        related, resource_added, resource_changed, resource_changed_or_removed, resource_equals,
-        resource_exists, resource_exists_and_changed, resource_exists_and_equals, resource_removed,
-        run_once,
-    };
-    pub use sge_ecs::{
-        Acceleration2D, AngularVelocity2D, DrawScreen, DrawWorld, Ecs, MovementBundle, Position2D,
-        Rotation2D, ShapeComponent, Velocity2D,
-    };
-}
 pub use crate::{next_frame, run_async};
 pub use sge_exec::{FrameFuture, fs::*, futures::join, start_coroutine, wait_for, wait_for_frames};
 

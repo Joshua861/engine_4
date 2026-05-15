@@ -4,13 +4,17 @@ pub struct Button;
 
 impl Button {
     pub fn new(bg: Color, hover: Color, id: usize, child: Child) -> UiRef {
-        Fit::new(ActiveFill::new(
-            bg,
-            hover,
-            bg,
-            0.0,
-            base::Button::new(id, Padding::tblr(10.0, 15.0, 40.0, 40.0, child)),
-        ))
+        Fit::new(
+            Fill::builder()
+                .color(bg)
+                .hover_color(hover)
+                .active_color(bg)
+                .child(base::Button::new(
+                    id,
+                    Padding::tblr(10., 15., 40., 40., child),
+                ))
+                .build(),
+        )
     }
 
     pub fn primary(id: usize, child: Child) -> UiRef {

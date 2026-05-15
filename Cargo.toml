@@ -16,7 +16,6 @@ anyhow = "1"
 bon = "3.8.1"
 const-random = "0.1.18"
 crossbeam-channel = "0.5.15"
-dyn-clone = "1.0.20"
 egui_glium = "0.31.1"
 env_logger = { version = "0.11.8", default-features = false }
 fontdue = "0.9.3"
@@ -55,7 +54,7 @@ sge_color = { path = "./crates/sge_color", version = "1.0.4" }
 sge_config = { version = "1.0.4", path = "crates/sge_config" }
 sge_debugging = { version = "1.0.4", path = "crates/sge_debugging" }
 sge_debug_visualisations = { version = "1.0.4", path = "crates/sge_debug_visualisations" }
-sge_ecs = { version = "1.0.4", path = "crates/sge_ecs" }
+# sge_ecs = { version = "1.0.4", path = "crates/sge_ecs" }
 sge_egui = { version = "1.0.4", path = "crates/sge_egui" }
 sge_error_union = { path = "./crates/sge_error_union", version = "1.0.4" }
 sge_global = { version = "1.0.4", path = "crates/sge_global" }
@@ -108,7 +107,7 @@ sge_color = { workspace = true }
 sge_config = { workspace = true }
 sge_debugging = { workspace = true, optional = true }
 sge_debug_visualisations = { workspace = true, optional = true }
-sge_ecs = { workspace = true, optional = true }
+# sge_ecs = { workspace = true, optional = true }
 sge_egui = { workspace = true, optional = true }
 sge_error_union = { workspace = true }
 sge_global = { workspace = true }
@@ -160,7 +159,7 @@ default = [
     "audio",
     "debugging",
     "debug_visualisations",
-    "ecs",
+    # "ecs",
     "extra_fonts",
     "gamepad",
     "input",
@@ -169,12 +168,12 @@ default = [
     "ui",
     "material_ui",
     "network",
-    "clipboard"
+    "clipboard",
 ]
 audio = ["dep:sge_audio"]
 debugging = ["dep:sge_debugging"]
 debug_visualisations = ["debugging", "dep:sge_debug_visualisations"]
-ecs = ["dep:sge_ecs"]
+# ecs = ["dep:sge_ecs"]
 egui = ["dep:sge_egui"]
 extra_fonts = ["text", "sge_text/extra_fonts"]
 gamepad = ["input", "sge_input/gamepad"]
@@ -200,7 +199,7 @@ members = [
     "crates/sge_config",
     "crates/sge_debugging",
     "crates/sge_debug_visualisations",
-    "crates/sge_ecs",
+    # "crates/sge_ecs",
     "crates/sge_egui",
     "crates/sge_error_union",
     "crates/sge_feature_gated",

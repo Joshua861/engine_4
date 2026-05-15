@@ -1,7 +1,7 @@
 use super::*;
-use sge_vectors::vec2;
 use sge_api::{area::AreaExt, shapes_2d::draw_custom_shape};
 use sge_rendering::scissor::{pop_scissor, push_scissor};
+use sge_vectors::vec2;
 
 #[derive(Debug)]
 pub struct LoadingBar {
@@ -89,10 +89,7 @@ impl UiNode for LoadingBar {
             let top_left = vec2(top_left_x, top_y);
             let top_right = vec2(top_right_x, top_y);
 
-            draw_custom_shape(
-                vec![top_left, top_right, bottom_right, bottom_left],
-                self.fg,
-            );
+            draw_custom_shape(&[top_left, top_right, bottom_right, bottom_left], self.fg);
         }
 
         pop_scissor();

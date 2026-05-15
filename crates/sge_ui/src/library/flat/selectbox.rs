@@ -2,7 +2,7 @@ use sge_color::Color;
 
 use crate::{
     UiRef,
-    base::{BoxFill, Padding, Text, select_box_value},
+    base::{Fill, Padding, Text, select_box_value},
 };
 
 pub struct SelectBox;
@@ -20,9 +20,7 @@ impl SelectBox {
             choices
                 .into_iter()
                 .enumerate()
-                .map(|(i, node)| {
-                    BoxFill::new(if i == n { selected_color } else { base_color }, node)
-                })
+                .map(|(i, node)| Fill::new(if i == n { selected_color } else { base_color }, node))
                 .collect::<Vec<_>>(),
         )
     }

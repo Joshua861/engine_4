@@ -1,12 +1,10 @@
 #version 140
 
-// All signed distance fields courtesy of Inigo Quilez the goat
-// https://iquilezles.org/articles/distfunctions2d/
-
 in vec2 v_local_pos;
 in vec2 v_dimensions;
 flat in int v_shape_type;
 flat in float v_corner_radius;
+flat in float v_rotation;
 flat in float v_shape_params[8];
 flat in int v_fill_type;
 in vec4 v_fill_color_a;
@@ -23,8 +21,20 @@ in vec4 v_shadow_color;
 
 out vec4 frag_color;
 
+const float BIAS = 0.0001;
+
+float hash(vec2 p) {
+    p = fract(p * vec2(234.34, 435.345));
+    p += dot(p, p + 34.23);
+    return fract(p.x * p.y);
+}
+
 float dot2(vec2 v) {
     return dot(v, v);
+}
+
+vec4 alpha_blend(vec4 dst, vec4 src) {
+    return src + dst * (1.0 - src.a);
 }
 
 float sdf_box(vec2 p, vec2 b) {
@@ -38,7 +48,12 @@ float sdf_rounded_box(vec2 p, vec2 b, float r) {
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
 }
 
-float sdf_ellipse(vec2 p, vec2 ab) {
+float sdf_ellipse(in vec2 p, in vec2 ab)
+{
+    if (ab.x == ab.y) {
+        return length(p) - ab.x;
+    }
+
     p = abs(p);
     if (p.x > p.y) {
         p = p.yx;
@@ -55,24 +70,27 @@ float sdf_ellipse(vec2 p, vec2 ab) {
     float d = c3 + m2 * n2;
     float g = m + m * n2;
     float co;
-    if (d < 0.0) {
+    if (d < 0.0)
+    {
         float h = acos(q / c3) / 3.0;
         float s = cos(h);
-        float t = sin(h) * 1.732050808;
+        float t = sin(h) * sqrt(3.0);
         float rx = sqrt(-c * (s + t + 2.0) + m2);
         float ry = sqrt(-c * (s - t + 2.0) + m2);
         co = (ry + sign(l) * rx + abs(g) / (rx * ry) - m) / 2.0;
-    } else {
+    }
+    else
+    {
         float h = 2.0 * m * n * sqrt(d);
         float s = sign(q + h) * pow(abs(q + h), 1.0 / 3.0);
         float u = sign(q - h) * pow(abs(q - h), 1.0 / 3.0);
         float rx = -s - u - c * 4.0 + 2.0 * m2;
-        float ry = (s - u) * 1.732050808;
+        float ry = (s - u) * sqrt(3.0);
         float rm = sqrt(rx * rx + ry * ry);
         co = (ry / sqrt(rm - rx) + 2.0 * g / rm - m) / 2.0;
     }
-    vec2 r2 = ab * vec2(co, sqrt(1.0 - co * co));
-    return length(r2 - p) * sign(p.y - r2.y);
+    vec2 r = ab * vec2(co, sqrt(1.0 - co * co));
+    return length(r - p) * sign(p.y - r.y);
 }
 
 float sdf_triangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
@@ -89,29 +107,12 @@ float sdf_triangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
     return -sqrt(d.x) * sign(d.y);
 }
 
-float sdf_quad(vec2 p, vec2 a, vec2 b, vec2 c, vec2 dd) {
-    vec2 e0 = b - a, e1 = c - b, e2 = dd - c, e3 = a - dd;
-    vec2 v0 = p - a, v1 = p - b, v2 = p - c, v3 = p - dd;
-    vec2 pq0 = v0 - e0 * clamp(dot(v0, e0) / dot(e0, e0), 0.0, 1.0);
-    vec2 pq1 = v1 - e1 * clamp(dot(v1, e1) / dot(e1, e1), 0.0, 1.0);
-    vec2 pq2 = v2 - e2 * clamp(dot(v2, e2) / dot(e2, e2), 0.0, 1.0);
-    vec2 pq3 = v3 - e3 * clamp(dot(v3, e3) / dot(e3, e3), 0.0, 1.0);
-    float d = min(min(min(dot2(pq0), dot2(pq1)), dot2(pq2)), dot2(pq3));
-    float s = sign(min(min(
-                    e0.x * v0.y - e0.y * v0.x,
-                    e1.x * v1.y - e1.y * v1.x),
-                min(
-                    e2.x * v2.y - e2.y * v2.x,
-                    e3.x * v3.y - e3.y * v3.x)));
-    return sqrt(d) * s;
-}
-
 float sdf_sector(vec2 p, float radius, float angle_start, float angle_end) {
     float mid = (angle_start + angle_end) * 0.5;
-    float half = abs(angle_end - angle_start) * 0.5;
+    float h = abs(angle_end - angle_start) * 0.5;
     float cs = cos(-mid), sn = sin(-mid);
     p = vec2(cs * p.x - sn * p.y, sn * p.x + cs * p.y);
-    vec2 sc = vec2(sin(half), cos(half));
+    vec2 sc = vec2(sin(h), cos(h));
     p.x = abs(p.x);
     float l = length(p) - radius;
     float m = length(p - sc * clamp(dot(p, sc), 0.0, radius));
@@ -123,10 +124,10 @@ float sdf_ring(vec2 p, float radius, float thickness, float angle_start, float a
     float base = abs(length(p) - radius) - thickness * 0.5;
     if (full_ring) return base;
     float mid = (angle_start + angle_end) * 0.5;
-    float half = abs(angle_end - angle_start) * 0.5;
+    float h = abs(angle_end - angle_start) * 0.5;
     float cs = cos(-mid), sn = sin(-mid);
     vec2 rp = vec2(cs * p.x - sn * p.y, sn * p.x + cs * p.y);
-    vec2 sc = vec2(sin(half), cos(half));
+    vec2 sc = vec2(sin(h), cos(h));
     rp.x = abs(rp.x);
     float m = length(rp - sc * clamp(dot(rp, sc), 0.0, radius));
     float mask = m * sign(sc.y * rp.x - sc.x * rp.y);
@@ -140,6 +141,22 @@ float sdf_pentagon(vec2 p, float r) {
     p -= 2.0 * min(dot(vec2(k.x, k.y), p), 0.0) * vec2(k.x, k.y);
     p -= vec2(clamp(p.x, -r * k.z, r * k.z), r);
     return length(p) * sign(p.y);
+}
+
+float sdf_quad(in vec2[4] v, in vec2 p)
+{
+    float d = dot(p - v[0], p - v[0]);
+    float s = 1.0;
+    for (int i = 0, j = 4 - 1; i < 4; j = i, i++)
+    {
+        vec2 e = v[j] - v[i];
+        vec2 w = p - v[i];
+        vec2 b = w - e * clamp(dot(w, e) / dot(e, e), 0.0, 1.0);
+        d = min(d, dot(b, b));
+        bvec3 c = bvec3(p.y >= v[i].y, p.y < v[j].y, e.x * w.y > e.y * w.x);
+        if (all(c) || all(not(c))) s *= -1.0;
+    }
+    return s * sqrt(d);
 }
 
 float sdf_hexagon(vec2 p, float r) {
@@ -160,11 +177,12 @@ float sdf_octogon(vec2 p, float r) {
 }
 
 float sdf_hexagram(vec2 p, float r) {
+    float r2 = r / 2.0;
     const vec4 k = vec4(-0.5, 0.8660254038, 0.5773502692, 1.7320508076);
     p = abs(p);
     p -= 2.0 * min(dot(k.xy, p), 0.0) * k.xy;
     p -= 2.0 * min(dot(k.yx, p), 0.0) * k.yx;
-    p -= vec2(clamp(p.x, r * k.z, r * k.w), r);
+    p -= vec2(clamp(p.x, r2 * k.z, r2 * k.w), r2);
     return length(p) * sign(p.y);
 }
 
@@ -228,6 +246,23 @@ float sdf_x(vec2 p, float w, float r) {
     return length(p - min(p.x + p.y, w) * 0.5) - r;
 }
 
+float sdf_orientedBox(in vec2 p, in vec2 a, in vec2 b, float th)
+{
+    float l = length(b - a);
+    vec2 d = (b - a) / l;
+    vec2 q = (p - (a + b) * 0.5);
+    q = mat2(d.x, -d.y, d.y, d.x) * q;
+    q = abs(q) - vec2(l, th) * 0.5;
+    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
+}
+
+float sdf_segment(in vec2 p, in vec2 a, in vec2 b)
+{
+    vec2 pa = p - a, ba = b - a;
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * h);
+}
+
 float sdf_quadratic_bezier(vec2 pos, vec2 A, vec2 B, vec2 C) {
     vec2 a = B - A;
     vec2 b = A - 2.0 * B + C;
@@ -281,6 +316,39 @@ float sdf_quadratic_circle(vec2 p) {
     return length(w) * sign(a * a * 0.5 + b - 1.5);
 }
 
+float sdf_cubic_bezier(vec2 pos, vec2 p0, vec2 p1, vec2 p2, vec2 p3)
+{
+    const int kNum = 48;
+
+    float res = 1e10;
+    vec2 a = p0;
+
+    for (int i = 1; i < kNum; i++)
+    {
+        float t = float(i) / float(kNum - 1);
+        float s = 1.0 - t;
+
+        vec2 b =
+            p0 * s * s * s +
+                p1 * 3.0 * s * s * t +
+                p2 * 3.0 * s * t * t +
+                p3 * t * t * t;
+
+        vec2 pa = pos - a;
+        vec2 ba = b - a;
+
+        float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+
+        float d = length(pa - ba * h);
+
+        res = min(res, d);
+
+        a = b;
+    }
+
+    return res;
+}
+
 float eval_sdf(vec2 p) {
     float d = 1e9;
     float cr = v_corner_radius;
@@ -302,7 +370,8 @@ float eval_sdf(vec2 p) {
         vec2 b = vec2(v_shape_params[2], v_shape_params[3]);
         vec2 c = vec2(v_shape_params[4], v_shape_params[5]);
         vec2 dd = vec2(v_shape_params[6], v_shape_params[7]);
-        d = sdf_quad(p, a, b, c, dd) - cr;
+        vec2 points[4] = vec2[4](a, b, c, dd);
+        d = sdf_quad(points, p) - cr;
     }
     else if (v_shape_type == 4) {
         float radius = v_dimensions.x;
@@ -315,13 +384,13 @@ float eval_sdf(vec2 p) {
     }
     else if (v_shape_type == 6) {
         float mid = (v_shape_params[0] + v_shape_params[1]) * 0.5;
-        float half = abs(v_shape_params[1] - v_shape_params[0]) * 0.5;
+        float h = abs(v_shape_params[1] - v_shape_params[0]) * 0.5;
         float cs = cos(-mid), sn = sin(-mid);
         vec2 rp = vec2(cs * p.x - sn * p.y, sn * p.x + cs * p.y);
-        vec2 sc = vec2(sin(half), cos(half));
+        vec2 sc = vec2(sin(h), cos(h));
         rp.x = abs(rp.x);
         float ra = v_dimensions.x;
-        float rb = v_shape_params[2];
+        float rb = v_shape_params[2] / 4.0;
         d = ((sc.y * rp.x > sc.x * rp.y) ? length(rp - sc * ra) : abs(length(rp) - ra)) - rb - cr;
     }
     else if (v_shape_type == 7) {
@@ -349,7 +418,7 @@ float eval_sdf(vec2 p) {
     }
     else if (v_shape_type == 14) {
         float s = v_dimensions.x;
-        d = sdf_heart(p / s) * s - cr;
+        d = sdf_heart(vec2(p.x, -(p.y + s * -0.6)) / s) * s - cr;
     }
     else if (v_shape_type == 15) {
         vec2 b = vec2(v_shape_params[0], v_shape_params[1]);
@@ -367,6 +436,23 @@ float eval_sdf(vec2 p) {
     else if (v_shape_type == 18) {
         float s = v_dimensions.x;
         d = sdf_quadratic_circle(p / s) * s - cr;
+    } else if (v_shape_type == 19) {
+        vec2 a = vec2(v_shape_params[0], v_shape_params[1]);
+        vec2 b = vec2(v_shape_params[2], v_shape_params[3]);
+        d = sdf_segment(p, a, b) - cr;
+    } else if (v_shape_type == 20) {
+        vec2 a = vec2(v_shape_params[0], v_shape_params[1]);
+        vec2 b = vec2(v_shape_params[2], v_shape_params[3]);
+        float thickness = v_shape_params[4];
+        d = sdf_orientedBox(p, a, b, thickness) - cr;
+    }
+    else if (v_shape_type == 21) {
+        vec2 a = vec2(v_shape_params[0], v_shape_params[1]);
+        vec2 b = vec2(v_shape_params[2], v_shape_params[3]);
+        vec2 c = vec2(v_shape_params[4], v_shape_params[5]);
+        vec2 d0 = vec2(v_shape_params[6], v_shape_params[7]);
+
+        d = sdf_cubic_bezier(p, a, b, c, d0) - cr;
     }
 
     return d;
@@ -377,88 +463,369 @@ vec2 rotate2d(vec2 p, float angle) {
     return vec2(c * p.x - s * p.y, s * p.x + c * p.y);
 }
 
-vec4 eval_fill(vec2 p) {
+float bayer_dither(vec2 pos) {
+    int x = int(mod(pos.x, 4.0));
+    int y = int(mod(pos.y, 4.0));
+    int index = x + y * 4;
+    float table[16];
+    table[0] = 0.0 / 16.0;
+    table[1] = 8.0 / 16.0;
+    table[2] = 2.0 / 16.0;
+    table[3] = 10.0 / 16.0;
+    table[4] = 12.0 / 16.0;
+    table[5] = 4.0 / 16.0;
+    table[6] = 14.0 / 16.0;
+    table[7] = 6.0 / 16.0;
+    table[8] = 3.0 / 16.0;
+    table[9] = 11.0 / 16.0;
+    table[10] = 1.0 / 16.0;
+    table[11] = 9.0 / 16.0;
+    table[12] = 15.0 / 16.0;
+    table[13] = 7.0 / 16.0;
+    table[14] = 13.0 / 16.0;
+    table[15] = 5.0 / 16.0;
+    return table[index] - 0.5;
+}
+
+vec4 eval_fill(vec2 p, vec2 frag_coord) {
     vec2 uv = p / max(v_dimensions, vec2(0.001));
-    vec2 rp = rotate2d(uv + v_fill_offset, v_fill_angle) * v_fill_scale;
+    float aspect = v_dimensions.x / v_dimensions.y;
+    vec2 uv_square = vec2(uv.x * aspect, uv.y);
+    vec2 tp = rotate2d(uv_square + v_fill_offset, v_fill_angle) * v_fill_scale;
+    // world-like tiling position scaled by fill_scale
+    vec2 wp = tp;
+
+    float dither = bayer_dither(frag_coord) / 255.0;
 
     if (v_fill_type == 0) {
         return v_fill_color_a;
     }
     else if (v_fill_type == 1) {
-        float t = clamp(rp.x * 0.5 + 0.5, 0.0, 1.0);
+        vec2 gp = rotate2d(uv + v_fill_offset, v_fill_angle);
+        float t = clamp(gp.x * 0.5 + 0.5 + dither, 0.0, 1.0);
         return mix(v_fill_color_a, v_fill_color_b, t);
     }
     else if (v_fill_type == 2) {
-        vec2 q = floor(rp);
-        float check = mod(q.x + q.y, 2.0);
+        // checker
+        int x = int(floor(wp.x + BIAS));
+        int y = int(floor(wp.y + BIAS));
+        float check = mod(float(x + y), 2.0);
         return mix(v_fill_color_a, v_fill_color_b, check);
     }
     else if (v_fill_type == 3) {
-        float t = step(0.5, fract(rp.y));
+        // horizontal lines
+        int y = int(floor(wp.y + BIAS));
+        float t = mod(float(y), 2.0);
         return mix(v_fill_color_a, v_fill_color_b, t);
     }
     else if (v_fill_type == 4) {
-        vec2 cell = fract(rp) - 0.5;
-        float inside = step(length(cell), 0.35);
+        // dots
+        float scale = 2.0;
+        float cell_x = mod(wp.x, scale);
+        float cell_y = mod(wp.y, scale);
+        float dist = length(vec2(cell_x - scale * 0.5, cell_y - scale * 0.5));
+        float inside = step(dist, scale * 0.3);
         return mix(v_fill_color_b, v_fill_color_a, inside);
     }
     else if (v_fill_type == 5) {
-        vec2 f = abs(fract(rp) - 0.5);
-        float line = step(0.45, max(f.x, f.y));
+        // grid
+        float cx = mod(wp.x, 2.0);
+        float cy = mod(wp.y, 2.0);
+        float line = float(cx < 1.0 || cy < 1.0);
         return mix(v_fill_color_a, v_fill_color_b, line);
     }
     else if (v_fill_type == 6) {
-        float wave = sin(rp.x * 6.2831853) * 0.5 + 0.5;
-        float t = step(wave, fract(rp.y));
+        // waves (from other shader)
+        float wave_y = wp.y + sin(wp.x * 3.14159) * 0.5;
+        int band = int(floor(wave_y + BIAS));
+        float t = mod(float(band), 2.0);
         return mix(v_fill_color_a, v_fill_color_b, t);
     }
     else if (v_fill_type == 7) {
-        float r = length(uv) * v_fill_scale;
+        // concentric rings
+        float r = length(uv_square) * v_fill_scale;
         float t = step(0.5, fract(r));
         return mix(v_fill_color_a, v_fill_color_b, t);
+    }
+    else if (v_fill_type == 8) {
+        // radial gradient
+        vec2 gp = rotate2d(uv + v_fill_offset, v_fill_angle);
+        float r = length(gp);
+        float t = clamp(r + dither, 0.0, 1.0);
+        return mix(v_fill_color_a, v_fill_color_b, t);
+    }
+    else if (v_fill_type == 9) {
+        // cross hatch
+        float d1 = (wp.x - wp.y);
+        float d2 = (wp.x + wp.y);
+        float line = float(mod(floor(d1 + BIAS), 2.0) == 0.0 || mod(floor(d2 + BIAS), 2.0) == 0.0);
+        return mix(v_fill_color_b, v_fill_color_a, line);
+    }
+    else if (v_fill_type == 10) {
+        // sparse dots
+        float scale = 2.0;
+        int cx = int(floor(wp.x / scale + BIAS));
+        int cy = int(floor(wp.y / scale + BIAS));
+        float cell_x = mod(wp.x, scale);
+        float cell_y = mod(wp.y, scale);
+        float dist = length(vec2(cell_x - scale * 0.5, cell_y - scale * 0.5));
+        float inside = float(mod(float(cx + cy), 2.0) == 0.0 && dist < scale * 0.3);
+        return mix(v_fill_color_b, v_fill_color_a, inside);
+    }
+    else if (v_fill_type == 11) {
+        // bricks
+        float brick_w = 4.0;
+        float brick_h = 2.0;
+        int row = int(floor(wp.y / brick_h + BIAS));
+        float offset = mod(float(row), 2.0) == 0.0 ? 0.0 : 1.0;
+        float cell_x = mod(wp.x + offset, brick_w);
+        float cell_y = mod(wp.y, brick_h);
+        float thickness = 0.4;
+        float line = float(cell_x < thickness || cell_y < thickness);
+        return mix(v_fill_color_b, v_fill_color_a, line);
+    }
+    else if (v_fill_type == 12) {
+        // herringbone
+        int cx = int(floor(wp.x + BIAS));
+        int cy = int(floor(wp.y + BIAS));
+        float lx = fract(wp.x);
+        float ly = fract(wp.y);
+        bool colored;
+        if (mod(float(cx + cy), 2.0) == 0.0) {
+            colored = ly < 0.5;
+        } else {
+            colored = lx < 0.5;
+        }
+        return colored ? v_fill_color_a : v_fill_color_b;
+    }
+    else if (v_fill_type == 13) {
+        // triangles
+        int cx = int(floor(wp.x + BIAS));
+        int cy = int(floor(wp.y + BIAS));
+        float lx = fract(wp.x);
+        float ly = fract(wp.y);
+        bool flip = mod(float(cx + cy), 2.0) == 0.0;
+        bool upper = flip ? (lx + ly < 1.0) : (lx < ly);
+        return upper ? v_fill_color_a : v_fill_color_b;
+    }
+    else if (v_fill_type == 14) {
+        // concentric squares
+        float dist = max(abs(uv_square.x), abs(uv_square.y)) * v_fill_scale;
+        float t = step(0.5, fract(dist));
+        return mix(v_fill_color_a, v_fill_color_b, t);
+    }
+    else if (v_fill_type == 15) {
+        // textured
+        int cx = int(floor(wp.x + BIAS));
+        int cy = int(floor(wp.y + BIAS));
+        float lx = fract(wp.x);
+        float ly = fract(wp.y);
+        float thickness = 0.2;
+        bool colored;
+        if (mod(float(cx + cy), 2.0) == 0.0) {
+            colored = ly > 0.5 - thickness && ly < 0.5 + thickness;
+        } else {
+            colored = lx > 0.5 - thickness && lx < 0.5 + thickness;
+        }
+        return colored ? v_fill_color_a : v_fill_color_b;
+    }
+    else if (v_fill_type == 16) {
+        // truchet
+        float cx = floor(wp.x + BIAS);
+        float cy = floor(wp.y + BIAS);
+        float lx = fract(wp.x);
+        float ly = fract(wp.y);
+        float h = hash(vec2(cx, cy));
+        float thickness = 0.2;
+        float dist;
+        if (h < 0.5) {
+            dist = min(length(vec2(lx, ly)), length(vec2(lx - 1.0, ly - 1.0)));
+        } else {
+            dist = min(length(vec2(lx - 1.0, ly)), length(vec2(lx, ly - 1.0)));
+        }
+        float line = float(abs(dist - 0.5) < thickness * 0.5);
+        return mix(v_fill_color_b, v_fill_color_a, line);
+    }
+    else if (v_fill_type == 17) {
+        // random tiles
+        float cx = floor(wp.x + BIAS);
+        float cy = floor(wp.y + BIAS);
+        float t = step(0.5, hash(vec2(cx, cy)));
+        return mix(v_fill_color_a, v_fill_color_b, t);
+    }
+    else if (v_fill_type == 18) {
+        // diagonal waves
+        float diag = wp.x + wp.y;
+        float perp = wp.x - wp.y;
+        float wave = diag + sin(perp * 3.14159 * 0.5) * 0.8;
+        float t = mod(floor(wave + BIAS), 2.0);
+        return mix(v_fill_color_a, v_fill_color_b, t);
+    }
+    else if (v_fill_type == 19) {
+        // topology
+        float d = wp.x + wp.y;
+        float perp = wp.x - wp.y;
+        float wobble = sin(perp * 0.3) * 1.8
+                + sin(perp * 0.7 + 1.4) * 0.9
+                + sin(perp * 1.7 + 2.8) * 0.35;
+        float stripe = sin((d + wobble) * 3.14159);
+        return stripe > 0.25 ? v_fill_color_a : v_fill_color_b;
+    }
+    else if (v_fill_type == 20) {
+        // zebra
+        float scale = 2.0;
+        float d = (wp.x + wp.y) / scale;
+        float perp = (wp.x - wp.y) / scale;
+        float stripe_id = floor(d);
+        float r1 = hash(vec2(stripe_id, 0.0));
+        float r2 = hash(vec2(stripe_id, 1.0));
+        float r3 = hash(vec2(stripe_id + 1.0, 0.0));
+        float wobble = sin(perp * 0.4 + r1 * 6.28) * (0.15 + r2 * 0.25)
+                + sin(perp * 0.15 + r3 * 6.28) * 0.2;
+        float local = fract(d + wobble);
+        float width = 0.55 + r1 * 0.2;
+        return local < width ? v_fill_color_a : v_fill_color_b;
+    }
+    else if (v_fill_type == 21) {
+        // fish scales
+        float scale = 2.0;
+        float row_h = scale * 0.7;
+        float row = floor(wp.y / row_h + BIAS);
+        float x_off = mod(row, 2.0) * scale * 0.5;
+        float col = floor((wp.x + x_off) / scale + BIAS);
+        vec2 center = vec2(col * scale - x_off + scale * 0.5, row * row_h + row_h * 0.5);
+        vec2 lp = wp - center;
+        float dist = length(lp);
+        if (dist > scale * 0.5) return v_fill_color_b;
+        float ring = mod(floor(dist / (scale * 0.18) + BIAS), 2.0);
+        return ring == 0.0 ? v_fill_color_a : v_fill_color_b;
+    }
+    else if (v_fill_type == 22) {
+        // maze
+        float cx = floor(wp.x + BIAS);
+        float cy = floor(wp.y + BIAS);
+        float lx = fract(wp.x);
+        float ly = fract(wp.y);
+        bool in_right = lx > 0.85;
+        bool in_bottom = ly > 0.85;
+        bool in_left = lx < 0.15;
+        bool in_top = ly < 0.15;
+        bool has_right = hash(vec2(cx, cy)) > 0.5;
+        bool has_bottom = hash(vec2(cx + 17.3, cy + 3.7)) > 0.5;
+        bool nb_right = hash(vec2(cx - 1.0, cy)) > 0.5;
+        bool nb_bottom = hash(vec2(cx + 17.3, cy - 1.0 + 3.7)) > 0.5;
+        bool wall = (in_right && has_right) || (in_bottom && has_bottom)
+                || (in_left && nb_right) || (in_top && nb_bottom);
+        return wall ? v_fill_color_a : v_fill_color_b;
+    }
+    else if (v_fill_type == 23) {
+        // moire
+        float offset = 8.0;
+        vec2 c1 = vec2(0.0);
+        vec2 c2 = vec2(offset, offset * 0.3);
+        float r1 = sin(length(wp - c1) * 3.14159);
+        float r2 = sin(length(wp - c2) * 3.14159);
+        return r1 * r2 > 0.0 ? v_fill_color_a : v_fill_color_b;
+    }
+    else if (v_fill_type == 24) {
+        // leopard spots
+        float s = 3.0;
+        vec2 cell = floor(wp / s);
+        vec2 lp = mod(wp, s);
+        float min_dist1 = 1e10;
+        float min_dist2 = 1e10;
+        vec2 nearest = vec2(0.0);
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                vec2 nc = cell + vec2(float(dx), float(dy));
+                vec2 point = vec2(hash(nc), hash(nc + vec2(43.7, 91.3))) * s
+                        + vec2(float(dx), float(dy)) * s;
+                float dist = length(lp - point);
+                if (dist < min_dist1) {
+                    min_dist2 = min_dist1;
+                    min_dist1 = dist;
+                    nearest = nc;
+                } else if (dist < min_dist2) {
+                    min_dist2 = dist;
+                }
+            }
+        }
+        float edge = min_dist2 - min_dist1;
+        if (edge < s * 0.15) return v_fill_color_a;
+        float spot_chance = hash(nearest + vec2(12.4, 56.7));
+        return spot_chance > 0.45 ? v_fill_color_a : v_fill_color_b;
+    }
+    else if (v_fill_type == 25) {
+        // rings
+        float scale = 2.0;
+        float cell_x = mod(wp.x, scale);
+        float cell_y = mod(wp.y, scale);
+        float dist = length(vec2(cell_x - scale * 0.5, cell_y - scale * 0.5));
+        bool inside = dist < scale * 0.2 || dist > scale * 0.4;
+        return inside ? v_fill_color_a : v_fill_color_b;
     }
 
     return v_fill_color_a;
 }
 
 void main() {
-    vec2 p = v_local_pos;
+    vec2 p = rotate2d(v_local_pos, -v_rotation);
+    float dist = eval_sdf(p);
+    float aa = fwidth(dist) * 0.5;
 
-    float d = eval_sdf(p);
+    vec4 shadow_layer = vec4(0.0);
+    if (v_shadow_color.a > 0.0 && v_shadow_radius > 0.0) {
+        float outer_stroke = 0.0;
+        if (v_stroke_type == 2) outer_stroke = v_stroke_width;
+        else if (v_stroke_type == 3) outer_stroke = v_stroke_width * 0.5;
 
-    float aa = max(fwidth(d), 0.0001);
+        vec2 shadow_p = rotate2d(v_local_pos - v_shadow_offset, -v_rotation);
+        float shadow_dist = eval_sdf(shadow_p) - outer_stroke;
+        float shadow_alpha = smoothstep(v_shadow_radius + aa, -v_shadow_radius - aa, shadow_dist);
 
-    vec2 shadow_p = p - v_shadow_offset;
-    float shadow_d = eval_sdf(shadow_p);
-    float shadow_alpha = v_shadow_color.a
-            * (1.0 - smoothstep(-v_shadow_radius, v_shadow_radius, shadow_d));
-    vec4 out_color = vec4(v_shadow_color.rgb, shadow_alpha);
+        float outside_shape = step(0.0, dist - outer_stroke);
+        shadow_alpha *= outside_shape;
 
-    vec4 fill = eval_fill(p);
-    float fill_a = fill.a * (1.0 - smoothstep(-aa, aa, d));
-    vec4 fill_col = vec4(fill.rgb, fill_a);
+        shadow_layer = vec4(v_shadow_color.rgb, v_shadow_color.a * shadow_alpha);
+    }
 
-    float stroke_d;
-    bool has_stroke = v_stroke_type != 0 && v_stroke_width > 0.0;
-    if (has_stroke) {
-        if (v_stroke_type == 1) {
-            stroke_d = -(d + v_stroke_width);
+    float fill_mask = smoothstep(aa, -aa, dist);
+    vec4 fill_color = eval_fill(p, gl_FragCoord.xy);
+    fill_color.a *= fill_mask;
+
+    vec4 stroke_layer = vec4(0.0);
+    if (v_stroke_width > 0.0 && v_stroke_color.a > 0.0) {
+        float stroke_dist;
+        if (v_stroke_type == 0) {
+            // none
+        } else if (v_stroke_type == 1) {
+            // inside
+            stroke_dist = abs(dist + v_stroke_width * 0.5) - v_stroke_width * 0.5;
         } else if (v_stroke_type == 2) {
-            stroke_d = d - v_stroke_width;
+            // outside
+            stroke_dist = abs(dist - v_stroke_width * 0.5) - v_stroke_width * 0.5;
         } else {
-            stroke_d = abs(d) - v_stroke_width * 0.5;
+            // centered
+            stroke_dist = abs(dist) - v_stroke_width * 0.5;
         }
+        float stroke_mask = smoothstep(aa, -aa, stroke_dist);
+        stroke_layer = vec4(v_stroke_color.rgb, v_stroke_color.a * stroke_mask);
     }
 
-    out_color = mix(out_color, fill_col, fill_a);
+    vec4 fill_final = vec4(fill_color.rgb * fill_color.a, fill_color.a);
+    vec4 stroke_final = vec4(v_stroke_color.rgb * stroke_layer.a, stroke_layer.a);
+    vec4 shadow_final = vec4(v_shadow_color.rgb * shadow_layer.a, shadow_layer.a);
 
-    if (has_stroke) {
-        float stroke_alpha = v_stroke_color.a * (1.0 - smoothstep(-aa, aa, stroke_d));
-        vec4 stroke_col = vec4(v_stroke_color.rgb, stroke_alpha);
-        out_color = mix(out_color, stroke_col, stroke_alpha);
-    }
+    vec4 final_color = vec4(0.0);
+    final_color = alpha_blend(final_color, shadow_final);
+    final_color = alpha_blend(final_color, fill_final);
+    final_color = alpha_blend(final_color, stroke_final);
 
-    if (out_color.a < 0.001) discard;
+    // if (final_color.a > 0.0) {
+    //     frag_color = final_color;
+    // } else {
+    //     frag_color = vec4(0.0, 0.0, 0.0, 1.0);
+    // }
 
-    frag_color = out_color;
+    frag_color = final_color;
 }

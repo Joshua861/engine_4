@@ -4,7 +4,7 @@ use sge::prelude::*;
 fn main() {
     let mut ps = ParticleSystem::new();
     let batch = ParticleOneshot::builder()
-        .shape(Rect::new_square(Vec2::ZERO, 20.0, Color::YELLOW_500))
+        .shape(&Rect::new_square(Vec2::ZERO, 20.0, Color::YELLOW_500))
         .size_randomness(5.0)
         .color_randomness(Color::new(0.3, 0.1, 0.1))
         .direction_randomness(0.5)

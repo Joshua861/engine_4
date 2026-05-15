@@ -12,7 +12,6 @@ round_coords = []
 
 [dependencies]
 sge_vectors.workspace = true
-dyn-clone.workspace = true
 lyon.workspace = true
 paste.workspace = true
 sge_color.workspace = true

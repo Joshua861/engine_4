@@ -2,7 +2,7 @@ use d2::{DrawQueue2D, Renderer2D};
 use d3::DrawQueue3D;
 use glium::{
     Rect, Surface, Texture2d,
-    framebuffer::{DepthRenderBuffer, RenderBuffer, SimpleFrameBuffer},
+    framebuffer::{SimpleFrameBuffer},
     texture::{DepthTexture2d, TextureCreationError},
     uniform,
 };
@@ -59,28 +59,11 @@ impl RenderState {
         let dimensions = frame.get_dimensions();
         let (w, h) = (dimensions.0, dimensions.1);
         let facade = get_display();
-        let samples = 4;
 
         if self.a.dimensions.x != w || self.a.dimensions.y != h {
             for tex in [&mut self.a, &mut self.b] {
                 tex.color_texture.gl_texture = Texture2d::empty(facade, w, h).unwrap();
                 tex.depth_texture = DepthTexture2d::empty(facade, w, h).unwrap();
-                tex.msaa_color = RenderBuffer::new_multisample(
-                    facade,
-                    glium::texture::UncompressedFloatFormat::U8U8U8U8,
-                    w,
-                    h,
-                    samples,
-                )
-                .unwrap();
-                tex.msaa_depth = DepthRenderBuffer::new_multisample(
-                    facade,
-                    glium::texture::DepthFormat::I24,
-                    w,
-                    h,
-                    samples,
-                )
-                .unwrap();
                 tex.dimensions = UVec2::new(w, h);
                 tex.color_texture.normalized_dimensions =
                     SgeTexture::create_normalized_dimensions(w, h);

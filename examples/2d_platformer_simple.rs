@@ -48,7 +48,7 @@ fn main() -> anyhow::Result<()> {
         draw_circle_world(player.position(), PLAYER_RADIUS, Color::RED_500);
 
         for platform in &platforms {
-            platform.draw_world();
+            draw_world(platform);
         }
 
         world.update();

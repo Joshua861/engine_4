@@ -1,5 +1,17 @@
 #+title: Todo
 
+- [X] Fix quads
+- [ ] Check if bounding boxes are excessively big
+- [X] Fix gradients
+- [X] Fix radial gradients
+- [X] Move things using 4 point custom shapes to quad sdfs
+- [ ] test all shapes under all conditions
+- [ ] test all fill parameters
+- [ ] do more testing with shadows (like when should they run? and what parameters
+- [X] dithering for gradients
+- [X] reimplement multigradients
+- [X] reimplement gradient lines
+
 - [-] High priority bugs:
   - [X] tailwind colors are wrong. oklch conversion is probably wrong
   - [ ] transparency

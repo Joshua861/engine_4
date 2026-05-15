@@ -10,7 +10,7 @@ use glium::{
 use sge_color::Color;
 use sge_macros::gen_ref_type;
 use sge_utils::ConstantArray;
-use sge_vectors::Vec2;
+use sge_vectors::{Vec2, Vec3};
 use sge_window::get_display;
 
 use crate::{Area, PatternVertex2D};
@@ -192,14 +192,14 @@ impl CircleInstance {
 ///////////////////////////////////////////////////////////////////////////////
 
 #[derive(Clone)]
-pub struct ShapeBatch {
+pub struct MeshBatch {
     pub vertices: Vec<PatternVertex2D>,
     pub indices: Vec<u32>,
     pub max_index: u32,
     pub scissor: Option<glium::Rect>,
 }
 
-impl ShapeBatch {
+impl MeshBatch {
     pub fn new(scissor: Option<glium::Rect>) -> Self {
         Self {
             vertices: Vec::new(),
@@ -691,19 +691,40 @@ pub enum SdfShape {
     X,
     QuadraticBezier,
     QuadraticCircle,
+    Segment,
+    OrientedBox,
+    CubicBezier,
 }
 
 #[repr(i32)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SdfFill {
     Solid = 0,
-    Gradient,
-    Checker,
-    Lines,
-    Dots,
-    Grid,
-    Waves,
-    ConcentricRings,
+    Gradient = 1,
+    Checker = 2,
+    Lines = 3,
+    Dots = 4,
+    Grid = 5,
+    Waves = 6,
+    ConcentricRings = 7,
+    RadialGradient = 8,
+    CrossHatch = 9,
+    SparseDots = 10,
+    Bricks = 11,
+    Herringbone = 12,
+    Triangles = 13,
+    ConcentricSquares = 14,
+    Textured = 15,
+    Truchet = 16,
+    RandomTiles = 17,
+    DiagonalWaves = 18,
+    Topology = 19,
+    Zebra = 20,
+    FishScales = 21,
+    Maze = 22,
+    Moire = 23,
+    LeopardSpots = 24,
+    Rings = 25,
 }
 
 #[repr(i32)]
@@ -716,34 +737,29 @@ pub enum SdfStroke {
 }
 
 implement_vertex!(
-    SdfInstance,
+    SdfInstanceGpu,
     center,
-    dimensions,
-    shape_type,
-    corner_radius,
+    bounding_box,
     shape_params_a,
     shape_params_b,
-    fill_type,
     fill_color_a,
     fill_color_b,
-    fill_angle,
-    fill_offset,
-    fill_scale,
-    stroke_width,
     stroke_color,
-    stroke_type,
-    shadow_offset,
-    shadow_radius,
     shadow_color,
+    misc_a,
+    misc_b,
+    misc_c,
+    misc_d,
 );
 
 #[derive(Clone, Copy, Debug)]
-pub struct SdfInstance {
-    pub center: [f32; 3],
+pub struct Sdf {
+    pub center: Vec3,
     // half extents
-    pub dimensions: [f32; 2],
+    pub bounding_box: Vec2,
+    pub rotation: f32,
 
-    pub shape_type: i32, // 0=rect, 1=circle, 2=capsule, 3=triangle, etc.
+    pub shape_type: SdfShape,
     pub corner_radius: f32,
 
     // Sector: [start_angle, end_angle, ...]
@@ -751,151 +767,167 @@ pub struct SdfInstance {
     // Triangle: [ax, ay, bx, by, cx, cy, ...]
     // Quad: [ax, ay, bx, by, cx, cy, dx, dy]
     // Star: [n_sides, m_ratio, ...]
-    // Moon: [center, outer_radius, inner_offset, inner_radius],
+    // Moon: [center, outer_radius, inner_offset, inner_radius]
     // QuadraticBezier: [ax, ay, bx, by, cx, cy, ...]
+    // Segment: [ax, ay, bx, by, ...]
+    // Oriented box: [ax ,ay, bx, by, thickness, ...]
+    // CubicBezier: [ax, ay, bx, by, cx, cy, dx, dy]
     pub shape_params_a: [f32; 4],
     pub shape_params_b: [f32; 4],
 
-    pub fill_type: i32,
-    pub fill_color_a: [f32; 4],
-    pub fill_color_b: [f32; 4],
+    pub fill_type: SdfFill,
+    pub fill_color_a: Color,
+    pub fill_color_b: Color,
     pub fill_angle: f32,
-    pub fill_offset: [f32; 2],
+    pub fill_offset: Vec2,
     pub fill_scale: f32,
 
     pub stroke_width: f32,
-    pub stroke_color: [f32; 4],
-    pub stroke_type: i32,
+    pub stroke_color: Color,
+    pub stroke_type: SdfStroke,
 
-    pub shadow_offset: [f32; 2],
+    pub shadow_offset: Vec2,
     pub shadow_radius: f32,
+    pub shadow_color: Color,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct SdfInstanceGpu {
+    pub center: [f32; 3],
+    pub bounding_box: [f32; 2],
+    pub shape_params_a: [f32; 4],
+    pub shape_params_b: [f32; 4],
+    pub fill_color_a: [f32; 4],
+    pub fill_color_b: [f32; 4],
+    pub stroke_color: [f32; 4],
     pub shadow_color: [f32; 4],
+    /// rotation, corner_radius, fill_angle, fill_scale
+    pub misc_a: [f32; 4],
+    /// stroke_width, shadow_radius, fill_offset.xy
+    pub misc_b: [f32; 4],
+    /// shadow_offset.xy, fill_type as f32, stroke_type as f32
+    pub misc_c: [f32; 4],
+    /// shape_type as f32, 0, 0, 0
+    pub misc_d: [f32; 4],
+}
+
+fn default_instance(center: Vec3, bounding_box: Vec2, shape_type: SdfShape) -> Sdf {
+    Sdf {
+        center,
+        bounding_box,
+        rotation: 0.0,
+        shape_type,
+        corner_radius: 0.0,
+        shape_params_a: [0.0; 4],
+        shape_params_b: [0.0; 4],
+        fill_type: SdfFill::Solid,
+        fill_color_a: Color::WHITE,
+        fill_color_b: Color::WHITE,
+        fill_angle: 0.0,
+        fill_offset: Vec2::ZERO,
+        fill_scale: 1.0,
+        stroke_width: 0.0,
+        stroke_color: Color::WHITE,
+        stroke_type: SdfStroke::Inside,
+        shadow_offset: Vec2::ZERO,
+        shadow_radius: 0.0,
+        shadow_color: Color::WHITE,
+    }
 }
 
 #[derive(Clone)]
 pub struct SdfBatch {
-    pub instances: Vec<SdfInstance>,
+    pub instances: Vec<Sdf>,
     pub scissor: Option<glium::Rect>,
 }
 
-impl SdfInstance {
-    pub fn rect(center: Vec2, size: Vec2) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [size.x * 0.5, size.y * 0.5],
-            shape_type: SdfShape::Rect as i32,
-            corner_radius: 0.0,
-            shape_params_a: [0.0; 4],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
+impl SdfBatch {
+    pub fn new(scissor: Option<glium::Rect>) -> Self {
+        Self {
+            instances: Vec::new(),
+            scissor,
         }
     }
+}
 
-    pub fn circle(center: Vec2, radius: f32) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [radius, radius],
-            shape_type: SdfShape::Ellipse as i32,
-            corner_radius: 0.0,
-            shape_params_a: [0.0; 4],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
-    }
-
-    pub fn ellipse(center: Vec2, radii: Vec2) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [radii.x, radii.y],
-            shape_type: SdfShape::Ellipse as i32,
-            corner_radius: 0.0,
-            shape_params_a: [0.0; 4],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
-    }
-
-    pub fn quad(a: Vec2, b: Vec2, c: Vec2, d: Vec2) -> SdfInstance {
-        SdfInstance {
-            center: [
-                (a.x + b.x + c.x + d.x) * 0.25,
-                (a.y + b.y + c.y + d.y) * 0.25,
-                0.0,
+impl Sdf {
+    pub fn to_gpu(&self) -> SdfInstanceGpu {
+        SdfInstanceGpu {
+            center: self.center.to_array(),
+            bounding_box: self.bounding_box.to_array(),
+            shape_params_a: self.shape_params_a,
+            shape_params_b: self.shape_params_b,
+            fill_color_a: self.fill_color_a.for_gpu(),
+            fill_color_b: self.fill_color_b.for_gpu(),
+            stroke_color: self.stroke_color.for_gpu(),
+            shadow_color: self.shadow_color.for_gpu(),
+            misc_a: [
+                self.rotation,
+                self.corner_radius,
+                self.fill_angle,
+                self.fill_scale,
             ],
-            dimensions: [(a - c).length() * 0.5, (b - d).length() * 0.5],
-            shape_type: SdfShape::Quad as i32,
-            corner_radius: 0.0,
-            shape_params_a: [a.x, a.y, b.x, b.y],
-            shape_params_b: [c.x, c.y, d.x, d.y],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
+            misc_b: [
+                self.stroke_width,
+                self.shadow_radius,
+                self.fill_offset.x,
+                self.fill_offset.y,
+            ],
+            misc_c: [
+                self.shadow_offset.x,
+                self.shadow_offset.y,
+                self.fill_type as i32 as f32,
+                self.stroke_type as i32 as f32,
+            ],
+            misc_d: [self.shape_type as i32 as f32, 0.0, 0.0, 0.0],
         }
     }
 
-    pub fn sector(center: Vec2, radius: Vec2, start_angle: f32, end_angle: f32) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [radius.x, radius.y],
-            shape_type: SdfShape::Sector as i32,
-            corner_radius: 0.0,
-            shape_params_a: [start_angle, end_angle, 0.0, 0.0],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn rect(center: Vec2, size: Vec2) -> Self {
+        default_instance(center.extend(0.0), size * 0.5, SdfShape::Rect)
+    }
+
+    pub fn rect_tl(top_left: Vec2, size: Vec2) -> Self {
+        let center = top_left + size * 0.5;
+        default_instance(center.extend(0.0), size * 0.5, SdfShape::Rect)
+    }
+
+    pub fn square(center: Vec2, size: f32) -> Self {
+        default_instance(center.extend(0.0), Vec2::splat(size * 0.5), SdfShape::Rect)
+    }
+
+    pub fn square_tl(top_left: Vec2, size: f32) -> Self {
+        let center = top_left + Vec2::splat(size * 0.5);
+        default_instance(center.extend(0.0), Vec2::splat(size * 0.5), SdfShape::Rect)
+    }
+
+    pub fn circle(center: Vec2, radius: f32) -> Self {
+        default_instance(center.extend(0.0), Vec2::splat(radius), SdfShape::Ellipse)
+    }
+
+    pub fn ellipse(center: Vec2, radii: Vec2) -> Self {
+        default_instance(center.extend(0.0), radii, SdfShape::Ellipse)
+    }
+
+    pub fn quad(a: Vec2, b: Vec2, c: Vec2, d: Vec2) -> Self {
+        let min_coord = a.min(b).min(c).min(d);
+        let max_coord = a.max(b).max(c).max(d);
+        let dimensions = (max_coord - min_coord) * 0.5;
+        let center = (min_coord + max_coord) * 0.5;
+        let la = a - center;
+        let lb = b - center;
+        let lc = c - center;
+        let ld = d - center;
+        let mut inst = default_instance(center.extend(0.0), dimensions, SdfShape::Quad);
+        inst.shape_params_a = [la.x, la.y, lb.x, lb.y];
+        inst.shape_params_b = [lc.x, lc.y, ld.x, ld.y];
+        inst
+    }
+
+    pub fn sector(center: Vec2, radius: Vec2, start_angle: f32, end_angle: f32) -> Self {
+        let mut inst = default_instance(center.extend(0.0), radius, SdfShape::Sector);
+        inst.shape_params_a = [start_angle, end_angle, 0.0, 0.0];
+        inst
     }
 
     pub fn ring(
@@ -904,27 +936,10 @@ impl SdfInstance {
         thickness: f32,
         start_angle: f32,
         end_angle: f32,
-    ) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [radius.x, radius.y],
-            shape_type: SdfShape::Ring as i32,
-            corner_radius: 0.0,
-            shape_params_a: [start_angle, end_angle, thickness, 0.0],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    ) -> Self {
+        let mut inst = default_instance(center.extend(0.0), radius, SdfShape::Ring);
+        inst.shape_params_a = [start_angle, end_angle, thickness, 0.0];
+        inst
     }
 
     pub fn arc(
@@ -933,357 +948,318 @@ impl SdfInstance {
         thickness: f32,
         start_angle: f32,
         end_angle: f32,
-    ) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [radius.x, radius.y],
-            shape_type: SdfShape::Arc as i32,
-            corner_radius: 0.0,
-            shape_params_a: [start_angle, end_angle, thickness, 0.0],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
+    ) -> Self {
+        let mut inst = default_instance(center.extend(0.0), radius, SdfShape::Arc);
+        inst.shape_params_a = [start_angle, end_angle, thickness, 0.0];
+        inst
+    }
+
+    pub fn triangle(a: Vec2, b: Vec2, c: Vec2) -> Self {
+        let min = a.min(b).min(c);
+        let max = a.max(b).max(c);
+        let center = (min + max) * 0.5;
+        let dimensions = (max - min) * 0.5;
+        let la = a - center;
+        let lb = b - center;
+        let lc = c - center;
+        let mut inst = default_instance(center.extend(0.0), dimensions, SdfShape::Triangle);
+        inst.shape_params_a = [la.x, la.y, lb.x, lb.y];
+        inst.shape_params_b = [lc.x, lc.y, 0.0, 0.0];
+        inst
+    }
+
+    pub fn pentagon(center: Vec2, radius: f32) -> Self {
+        default_instance(center.extend(0.0), Vec2::splat(radius), SdfShape::Pentagon)
+    }
+
+    pub fn hexagon(center: Vec2, radius: f32) -> Self {
+        default_instance(center.extend(0.0), Vec2::splat(radius), SdfShape::Hexagon)
+    }
+
+    pub fn octogon(center: Vec2, radius: f32) -> Self {
+        default_instance(center.extend(0.0), Vec2::splat(radius), SdfShape::Octogon)
+    }
+
+    pub fn hexagram(center: Vec2, radius: f32) -> Self {
+        default_instance(center.extend(0.0), Vec2::splat(radius), SdfShape::Hexagram)
+    }
+
+    pub fn pentagram(center: Vec2, radius: f32) -> Self {
+        default_instance(center.extend(0.0), Vec2::splat(radius), SdfShape::Pentagram)
+    }
+
+    pub fn star(center: Vec2, radius: f32, n_sides: f32, m_ratio: f32) -> Self {
+        let mut inst = default_instance(center.extend(0.0), Vec2::splat(radius), SdfShape::Star);
+        inst.shape_params_a = [n_sides, m_ratio, 0.0, 0.0];
+        inst
+    }
+
+    pub fn moon(center: Vec2, outer_radius: f32, inner_offset: f32, inner_radius: f32) -> Self {
+        let mut inst = default_instance(
+            center.extend(0.0),
+            Vec2::splat(outer_radius),
+            SdfShape::Moon,
+        );
+        inst.shape_params_a = [inner_offset, inner_radius, 0.0, 0.0];
+        inst
+    }
+
+    pub fn heart(center: Vec2, radius: f32) -> Self {
+        default_instance(center.extend(0.0), Vec2::splat(radius), SdfShape::Heart)
+    }
+
+    // pub fn cross(center: Vec2, size: Vec2) -> Self {
+    //     default_instance(center.extend(0.0), size * 0.5, SdfShape::Cross)
+    // }
+
+    // pub fn x_shape(center: Vec2, size: Vec2) -> Self {
+    //     default_instance(center.extend(0.0), size * 0.5, SdfShape::X)
+    // }
+
+    pub fn quadratic_bezier(a: Vec2, b: Vec2, c: Vec2) -> Self {
+        let (min, max) = quadratic_bezier_bounds(a, b, c);
+
+        let center = (min + max) * 0.5;
+        let dimensions = (max - min) * 0.5;
+
+        let la = a - center;
+        let lb = b - center;
+        let lc = c - center;
+
+        let mut inst = default_instance(center.extend(0.0), dimensions, SdfShape::QuadraticBezier);
+
+        inst.shape_params_a = [la.x, la.y, lb.x, lb.y];
+        inst.shape_params_b = [lc.x, lc.y, 0.0, 0.0];
+
+        inst
+    }
+
+    pub fn cubic_bezier(a: Vec2, b: Vec2, c: Vec2, d: Vec2) -> Self {
+        let (min, max) = cubic_bezier_bounds(a, b, c, d);
+
+        let center = (min + max) * 0.5;
+        let dimensions = (max - min) * 0.5;
+
+        let la = a - center;
+        let lb = b - center;
+        let lc = c - center;
+        let ld = d - center;
+
+        let mut inst = default_instance(center.extend(0.0), dimensions, SdfShape::CubicBezier);
+
+        inst.shape_params_a = [la.x, la.y, lb.x, lb.y];
+        inst.shape_params_b = [lc.x, lc.y, ld.x, ld.y];
+
+        inst
+    }
+
+    pub fn quadratic_circle(center: Vec2, radius: f32) -> Self {
+        default_instance(
+            center.extend(0.0),
+            Vec2::splat(radius),
+            SdfShape::QuadraticCircle,
+        )
+    }
+
+    pub fn segment(a: Vec2, b: Vec2) -> Self {
+        let min = a.min(b);
+        let max = a.max(b);
+        let center = (min + max) * 0.5;
+        let bb = (max - min) * 0.5;
+        let la = a - center;
+        let lb = b - center;
+        let mut inst = default_instance(center.extend(0.0), bb, SdfShape::Segment);
+        inst.shape_params_a = [la.x, la.y, lb.x, lb.y];
+        inst
+    }
+
+    pub fn oriented_box(a: Vec2, b: Vec2, thickness: f32) -> Self {
+        let min = a.min(b);
+        let max = a.max(b);
+        let center = (min + max) * 0.5;
+        let bb = ((max - min) * 0.5) + thickness;
+        let la = a - center;
+        let lb = b - center;
+        let mut inst = default_instance(center.extend(0.0), bb, SdfShape::OrientedBox);
+        inst.shape_params_a = [la.x, la.y, lb.x, lb.y];
+        inst.shape_params_b = [thickness, 0.0, 0.0, 0.0];
+        inst
+    }
+
+    pub fn get_position(&self) -> Vec2 {
+        self.center.truncate()
+    }
+    pub fn set_position(&mut self, pos: Vec2) {
+        self.center = pos.extend(self.center.z);
+    }
+
+    pub fn get_depth(&self) -> f32 {
+        self.center.z
+    }
+    pub fn set_depth(&mut self, z: f32) {
+        self.center.z = z;
+    }
+
+    pub fn get_dimensions(&self) -> Vec2 {
+        self.bounding_box
+    }
+    pub fn set_dimensions(&mut self, d: Vec2) {
+        self.bounding_box = d;
+    }
+
+    pub fn get_rotation(&self) -> f32 {
+        self.rotation
+    }
+    pub fn set_rotation(&mut self, r: f32) {
+        self.rotation = r;
+    }
+
+    pub fn get_corner_radius(&self) -> f32 {
+        self.corner_radius
+    }
+    pub fn set_corner_radius(&mut self, r: f32) {
+        self.corner_radius = r;
+    }
+
+    pub fn get_shape_type(&self) -> SdfShape {
+        self.shape_type
+    }
+    pub fn set_shape_type(&mut self, t: SdfShape) {
+        self.shape_type = t;
+    }
+
+    pub fn get_shape_param(&self, i: usize) -> f32 {
+        match i {
+            0..=3 => self.shape_params_a[i],
+            4..=7 => self.shape_params_b[i - 4],
+            _ => panic!("shape param index {i} out of range 0..=7"),
+        }
+    }
+    pub fn set_shape_param(&mut self, i: usize, v: f32) {
+        match i {
+            0..=3 => self.shape_params_a[i] = v,
+            4..=7 => self.shape_params_b[i - 4] = v,
+            _ => panic!("shape param index {i} out of range 0..=7"),
         }
     }
 
-    pub fn triangle(a: Vec2, b: Vec2, c: Vec2) -> SdfInstance {
-        SdfInstance {
-            center: [(a.x + b.x + c.x) / 3.0, (a.y + b.y + c.y) / 3.0, 0.0],
-            dimensions: [(a - b).length() * 0.5, (b - c).length() * 0.5],
-            shape_type: SdfShape::Triangle as i32,
-            corner_radius: 0.0,
-            shape_params_a: [a.x, a.y, b.x, b.y],
-            shape_params_b: [c.x, c.y, 0.0, 0.0],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn get_fill_type(&self) -> SdfFill {
+        self.fill_type
+    }
+    pub fn set_fill_type(&mut self, t: SdfFill) {
+        self.fill_type = t;
     }
 
-    pub fn pentagon(center: Vec2, radius: f32) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [radius, radius],
-            shape_type: SdfShape::Pentagon as i32,
-            corner_radius: 0.0,
-            shape_params_a: [0.0; 4],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn get_fill_color_a(&self) -> Color {
+        self.fill_color_a
+    }
+    pub fn set_fill_color_a(&mut self, c: Color) {
+        self.fill_color_a = c;
     }
 
-    pub fn hexagon(center: Vec2, radius: f32) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [radius, radius],
-            shape_type: SdfShape::Hexagon as i32,
-            corner_radius: 0.0,
-            shape_params_a: [0.0; 4],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn get_fill_color_b(&self) -> Color {
+        self.fill_color_b
+    }
+    pub fn set_fill_color_b(&mut self, c: Color) {
+        self.fill_color_b = c;
     }
 
-    pub fn octogon(center: Vec2, radius: f32) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [radius, radius],
-            shape_type: SdfShape::Octogon as i32,
-            corner_radius: 0.0,
-            shape_params_a: [0.0; 4],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn get_fill_angle(&self) -> f32 {
+        self.fill_angle
+    }
+    pub fn set_fill_angle(&mut self, a: f32) {
+        self.fill_angle = a;
     }
 
-    pub fn hexagram(center: Vec2, radius: f32) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [radius, radius],
-            shape_type: SdfShape::Hexagram as i32,
-            corner_radius: 0.0,
-            shape_params_a: [0.0; 4],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn get_fill_scale(&self) -> f32 {
+        self.fill_scale
+    }
+    pub fn set_fill_scale(&mut self, s: f32) {
+        self.fill_scale = s;
     }
 
-    pub fn pentagram(center: Vec2, radius: f32) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [radius, radius],
-            shape_type: SdfShape::Pentagram as i32,
-            corner_radius: 0.0,
-            shape_params_a: [0.0; 4],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn get_fill_offset(&self) -> Vec2 {
+        self.fill_offset
+    }
+    pub fn set_fill_offset(&mut self, o: Vec2) {
+        self.fill_offset = o;
     }
 
-    pub fn star(center: Vec2, radius: f32, n_sides: f32, m_ratio: f32) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [radius, radius],
-            shape_type: SdfShape::Star as i32,
-            corner_radius: 0.0,
-            shape_params_a: [n_sides, m_ratio, 0.0, 0.0],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn get_stroke_width(&self) -> f32 {
+        self.stroke_width
+    }
+    pub fn set_stroke_width(&mut self, w: f32) {
+        self.stroke_width = w;
     }
 
-    pub fn moon(
-        center: Vec2,
-        outer_radius: f32,
-        inner_offset: f32,
-        inner_radius: f32,
-    ) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [outer_radius, outer_radius],
-            shape_type: SdfShape::Moon as i32,
-            corner_radius: 0.0,
-            shape_params_a: [inner_offset, inner_radius, 0.0, 0.0],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn get_stroke_color(&self) -> Color {
+        self.stroke_color
+    }
+    pub fn set_stroke_color(&mut self, c: Color) {
+        self.stroke_color = c;
     }
 
-    pub fn heart(center: Vec2, radius: f32) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [radius, radius],
-            shape_type: SdfShape::Heart as i32,
-            corner_radius: 0.0,
-            shape_params_a: [0.0; 4],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn get_stroke_type(&self) -> SdfStroke {
+        self.stroke_type
+    }
+    pub fn set_stroke_type(&mut self, t: SdfStroke) {
+        self.stroke_type = t;
     }
 
-    pub fn cross(center: Vec2, size: Vec2) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [size.x * 0.5, size.y * 0.5],
-            shape_type: SdfShape::Cross as i32,
-            corner_radius: 0.0,
-            shape_params_a: [0.0; 4],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn get_shadow_offset(&self) -> Vec2 {
+        self.shadow_offset
+    }
+    pub fn set_shadow_offset(&mut self, o: Vec2) {
+        self.shadow_offset = o;
     }
 
-    pub fn x(center: Vec2, size: Vec2) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [size.x * 0.5, size.y * 0.5],
-            shape_type: SdfShape::X as i32,
-            corner_radius: 0.0,
-            shape_params_a: [0.0; 4],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn get_shadow_radius(&self) -> f32 {
+        self.shadow_radius
+    }
+    pub fn set_shadow_radius(&mut self, r: f32) {
+        self.shadow_radius = r;
     }
 
-    pub fn quadratic_bezier(a: Vec2, b: Vec2, c: Vec2) -> SdfInstance {
-        SdfInstance {
-            center: [(a.x + b.x + c.x) / 3.0, (a.y + b.y + c.y) / 3.0, 0.0],
-            dimensions: [(a - c).length() * 0.5, (b - c).length() * 0.5],
-            shape_type: SdfShape::QuadraticBezier as i32,
-            corner_radius: 0.0,
-            shape_params_a: [a.x, a.y, b.x, b.y],
-            shape_params_b: [c.x, c.y, 0.0, 0.0],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn get_shadow_color(&self) -> Color {
+        self.shadow_color
+    }
+    pub fn set_shadow_color(&mut self, c: Color) {
+        self.shadow_color = c;
     }
 
-    pub fn quadratic_circle(center: Vec2, control: Vec2, radius: f32) -> SdfInstance {
-        SdfInstance {
-            center: [center.x, center.y, 0.0],
-            dimensions: [radius, radius],
-            shape_type: SdfShape::QuadraticCircle as i32,
-            corner_radius: 0.0,
-            shape_params_a: [control.x, control.y, 0.0, 0.0],
-            shape_params_b: [0.0; 4],
-            fill_type: SdfFill::Solid as i32,
-            fill_color_a: [1.0; 4],
-            fill_color_b: [1.0; 4],
-            fill_angle: 0.0,
-            fill_offset: [0.0; 2],
-            fill_scale: 1.0,
-            stroke_width: 0.0,
-            stroke_color: [1.0; 4],
-            stroke_type: SdfStroke::None as i32,
-            shadow_offset: [0.0; 2],
-            shadow_radius: 0.0,
-            shadow_color: [1.0; 4],
-        }
+    pub fn get_color(&self) -> Color {
+        self.fill_color_a
+    }
+    pub fn set_color(&mut self, color: Color) {
+        self.fill_color_a = color;
     }
 
     pub fn with_fill_solid(mut self, color: Color) -> Self {
-        self.fill_type = SdfFill::Solid as i32;
-        self.fill_color_a = color.for_gpu();
+        self.fill_type = SdfFill::Solid;
+        self.fill_color_a = color;
         self
     }
 
-    pub fn with_fill_gradient(
-        mut self,
-        color_a: Color,
-        color_b: Color,
-        angle: f32,
-        scale: f32,
-    ) -> Self {
-        self.fill_type = SdfFill::Gradient as i32;
-        self.fill_color_a = color_a.for_gpu();
-        self.fill_color_b = color_b.for_gpu();
+    pub fn with_fill_gradient(mut self, color_a: Color, color_b: Color, angle: f32) -> Self {
+        self.fill_type = SdfFill::Gradient;
+        self.fill_color_a = color_a;
+        self.fill_color_b = color_b;
         self.fill_angle = angle;
-        self.fill_scale = scale;
+        self.fill_scale = 1.0;
+        self
+    }
+
+    pub fn with_fill_radial_gradient(mut self, color_a: Color, color_b: Color) -> Self {
+        self.fill_type = SdfFill::RadialGradient;
+        self.fill_color_a = color_a;
+        self.fill_color_b = color_b;
+        self.fill_scale = 1.0;
         self
     }
 
     pub fn with_fill_colors(mut self, color_a: Color, color_b: Color) -> Self {
-        self.fill_color_a = color_a.for_gpu();
-        self.fill_color_b = color_b.for_gpu();
+        self.fill_color_a = color_a;
+        self.fill_color_b = color_b;
         self
     }
 
@@ -1291,14 +1267,12 @@ impl SdfInstance {
         self.fill_scale = scale;
         self
     }
-
     pub fn with_fill_angle(mut self, angle: f32) -> Self {
         self.fill_angle = angle;
         self
     }
-
     pub fn with_fill_type(mut self, fill_type: SdfFill) -> Self {
-        self.fill_type = fill_type as i32;
+        self.fill_type = fill_type;
         self
     }
 
@@ -1310,25 +1284,25 @@ impl SdfInstance {
         scale: f32,
         fill_type: SdfFill,
     ) -> Self {
-        self.fill_type = fill_type as i32;
-        self.fill_color_a = color_a.for_gpu();
-        self.fill_color_b = color_b.for_gpu();
+        self.fill_type = fill_type;
+        self.fill_color_a = color_a;
+        self.fill_color_b = color_b;
         self.fill_angle = angle;
         self.fill_scale = scale;
         self
     }
 
     pub fn with_shadow(mut self, offset: Vec2, radius: f32, color: Color) -> Self {
-        self.shadow_offset = offset.into();
+        self.shadow_offset = offset;
         self.shadow_radius = radius;
-        self.shadow_color = color.for_gpu();
+        self.shadow_color = color;
         self
     }
 
     pub fn with_stroke(mut self, width: f32, color: Color, stroke_type: SdfStroke) -> Self {
         self.stroke_width = width;
-        self.stroke_color = color.for_gpu();
-        self.stroke_type = stroke_type as i32;
+        self.stroke_color = color;
+        self.stroke_type = stroke_type;
         self
     }
 
@@ -1336,4 +1310,99 @@ impl SdfInstance {
         self.corner_radius = radius;
         self
     }
+    pub fn with_rotation(mut self, rotation: f32) -> Self {
+        self.rotation = rotation;
+        self
+    }
+    pub fn with_depth(mut self, z: f32) -> Self {
+        self.center.z = z;
+        self
+    }
+    pub fn with_color(mut self, color: Color) -> Self {
+        self.fill_color_a = color;
+        self
+    }
+
+    pub fn with_fill_offset(mut self, offset: Vec2) -> Self {
+        self.fill_offset = offset;
+        self
+    }
+}
+
+fn quadratic_bezier_bounds(p0: Vec2, p1: Vec2, p2: Vec2) -> (Vec2, Vec2) {
+    let mut min = p0.min(p2);
+    let mut max = p0.max(p2);
+
+    for axis in 0..2 {
+        let a = if axis == 0 { p0.x } else { p0.y };
+        let b = if axis == 0 { p1.x } else { p1.y };
+        let c = if axis == 0 { p2.x } else { p2.y };
+
+        let denom = a - 2.0 * b + c;
+
+        if denom.abs() > f32::EPSILON {
+            let t = (a - b) / denom;
+
+            if (0.0..=1.0).contains(&t) {
+                let s = 1.0 - t;
+
+                let q = s * s * a + 2.0 * s * t * b + t * t * c;
+
+                if axis == 0 {
+                    min.x = min.x.min(q);
+                    max.x = max.x.max(q);
+                } else {
+                    min.y = min.y.min(q);
+                    max.y = max.y.max(q);
+                }
+            }
+        }
+    }
+
+    (min, max)
+}
+
+fn cubic_bezier_bounds(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2) -> (Vec2, Vec2) {
+    let mut min = p0.min(p3);
+    let mut max = p0.max(p3);
+
+    for axis in 0..2 {
+        let p0v = if axis == 0 { p0.x } else { p0.y };
+        let p1v = if axis == 0 { p1.x } else { p1.y };
+        let p2v = if axis == 0 { p2.x } else { p2.y };
+        let p3v = if axis == 0 { p3.x } else { p3.y };
+
+        // IQ formulation
+        let c = -p0v + p1v;
+        let b = p0v - 2.0 * p1v + p2v;
+        let a = -p0v + 3.0 * p1v - 3.0 * p2v + p3v;
+
+        let h = b * b - a * c;
+
+        if h >= 0.0 && a.abs() > f32::EPSILON {
+            let g = h.sqrt();
+
+            let t1 = ((-b - g) / a).clamp(0.0, 1.0);
+            let t2 = ((-b + g) / a).clamp(0.0, 1.0);
+
+            for t in [t1, t2] {
+                let s = 1.0 - t;
+
+                let q = s * s * s * p0v
+                    + 3.0 * s * s * t * p1v
+                    + 3.0 * s * t * t * p2v
+                    + t * t * t * p3v;
+
+                if axis == 0 {
+                    min.x = min.x.min(q);
+                    max.x = max.x.max(q);
+                } else {
+                    min.y = min.y.min(q);
+                    max.y = max.y.max(q);
+                }
+            }
+        }
+    }
+
+    (min, max)
 }

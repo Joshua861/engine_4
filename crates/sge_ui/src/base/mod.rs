@@ -2,9 +2,6 @@
 
 use super::*;
 
-mod active_fill;
-pub use active_fill::*;
-
 mod align;
 pub use align::*;
 
@@ -13,9 +10,6 @@ pub use aspect_ratio::*;
 
 mod border;
 pub use border::*;
-
-mod box_fill;
-pub use box_fill::*;
 
 mod button;
 pub use button::*;
@@ -41,14 +35,14 @@ pub use empty::*;
 mod fill;
 pub use fill::*;
 
+mod multipoint_gradient;
+pub use multipoint_gradient::*;
+
 mod fit;
 pub use fit::*;
 
 mod flex;
 pub use flex::*;
-
-mod gradient_fill;
-pub use gradient_fill::*;
 
 mod grid;
 pub use grid::*;
@@ -73,9 +67,6 @@ pub use padding::*;
 
 mod progress_bar;
 pub use progress_bar::*;
-
-mod rounded_fill;
-pub use rounded_fill::*;
 
 mod row;
 pub use row::*;

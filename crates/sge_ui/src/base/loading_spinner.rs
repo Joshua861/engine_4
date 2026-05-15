@@ -1,7 +1,8 @@
 use std::f32::consts::TAU;
 
-use sge_api::shapes_2d::draw_ellipse_sector_outline;
+use sge_api::shapes_2d::draw_sdf;
 use sge_time::oscillate;
+use sge_types::Sdf;
 
 use super::*;
 
@@ -22,14 +23,9 @@ impl UiNode for LoadingSpinner {
         let a = (time() * 7.0) % TAU;
         let b = a + oscillate(0.5, TAU - 0.5);
 
-        draw_ellipse_sector_outline(
-            area.center(),
-            area.size / 2.0 - thickness,
-            a,
-            b,
-            self.0,
-            thickness,
-        );
+        let sdf =
+            Sdf::ring(area.center(), area.size / 2.0, thickness, a, b).with_fill_solid(self.0);
+        draw_sdf(sdf);
 
         area.size
     }

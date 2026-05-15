@@ -1,5 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 
+use std::f32::consts::TAU;
+
 use sge_color::Color;
 use sge_macros::draw_shape_variants;
 use sge_math::collision::{self, HasBounds2D, Polygon};
@@ -11,14 +13,15 @@ use sge_rendering::{
 };
 use sge_shapes::d2::*;
 pub use sge_types::Orientation;
-use sge_types::{ColorVertex2D, Pattern};
+use sge_types::{Metaballs, Sdf, SdfStroke};
 use sge_vectors::{Vec2, vec2};
 
 use crate::draw_to;
 
-dyn_clone::clone_trait_object!(Shape2DExt);
-pub trait Shape2DExt: Shape2D {
-    fn draw_to(&self, renderer: Renderer2D);
+pub trait Shape2DExt: Shape2D + Sized {
+    fn draw_to(&self, mut renderer: Renderer2D) {
+        renderer.add_shape(self);
+    }
 
     fn draw(&self) {
         self.draw_to(draw_queue_2d().renderer())
@@ -30,7 +33,9 @@ pub trait Shape2DExt: Shape2D {
         }
     }
 
-    fn draw_outline_to(&self, renderer: Renderer2D, thickness: f32, color: Color);
+    fn draw_outline_to(&self, mut renderer: Renderer2D, thickness: f32, color: Color) {
+        renderer.add_sdf(self.sdf().with_stroke(thickness, color, SdfStroke::Inside));
+    }
 
     fn draw_with_outline_to(&self, renderer: Renderer2D, thickness: f32, color: Color) {
         self.draw_to(renderer);
@@ -58,225 +63,7 @@ pub trait Shape2DExt: Shape2D {
     }
 }
 
-impl Shape2DExt for Circle {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_circle(self.center, self.radius, self.color);
-    }
-
-    fn draw_outline_to(&self, mut renderer: Renderer2D, thickness: f32, color: Color) {
-        renderer.add_circle_with_outline(
-            self.center,
-            self.radius,
-            Color::TRANSPARENT,
-            thickness,
-            color,
-        );
-    }
-
-    fn draw_with_outline_to(&self, mut renderer: Renderer2D, thickness: f32, color: Color) {
-        renderer.add_circle_with_outline(self.center, self.radius, self.color, thickness, color);
-    }
-}
-
-impl Shape2DExt for CircleWithOutline {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_circle_with_outline(
-            self.center,
-            self.radius,
-            self.fill_color,
-            self.outline_thickness,
-            self.outline_color,
-        );
-    }
-
-    fn draw_outline_to(&self, mut renderer: Renderer2D, thickness: f32, color: Color) {
-        renderer.add_circle_with_outline(
-            self.center,
-            self.radius,
-            Color::TRANSPARENT,
-            thickness,
-            color,
-        );
-    }
-
-    fn draw_with_outline_to(&self, mut renderer: Renderer2D, thickness: f32, color: Color) {
-        renderer.add_circle_with_outline(
-            self.center,
-            self.radius,
-            self.fill_color,
-            thickness,
-            color,
-        );
-    }
-}
-
-impl Shape2DExt for Sector {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_sector(
-            self.center,
-            self.radius,
-            self.fill_color,
-            self.start_angle,
-            self.end_angle,
-        );
-    }
-
-    fn draw_outline_to(&self, mut renderer: Renderer2D, thickness: f32, color: Color) {
-        renderer.add_sector_with_outline(
-            self.center,
-            self.radius,
-            Color::TRANSPARENT,
-            thickness,
-            color,
-            self.start_angle,
-            self.end_angle,
-        );
-    }
-
-    fn draw_with_outline_to(&self, mut renderer: Renderer2D, thickness: f32, color: Color) {
-        renderer.add_sector_with_outline(
-            self.center,
-            self.radius,
-            self.fill_color,
-            thickness,
-            color,
-            self.start_angle,
-            self.end_angle,
-        );
-    }
-}
-
-impl Shape2DExt for Rect {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_shape(self);
-    }
-
-    fn draw_outline_to(&self, renderer: Renderer2D, thickness: f32, color: Color) {
-        let points = self.points();
-        draw_square_outline_path(&points, color, thickness, renderer);
-    }
-
-    fn draw_with_outline_to(&self, renderer: Renderer2D, thickness: f32, color: Color) {
-        self.draw_to(renderer);
-        self.draw_outline_to(renderer, thickness, color);
-    }
-}
-
-impl Shape2DExt for Triangle {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_shape(self);
-    }
-
-    fn draw_outline_to(&self, renderer: Renderer2D, thickness: f32, color: Color) {
-        let points = self.points();
-        draw_circle_outline_path(&points, thickness, color, renderer);
-    }
-}
-
-impl Shape2DExt for Line2D {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_shape(self);
-    }
-
-    fn draw_outline_to(&self, _renderer: Renderer2D, _thickness: f32, _color: Color) {
-        unimplemented!()
-    }
-}
-
-impl Shape2DExt for Pixel {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_pixel(self);
-    }
-
-    fn draw_outline_to(&self, _renderer: Renderer2D, _thickness: f32, _color: Color) {
-        unimplemented!()
-    }
-}
-
-impl Shape2DExt for PixelLine {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_pixel_line(self);
-    }
-
-    fn draw_outline_to(&self, _renderer: Renderer2D, _thickness: f32, _color: Color) {
-        unimplemented!()
-    }
-}
-
-impl Shape2DExt for Poly {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_shape(self);
-    }
-
-    fn draw_outline_to(&self, renderer: Renderer2D, thickness: f32, color: Color) {
-        let points = self.gen_points();
-        draw_circle_outline_path(&points, thickness, color, renderer);
-    }
-}
-
-impl Shape2DExt for CustomShape {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_shape(self);
-    }
-
-    fn draw_outline_to(&self, renderer: Renderer2D, thickness: f32, color: Color) {
-        let points = &self.points;
-        draw_circle_outline_path(points, thickness, color, renderer);
-    }
-}
-
-impl Shape2DExt for RoundedRectangle {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_rounded_rectangle(
-            self.center(),
-            self.size,
-            self.corner_radius,
-            self.fill_color,
-            self.outline_thickness,
-            self.outline_color,
-        );
-    }
-
-    fn draw_outline_to(&self, mut renderer: Renderer2D, thickness: f32, color: Color) {
-        renderer.add_rounded_rectangle(
-            self.center(),
-            self.size,
-            self.corner_radius,
-            Color::TRANSPARENT,
-            thickness,
-            color,
-        );
-    }
-
-    fn draw_with_outline_to(&self, mut renderer: Renderer2D, thickness: f32, color: Color) {
-        renderer.add_rounded_rectangle(
-            self.center(),
-            self.size,
-            self.corner_radius,
-            self.fill_color,
-            thickness,
-            color,
-        );
-    }
-}
-
-impl Shape2DExt for RadialGradient {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_radial_gradient(
-            self.center,
-            self.radius,
-            self.inner_color,
-            self.outer_color,
-            self.outline_thickness,
-            self.outline_color,
-            self.gradient_offset,
-        );
-    }
-
-    fn draw_outline_to(&self, _renderer: Renderer2D, _thickness: f32, _color: Color) {
-        unimplemented!()
-    }
-}
+impl<T: Shape2D> Shape2DExt for T {}
 
 macro_rules! draw_variants {
     (
@@ -334,15 +121,11 @@ draw_shape_variants! {
 
     line [rotation]:
         start: Vec2, end: Vec2, thickness: f32, color: Color
-        => Line2D { start, end, thickness, color, rot },
+        => Line2D { start, end, thickness, color },
 
     poly [outline, with_outline]:
         center: Vec2, sides: usize, radius: f32, rotation: f32, color: Color
         => Poly { center, sides, radius, rotation, color },
-
-    custom_shape [outline, with_outline]:
-        points: Vec<Vec2>, color: Color
-        => CustomShape { points, color },
 
     hexagon [outline, with_outline]:
         center: Vec2, radius: f32, color: Color
@@ -351,31 +134,15 @@ draw_shape_variants! {
     hexagon_pointy [outline, with_outline]:
         center: Vec2, radius: f32, color: Color
         => Poly { center, sides: 6, radius, rotation: std::f32::consts::FRAC_PI_6, color },
-
-    pixel []:
-        pos: Vec2, color: Color
-        => Pixel { pos, color },
-
-    pixel_line []:
-        start: Vec2, end: Vec2, color: Color
-        => PixelLine { start, end, color },
-
-    radial_gradient []:
-        center: Vec2, radius: Vec2, inner_color: Color, outer_color: Color,
-        outline_thickness: f32, outline_color: Color, gradient_offset: Vec2
-        => RadialGradient {
-            center, radius, inner_color, outer_color,
-            outline_thickness, outline_color, gradient_offset,
-        },
 }
 
 draw_variants! {
     fn circle(center: Vec2, radius: f32, color: Color) {
-        screen(renderer) { renderer.add_circle(center, Vec2::splat(radius), color); }
+        screen(renderer) { Circle::new(center, Vec2::splat(radius), color).draw_to(renderer); }
         world(renderer)  {
             let shape = Circle { center, radius: Vec2::splat(radius), color };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_circle(center, Vec2::splat(radius), color);
+                Circle::new(center, Vec2::splat(radius), color).draw_to(renderer);
             }
         }
     }
@@ -383,11 +150,11 @@ draw_variants! {
 
 draw_variants! {
     fn ellipse(center: Vec2, radius: Vec2, color: Color) {
-        screen(renderer) { renderer.add_circle(center, radius, color); }
+        screen(renderer) { renderer.add_shape(&Circle::new(center, radius, color)); }
         world(renderer)  {
             let shape = Circle { center, radius, color };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_circle(center, radius, color);
+                renderer.add_shape(&Circle::new(center, radius, color));
             }
         }
     }
@@ -396,18 +163,12 @@ draw_variants! {
 draw_variants! {
     fn circle_outline(center: Vec2, radius: f32, outline_color: Color, thickness: f32) {
         screen(renderer) {
-            renderer.add_circle_with_outline(
-                center, Vec2::splat(radius),
-                outline_color.with_alpha(0.0), thickness, outline_color,
-            );
+            CircleWithOutline::new(center, Vec2::splat(radius), outline_color, thickness, Color::TRANSPARENT).draw_to(renderer);
         }
         world(renderer) {
-            let shape = Circle { center, radius: Vec2::splat(radius + thickness), color: outline_color };
+            let shape = Circle { center, radius: Vec2::splat(radius), color: Color::TRANSPARENT };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_circle_with_outline(
-                    center, Vec2::splat(radius),
-                    Color::new(0.0, 0.0, 0.0).with_alpha(0.0), thickness, outline_color,
-                );
+                CircleWithOutline::new(center, Vec2::splat(radius), outline_color, thickness, Color::TRANSPARENT).draw_to(renderer);
             }
         }
     }
@@ -416,18 +177,12 @@ draw_variants! {
 draw_variants! {
     fn ellipse_outline(center: Vec2, radius: Vec2, outline_color: Color, thickness: f32) {
         screen(renderer) {
-            renderer.add_circle_with_outline(
-                center, radius,
-                Color::new(0.0, 0.0, 0.0).with_alpha(0.0), thickness, outline_color,
-            );
+            CircleWithOutline::new(center, radius, outline_color, thickness, Color::TRANSPARENT).draw_to(renderer);
         }
         world(renderer) {
             let shape = Circle { center, radius: radius + Vec2::splat(thickness), color: outline_color };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_circle_with_outline(
-                    center, radius,
-                    Color::new(0.0, 0.0, 0.0).with_alpha(0.0), thickness, outline_color,
-                );
+                CircleWithOutline::new(center, radius, outline_color, thickness, Color::TRANSPARENT).draw_to(renderer);
             }
         }
     }
@@ -436,14 +191,12 @@ draw_variants! {
 draw_variants! {
     fn circle_with_outline(center: Vec2, radius: f32, fill: Color, outline: Color, thickness: f32) {
         screen(renderer) {
-            renderer.add_circle_with_outline(center, Vec2::splat(radius), fill, thickness, outline);
+            CircleWithOutline::new(center, Vec2::splat(radius), outline, thickness, fill).draw_to(renderer);
         }
         world(renderer) {
             let shape = Circle { center, radius: Vec2::splat(radius + thickness), color: fill };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_circle_with_outline(
-                    center, Vec2::splat(radius), fill, thickness, outline,
-                );
+                CircleWithOutline::new(center, Vec2::splat(radius), outline, thickness, fill).draw_to(renderer);
             }
         }
     }
@@ -452,12 +205,12 @@ draw_variants! {
 draw_variants! {
     fn ellipse_with_outline(center: Vec2, radius: Vec2, fill: Color, outline: Color, thickness: f32) {
         screen(renderer) {
-            renderer.add_circle_with_outline(center, radius, fill, thickness, outline);
+            CircleWithOutline::new(center, radius, outline, thickness, fill).draw_to(renderer);
         }
         world(renderer) {
             let shape = Circle { center, radius: radius + Vec2::splat(thickness), color: fill };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_circle_with_outline(center, radius, fill, thickness, outline);
+                CircleWithOutline::new(center, radius, outline, thickness, fill).draw_to(renderer);
             }
         }
     }
@@ -468,12 +221,13 @@ draw_variants! {
         center: Vec2, radius: f32, start_angle: f32, end_angle: f32, color: Color
     ) {
         screen(renderer) {
-            renderer.add_sector(center, Vec2::splat(radius), color, start_angle, end_angle);
+            let shape = Sector { center, radius: Vec2::splat(radius), fill_color: color, start_angle, end_angle, outline_color: Color::TRANSPARENT, outline_thickness: 0.0 };
+            renderer.add_shape(&shape);
         }
         world(renderer) {
-            let shape = Sector { center, radius: Vec2::splat(radius), fill_color: color, start_angle, end_angle, outline_color: color, outline_thickness: 0.0 };
+            let shape = Sector { center, radius: Vec2::splat(radius), fill_color: color, start_angle, end_angle, outline_color: Color::TRANSPARENT, outline_thickness: 0.0 };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_sector(center, Vec2::splat(radius), color, start_angle, end_angle);
+                renderer.add_shape(&shape);
             }
         }
     }
@@ -485,20 +239,13 @@ draw_variants! {
         outline_color: Color, thickness: f32,
     ) {
         screen(renderer) {
-            renderer.add_sector_with_outline(
-                center, Vec2::splat(radius),
-                Color::new(0.0, 0.0, 0.0).with_alpha(0.0), thickness, outline_color,
-                start_angle, end_angle,
-            );
+            let shape = Sector { center, radius: Vec2::splat(radius), fill_color: Color::TRANSPARENT, start_angle, end_angle, outline_color, outline_thickness: thickness };
+            renderer.add_shape(&shape);
         }
         world(renderer) {
             let shape = Sector { center, radius: Vec2::splat(radius), fill_color: Color::TRANSPARENT, start_angle, end_angle, outline_color, outline_thickness: thickness };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_sector_with_outline(
-                    center, Vec2::splat(radius),
-                    Color::new(0.0, 0.0, 0.0).with_alpha(0.0), thickness, outline_color,
-                    start_angle, end_angle,
-                );
+                renderer.add_shape(&shape);
             }
         }
     }
@@ -510,18 +257,13 @@ draw_variants! {
         fill_color: Color, outline_color: Color, thickness: f32,
     ) {
         screen(renderer) {
-            renderer.add_sector_with_outline(
-                center, Vec2::splat(radius), fill_color, thickness, outline_color,
-                start_angle, end_angle,
-            );
+            let shape = Sector { center, radius: Vec2::splat(radius), fill_color, start_angle, end_angle, outline_color, outline_thickness: thickness };
+            renderer.add_shape(&shape);
         }
         world(renderer) {
             let shape = Sector { center, radius: Vec2::splat(radius), fill_color, start_angle, end_angle, outline_color, outline_thickness: thickness };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_sector_with_outline(
-                    center, Vec2::splat(radius), fill_color, thickness, outline_color,
-                    start_angle, end_angle,
-                );
+                renderer.add_shape(&shape);
             }
         }
     }
@@ -532,12 +274,13 @@ draw_variants! {
         center: Vec2, radius: Vec2, start_angle: f32, end_angle: f32, color: Color
     ) {
         screen(renderer) {
-            renderer.add_sector(center, radius, color, start_angle, end_angle);
+            let shape = Sector { center, radius, fill_color: color, start_angle, end_angle, outline_color: Color::TRANSPARENT, outline_thickness: 0.0 };
+            renderer.add_shape(&shape);
         }
         world(renderer) {
-            let shape = Sector { center, radius, fill_color: color, start_angle, end_angle, outline_color: color, outline_thickness: 0.0 };
+            let shape = Sector { center, radius, fill_color: color, start_angle, end_angle, outline_color: Color::TRANSPARENT, outline_thickness: 0.0 };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_sector(center, radius, color, start_angle, end_angle);
+                renderer.add_shape(&shape);
             }
         }
     }
@@ -549,20 +292,13 @@ draw_variants! {
         outline_color: Color, thickness: f32,
     ) {
         screen(renderer) {
-            renderer.add_sector_with_outline(
-                center, radius,
-                Color::new(0.0, 0.0, 0.0).with_alpha(0.0), thickness, outline_color,
-                start_angle, end_angle,
-            );
+            let shape = Sector { center, radius, fill_color: Color::TRANSPARENT, start_angle, end_angle, outline_color, outline_thickness: thickness };
+            renderer.add_shape(&shape);
         }
         world(renderer) {
-            let shape = Sector { center, radius: radius, fill_color: Color::TRANSPARENT, start_angle, end_angle, outline_color, outline_thickness: thickness };
+            let shape = Sector { center, radius, fill_color: Color::TRANSPARENT, start_angle, end_angle, outline_color, outline_thickness: thickness };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_sector_with_outline(
-                    center, radius,
-                    Color::new(0.0, 0.0, 0.0).with_alpha(0.0), thickness, outline_color,
-                    start_angle, end_angle,
-                );
+                renderer.add_shape(&shape);
             }
         }
     }
@@ -574,18 +310,13 @@ draw_variants! {
         fill_color: Color, outline_color: Color, thickness: f32,
     ) {
         screen(renderer) {
-            renderer.add_sector_with_outline(
-                center, radius, fill_color, thickness, outline_color,
-                start_angle, end_angle,
-            );
+            let shape = Sector { center, radius, fill_color, start_angle, end_angle, outline_color, outline_thickness: thickness };
+            renderer.add_shape(&shape);
         }
         world(renderer) {
             let shape = Sector { center, radius, fill_color, start_angle, end_angle, outline_color, outline_thickness: thickness };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_sector_with_outline(
-                    center, radius, fill_color, thickness, outline_color,
-                    start_angle, end_angle,
-                );
+                renderer.add_shape(&shape);
             }
         }
     }
@@ -880,281 +611,6 @@ draw_variants! {
     }
 }
 
-fn rect_gradient_mesh(
-    top_left: Vec2,
-    size: Vec2,
-    c_tl: Color,
-    c_tr: Color,
-    c_bl: Color,
-    c_br: Color,
-) -> [ColorVertex2D; 4] {
-    let tl = top_left;
-    let tr = top_left + Vec2::new(size.x, 0.0);
-    let bl = top_left + Vec2::new(0.0, size.y);
-    let br = top_left + size;
-    [
-        ColorVertex2D::new(tl.x, tl.y, c_tl),
-        ColorVertex2D::new(tr.x, tr.y, c_tr),
-        ColorVertex2D::new(bl.x, bl.y, c_bl),
-        ColorVertex2D::new(br.x, br.y, c_br),
-    ]
-}
-
-draw_variants! {
-    fn triangle_gradient(a: Vec2, b: Vec2, c: Vec2, ca: Color, cb: Color, cc: Color) {
-        screen(renderer) {
-            renderer.add_mesh(
-                &[ColorVertex2D::new(a.x, a.y, ca), ColorVertex2D::new(b.x, b.y, cb), ColorVertex2D::new(c.x, c.y, cc)],
-                &[0, 1, 2],
-            );
-        }
-        world(renderer) {
-            let tri = Triangle { points: [a, b, c], color: Color::TRANSPARENT, rot: 0.0 };
-            if !tri.bounds().is_visible_in_world() { return; }
-            renderer.add_mesh(
-                &[ColorVertex2D::new(a.x, a.y, ca), ColorVertex2D::new(b.x, b.y, cb), ColorVertex2D::new(c.x, c.y, cc)],
-                &[0, 1, 2],
-            );
-        }
-    }
-}
-
-draw_variants! {
-    fn rect_gradient(
-        top_left: Vec2, size: Vec2,
-        c_tl: Color, c_tr: Color, c_bl: Color, c_br: Color,
-    ) {
-        screen(renderer) {
-            renderer.add_mesh(&rect_gradient_mesh(top_left, size, c_tl, c_tr, c_bl, c_br), &QUAD_INDICES);
-        }
-        world(renderer) {
-            let rect = Rect { top_left, size, color: Color::TRANSPARENT, rot: 0.0 };
-            if !rect.bounds().is_visible_in_world() { return; }
-            renderer.add_mesh(&rect_gradient_mesh(top_left, size, c_tl, c_tr, c_bl, c_br), &QUAD_INDICES);
-        }
-    }
-}
-
-draw_variants! {
-    fn square_gradient_all(
-        top_left: Vec2, size: f32,
-        c_tl: Color, c_tr: Color, c_bl: Color, c_br: Color,
-    ) [renderer] {
-        draw_rect_gradient_to(top_left, Vec2::splat(size), c_tl, c_tr, c_bl, c_br, renderer);
-    }
-}
-
-fn line_gradient_vertices(
-    start: Vec2,
-    end: Vec2,
-    thickness: f32,
-    c_start_left: Color,
-    c_start_right: Color,
-    c_end_left: Color,
-    c_end_right: Color,
-) -> Vec<ColorVertex2D> {
-    Line2D {
-        start,
-        end,
-        thickness,
-        color: Color::TRANSPARENT,
-        rot: 0.0,
-    }
-    .gen_mesh(0)
-    .1
-    .into_iter()
-    .zip([c_start_right, c_end_right, c_start_left, c_end_left])
-    .map(|(mut v, c)| {
-        v.color = c.for_gpu();
-        v
-    })
-    .collect()
-}
-
-draw_variants! {
-    fn line_gradient(start: Vec2, end: Vec2, thickness: f32, start_color: Color, end_color: Color) [renderer] {
-        draw_line_gradient_ex_to(start, end, thickness, start_color, start_color, end_color, end_color, renderer);
-    }
-}
-
-draw_variants! {
-    fn line_gradient_ex(
-        start: Vec2, end: Vec2, thickness: f32,
-        c_start_left: Color, c_start_right: Color,
-        c_end_left: Color, c_end_right: Color,
-    ) {
-        screen(renderer) {
-            let verts = line_gradient_vertices(start, end, thickness, c_start_left, c_start_right, c_end_left, c_end_right);
-            renderer.add_mesh(&verts, &QUAD_INDICES);
-        }
-        world(renderer) {
-            let line = Line2D { start, end, thickness, color: Color::TRANSPARENT, rot: 0.0 };
-            if !line.bounds().is_visible_in_world() { return; }
-            let verts = line_gradient_vertices(start, end, thickness, c_start_left, c_start_right, c_end_left, c_end_right);
-            if verts.is_empty() { return; }
-            renderer.add_mesh(&verts, &QUAD_INDICES);
-        }
-    }
-}
-
-draw_variants! {
-    fn gradient_path(points: &[Vec2], thickness: f32, start: Color, end: Color) [renderer] {
-        draw_gradient_path_internal(points, thickness, start, end, draw_line_gradient_to, renderer);
-    }
-}
-
-fn draw_gradient_path_internal<F>(
-    points: &[Vec2],
-    thickness: f32,
-    start: Color,
-    end: Color,
-    mut draw_seg: F,
-    renderer: Renderer2D,
-) where
-    F: FnMut(Vec2, Vec2, f32, Color, Color, Renderer2D),
-{
-    if points.len() < 2 {
-        return;
-    }
-    let total_len: f32 = points.windows(2).map(|p| (p[1] - p[0]).length()).sum();
-    if total_len == 0.0 {
-        return;
-    }
-    let mut acc = 0.0;
-    for seg in points.windows(2) {
-        let len = (seg[1] - seg[0]).length();
-        let t0 = acc / total_len;
-        let t1 = (acc + len) / total_len;
-        draw_seg(
-            seg[0],
-            seg[1],
-            thickness,
-            start.blend(end, t0),
-            start.blend(end, t1),
-            renderer,
-        );
-        acc += len;
-    }
-}
-
-macro_rules! draw_rect_gradient_dirs {
-    ($stem:ident, $size_ty:ty, $to_vec2:expr) => {
-        paste::paste! {
-            draw_variants! {
-                fn [<$stem _gradient_vertical>](top_left: Vec2, size: $size_ty, top: Color, bottom: Color) [renderer] {
-                    draw_rect_gradient_to(top_left, $to_vec2(size), top, top, bottom, bottom, renderer);
-                }
-            }
-            draw_variants! {
-                fn [<$stem _gradient_horizontal>](top_left: Vec2, size: $size_ty, left: Color, right: Color) [renderer] {
-                    draw_rect_gradient_to(top_left, $to_vec2(size), left, right, left, right, renderer);
-                }
-            }
-            draw_variants! {
-                fn [<$stem _gradient_tl_br>](top_left: Vec2, size: $size_ty, tl: Color, br: Color) [renderer] {
-                    let m = tl.blend_halfway(br);
-                    draw_rect_gradient_to(top_left, $to_vec2(size), tl, m, m, br, renderer);
-                }
-            }
-            draw_variants! {
-                fn [<$stem _gradient_tr_bl>](top_left: Vec2, size: $size_ty, tr: Color, bl: Color) [renderer] {
-                    let m = tr.blend_halfway(bl);
-                    draw_rect_gradient_to(top_left, $to_vec2(size), m, tr, bl, m, renderer);
-                }
-            }
-        }
-    };
-}
-
-draw_rect_gradient_dirs!(square, f32, Vec2::splat);
-draw_rect_gradient_dirs!(rect, Vec2, |s: Vec2| s);
-
-macro_rules! gen_radial_gradient_variants {
-    () => {
-        gen_radial_gradient_variants!(@shape circle,  radius: f32,  Vec2::splat(radius));
-        gen_radial_gradient_variants!(@shape ellipse, radius: Vec2, radius);
-    };
-
-    (@shape $name:ident, $radius_param:ident: $radius_ty:ty, $radius_expr:expr) => {
-        gen_radial_gradient_variants!(@emit $name, $radius_param: $radius_ty, $radius_expr,
-            fn_suffix:      [],
-            outline_params: [],
-            outline_val:    [0.0, Color::TRANSPARENT],
-            offset_params:  [],
-            offset_val:     [Vec2::ZERO],
-            vis_radius:     [$radius_expr]
-        );
-        gen_radial_gradient_variants!(@emit $name, $radius_param: $radius_ty, $radius_expr,
-            fn_suffix:      [_with_outline],
-            outline_params: [outline_thickness: f32, outline_color: Color],
-            outline_val:    [outline_thickness, outline_color],
-            offset_params:  [],
-            offset_val:     [Vec2::ZERO],
-            vis_radius:     [$radius_expr + Vec2::splat(outline_thickness)]
-        );
-        gen_radial_gradient_variants!(@emit $name, $radius_param: $radius_ty, $radius_expr,
-            fn_suffix:      [_offset],
-            outline_params: [],
-            outline_val:    [0.0, Color::TRANSPARENT],
-            offset_params:  [gradient_offset: Vec2],
-            offset_val:     [gradient_offset],
-            vis_radius:     [$radius_expr]
-        );
-        gen_radial_gradient_variants!(@emit $name, $radius_param: $radius_ty, $radius_expr,
-            fn_suffix:      [_with_outline_offset],
-            outline_params: [outline_thickness: f32, outline_color: Color],
-            outline_val:    [outline_thickness, outline_color],
-            offset_params:  [gradient_offset: Vec2],
-            offset_val:     [gradient_offset],
-            vis_radius:     [$radius_expr + Vec2::splat(outline_thickness)]
-        );
-    };
-
-    (
-        @emit $name:ident, $radius_param:ident: $radius_ty:ty, $radius_expr:expr,
-        fn_suffix:      [$($suffix:tt)*],
-        outline_params: [$($outline_param:ident: $outline_ty:ty),*],
-        outline_val:    [$outline_thickness_val:expr, $outline_color_val:expr],
-        offset_params:  [$($offset_param:ident: $offset_ty:ty),*],
-        offset_val:     [$offset_val:expr],
-        vis_radius:     [$vis_radius:expr]
-    ) => {
-        paste::paste! {
-            draw_variants! {
-                fn [<radial_gradient_ $name $($suffix)*>](
-                    center: Vec2,
-                    $radius_param: $radius_ty,
-                    inner: Color,
-                    outer: Color,
-                    $($outline_param: $outline_ty,)*
-                    $($offset_param: $offset_ty,)*
-                ) {
-                    screen(renderer) {
-                        RadialGradient {
-                            center, radius: $radius_expr, inner_color: inner, outer_color: outer,
-                            outline_thickness: $outline_thickness_val, outline_color: $outline_color_val,
-                            gradient_offset: $offset_val,
-                        }.draw_to(renderer);
-                    }
-                    world(renderer) {
-                        let shape = RadialGradient {
-                            center, radius: $radius_expr, inner_color: inner, outer_color: outer,
-                            outline_thickness: $outline_thickness_val, outline_color: $outline_color_val,
-                            gradient_offset: $offset_val,
-                        };
-
-                        if shape.bounds().is_visible_in_world() {
-                            shape.draw_to(renderer);
-                        }
-                    }
-                }
-            }
-        }
-    };
-}
-
-gen_radial_gradient_variants!();
-
 pub trait ToCollider<T> {
     fn to_collider(&self) -> T;
 }
@@ -1176,50 +632,6 @@ impl ToCollider<Polygon> for Poly {
     }
 }
 
-impl ToCollider<Polygon> for CustomShape {
-    fn to_collider(&self) -> Polygon {
-        Polygon {
-            vertices: self.points.clone(),
-        }
-    }
-}
-
-fn draw_square_outline_path(
-    points: &[Vec2],
-    color: Color,
-    thickness: f32,
-    mut renderer: Renderer2D,
-) {
-    points.array_windows().for_each(|[a, b]| {
-        renderer.add_shape(&Line2D::new(*a, *b, thickness, color).with_caps());
-    });
-
-    renderer
-        .add_shape(&Line2D::new(points[points.len() - 1], points[0], thickness, color).with_caps());
-}
-
-fn draw_circle_outline_path(
-    points: &[Vec2],
-    thickness: f32,
-    color: Color,
-    mut renderer: Renderer2D,
-) {
-    points
-        .iter()
-        .for_each(|p| renderer.add_circle(*p, Vec2::splat(thickness / 2.0), color));
-
-    points.array_windows().for_each(|[a, b]| {
-        renderer.add_shape(&Line2D::new(*a, *b, thickness, color));
-    });
-
-    renderer.add_shape(&Line2D::new(
-        points[points.len() - 1],
-        points[0],
-        thickness,
-        color,
-    ));
-}
-
 draw_variants!(
     fn circle_line(start: Vec2, end: Vec2, thickness: f32, color: Color) [renderer] {
         draw_circle_to(start, thickness / 2.0, color, renderer);
@@ -1230,8 +642,8 @@ draw_variants!(
 
 #[derive(Debug, Clone, Copy)]
 pub struct GradientPoint {
-    width: f32,
-    color: Color,
+    pub width: f32,
+    pub color: Color,
 }
 
 impl GradientPoint {
@@ -1240,82 +652,237 @@ impl GradientPoint {
     }
 }
 
-fn draw_multi_point_gradient_internal(
-    pos: Vec2,
+pub fn multipoint_gradient_internal(
+    top_left: Vec2,
     size: Vec2,
+    points: Vec<GradientPoint>,
     orientation: Orientation,
-    points: &[GradientPoint],
     renderer: Renderer2D,
 ) {
-    let total_width: f32 = points.iter().map(|p| p.width).sum();
-    if total_width == 0.0 {
-        return;
-    }
-    let main_axis = match orientation {
-        Orientation::Vertical => size.y,
-        Orientation::Horizontal => size.x,
-    };
-    let cross_axis = match orientation {
-        Orientation::Vertical => size.x,
-        Orientation::Horizontal => size.y,
-    };
+    let total_width = points.iter().map(|p| p.width).sum::<f32>();
+    let main_axis = orientation.main(size);
     let width_multiplier = main_axis / total_width;
-    let mut offset = 0.0f32;
+    let cross = orientation.cross(size);
+
+    let angle = match orientation {
+        Orientation::Horizontal => 0.0,
+        Orientation::Vertical => std::f32::consts::FRAC_PI_2,
+    };
+
+    let mut cursor = top_left;
+
     for i in 0..points.len() {
-        let point = &points[i];
+        let point = points[i];
+        let width = point.width * width_multiplier;
+        let top_left = cursor;
+        let size = orientation.create_vec2(width, cross);
         let next_color = points.get(i + 1).map(|p| p.color).unwrap_or(point.color);
-        let w = point.width * width_multiplier;
-        let (top_left, seg_size, c_tl, c_tr, c_bl, c_br) = match orientation {
-            Orientation::Vertical => (
-                pos + vec2(0.0, offset),
-                vec2(cross_axis, w),
-                point.color,
-                point.color,
-                next_color,
-                next_color,
-            ),
-            Orientation::Horizontal => (
-                pos + vec2(offset, 0.0),
-                vec2(w, cross_axis),
-                point.color,
-                next_color,
-                point.color,
-                next_color,
-            ),
-        };
-        draw_rect_gradient_to(top_left, seg_size, c_tl, c_tr, c_bl, c_br, renderer);
-        offset += w;
+
+        let sdf = Sdf::rect_tl(top_left, size).with_fill_gradient(point.color, next_color, angle);
+        draw_sdf_to(sdf, renderer);
+
+        cursor += orientation.create_vec2(width, 0.0);
     }
 }
 
 draw_variants! {
-    fn multi_point_gradient(
-        pos: Vec2,
+    fn multipoint_gradient(
+        top_left: Vec2,
         size: Vec2,
+        points: Vec<GradientPoint>,
         orientation: Orientation,
-        points: &[GradientPoint],
     ) [renderer] {
-        draw_multi_point_gradient_internal(pos, size, orientation, points, renderer);
+        multipoint_gradient_internal(top_left, size, points, orientation, renderer);
     }
 }
 
 draw_variants! {
     fn quadratic_bezier(a: Vec2, b: Vec2, c: Vec2, color: Color, thickness: f32) [renderer] {
         let mut renderer = renderer;
-        renderer.add_quadratic_bezier(a, b, c, color, thickness);
+        renderer.add_sdf(
+            Sdf::quadratic_bezier(a, b, c).with_fill_solid(color).with_corner_radius(thickness / 2.0)
+        );
     }
 }
 
 draw_variants! {
-    fn cubic_bezier(a: Vec2, b: Vec2, c: Vec2,d: Vec2, color: Color, thickness: f32) [renderer] {
+    fn cubic_bezier(a: Vec2, b: Vec2, c: Vec2, d: Vec2, color: Color, thickness: f32) [renderer] {
         let mut renderer = renderer;
-        renderer.add_cubic_bezier(a, b, c, d, color, thickness);
+        renderer.add_sdf(
+            Sdf::cubic_bezier(a, b, c, d).with_fill_solid(color).with_corner_radius(thickness / 2.0)
+        );
     }
 }
 
 draw_variants! {
-    fn shape_with_pattern(shape: impl Shape2D, alt_color: Color, pattern: Pattern, scale: f32) [renderer] {
+    fn sdf(sdf: Sdf) [renderer] {
         let mut renderer = renderer;
-        renderer.add_shape_with_pattern(&shape, alt_color, pattern, scale);
+        renderer.add_sdf(sdf);
+    }
+}
+
+draw_variants! {
+    fn pixel(pos: Vec2, color: Color) [renderer] {
+        let mut renderer = renderer;
+        renderer.add_pixel(pos, color);
+    }
+}
+
+draw_variants! {
+    fn pixel_line(a: Vec2, b: Vec2, color: Color) [renderer] {
+        let mut renderer = renderer;
+        renderer.add_pixel_line(a, b, color);
+    }
+}
+
+draw_variants! {
+    fn custom_shape(points: &[Vec2], color: Color) [renderer] {
+        let mut renderer = renderer;
+        let (vertices, indices) = gen_mesh_from_points(&points, color);
+        renderer.add_mesh(&vertices, &indices);
+    }
+}
+
+draw_variants! {
+    fn quad(points: [Vec2; 4], color: Color) [renderer] {
+        let mut renderer = renderer;
+        let [a,b,c,d] = points;
+        let sdf = Sdf::quad(a, b, c, d).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+//ring
+draw_variants! {
+    fn ring(center: Vec2, radius: f32, thickness: f32, start_angle: f32, end_angle: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::ring(center, Vec2::splat(radius), thickness, start_angle, end_angle)
+            .with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+draw_variants! {
+    fn full_ring(center: Vec2, radius: f32, thickness: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::ring(center, Vec2::splat(radius), thickness, 0.0, TAU)
+            .with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// arc
+draw_variants! {
+    fn arc(center: Vec2, radius: f32, thickness: f32, start_angle: f32, end_angle: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::ring(center, Vec2::splat(radius), thickness, start_angle, end_angle)
+            .with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// pentagon
+draw_variants! {
+    fn pentagon(center: Vec2, radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::pentagon(center, radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// octogon
+draw_variants! {
+    fn octogon(center: Vec2, radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::octogon(center, radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// hexagram
+draw_variants! {
+    fn hexagram(center: Vec2, radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::hexagram(center, radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// pentagram
+draw_variants! {
+    fn pentagram(center: Vec2, radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::pentagram(center, radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// star
+draw_variants! {
+    fn star(center: Vec2, radius: f32,n_sides: usize, m_ratio: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::star(center, radius, n_sides as f32, m_ratio).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// moon
+draw_variants! {
+    fn moon(center: Vec2, outer_radius: f32, inner_offset: f32, inner_radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::moon(center, outer_radius, inner_offset, inner_radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// heart
+draw_variants! {
+    fn heart(center: Vec2, radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::heart(center, radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// // cross
+// draw_variants! {
+//     fn cross(center: Vec2, radius: Vec2, color: Color) [renderer] {
+//         let mut renderer = renderer;
+//         let sdf = Sdf::cross(center, radius).with_fill_solid(color);
+//         draw_sdf_to(sdf, renderer);
+//     }
+// }
+
+// // x_shape
+// draw_variants! {
+//     fn x_shape(center: Vec2, radius: Vec2, color: Color) [renderer] {
+//         let mut renderer = renderer;
+//         let sdf = Sdf::x_shape(center, radius).with_fill_solid(color);
+//         draw_sdf_to(sdf, renderer);
+//     }
+// }
+
+// quadratic_circle
+draw_variants! {
+    fn quadratic_circle(center: Vec2, radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::quadratic_circle(center, radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// rounded_line
+draw_variants! {
+    fn rounded_line(start: Vec2, end:Vec2, thickness: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::segment(start, end).with_fill_solid(color).with_corner_radius(thickness / 2.0);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+draw_variants! {
+    fn metaballs(metaballs: Metaballs) [renderer] {
+        let mut renderer = renderer;
+        renderer.add_metaball_batch(metaballs.get());
     }
 }

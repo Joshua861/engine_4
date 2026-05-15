@@ -1,4 +1,3 @@
-use glium::winit::monitor::VideoModeHandle;
 use sge::prelude::*;
 
 struct PhysicsCircle {

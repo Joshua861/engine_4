@@ -5,16 +5,10 @@ use sge_color::Color;
 use sge_config::{get_dithering, get_polygon_mode};
 use sge_debugging::*;
 use sge_math::transform::Transform2D;
-use sge_programs::{
-    CIRCLE_PROGRAM, FLAT_PROGRAM, QBEZIER_PROGRAM, RADIAL_PROGRAM, ROUNDED_PROGRAM,
-    TEXTURED_PROGRAM,
-};
 use sge_shapes::d2::{QUAD_INDICES, Shape2D, UNIT_QUAD};
 use sge_textures::TextureRef;
 use sge_types::{
-    CircleBatch, CircleInstance, ColorVertex2D, CubicBezier, CubicBezierBatch, LineBatch,
-    MetaballBatch, Pattern, PointBatch, QuadraticBezier, QuadraticBezierBatch, RadialGradientBatch,
-    RadialGradientInstance, RoundedBatch, RoundedInstance, ShapeBatch,
+    ColorVertex2D, LineBatch, MeshBatch, MetaballBatch, Pattern, PointBatch, Sdf, SdfBatch,
 };
 use sge_vectors::{Mat4, Rect, Vec2, Vec3};
 use sge_window::get_display;
@@ -29,15 +23,11 @@ mod scene;
 
 #[derive(Clone)]
 pub enum DrawCommand {
-    Shapes(ShapeBatch),
+    Sdf(SdfBatch),
+    Mesh(MeshBatch),
     Points(PointBatch),
     Lines(LineBatch),
-    Circles(CircleBatch),
-    Rounded(RoundedBatch),
-    Radial(RadialGradientBatch),
     Sprites(SpriteBatch),
-    QuadraticBezier(QuadraticBezierBatch),
-    CubicBezier(CubicBezierBatch),
     Metaballs(*const MetaballBatch),
 }
 
@@ -84,70 +74,6 @@ impl Renderer2D {
         matches!(self.ty, RendererType::World)
     }
 
-    pub fn current_shape_batch(&mut self) -> &mut ShapeBatch {
-        let scissor = current_scissor();
-        let needs_new = match self.draws().last() {
-            Some(DrawCommand::Shapes(b)) => b.scissor != scissor,
-            _ => true,
-        };
-        if needs_new {
-            self.draws_mut()
-                .push(DrawCommand::Shapes(ShapeBatch::new(scissor)));
-        }
-        match self.draws_mut().last_mut().unwrap() {
-            DrawCommand::Shapes(b) => b,
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn current_circle_batch(&mut self) -> &mut CircleBatch {
-        let scissor = current_scissor();
-        let needs_new = match self.draws().last() {
-            Some(DrawCommand::Circles(b)) => b.scissor != scissor,
-            _ => true,
-        };
-        if needs_new {
-            self.draws_mut()
-                .push(DrawCommand::Circles(CircleBatch::new(scissor)));
-        }
-        match self.draws_mut().last_mut().unwrap() {
-            DrawCommand::Circles(b) => b,
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn current_rounded_batch(&mut self) -> &mut RoundedBatch {
-        let scissor = current_scissor();
-        let needs_new = match self.draws().last() {
-            Some(DrawCommand::Rounded(b)) => b.scissor != scissor,
-            _ => true,
-        };
-        if needs_new {
-            self.draws_mut()
-                .push(DrawCommand::Rounded(RoundedBatch::new(scissor)));
-        }
-        match self.draws_mut().last_mut().unwrap() {
-            DrawCommand::Rounded(b) => b,
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn current_radial_batch(&mut self) -> &mut RadialGradientBatch {
-        let scissor = current_scissor();
-        let needs_new = match self.draws().last() {
-            Some(DrawCommand::Radial(b)) => b.scissor != scissor,
-            _ => true,
-        };
-        if needs_new {
-            self.draws_mut()
-                .push(DrawCommand::Radial(RadialGradientBatch::new(scissor)));
-        }
-        match self.draws_mut().last_mut().unwrap() {
-            DrawCommand::Radial(b) => b,
-            _ => unreachable!(),
-        }
-    }
-
     pub fn current_sprite_batch(&mut self, texture: TextureRef) -> &mut SpriteBatch {
         let scissor = current_scissor();
 
@@ -171,159 +97,33 @@ impl Renderer2D {
         }
     }
 
-    pub fn add_shape(&mut self, shape: &impl Shape2D) {
-        debugger_add_drawn_objects(1);
-        let batch = self.current_shape_batch();
-        let (mut indices, vertices) = shape.gen_mesh(batch.max_index);
-        for vertex in &vertices {
-            batch.vertices.push(vertex.solid_pattern());
+    pub fn current_sdf_batch(&mut self) -> &mut SdfBatch {
+        let scissor = current_scissor();
+        let needs_new = match self.draws().last() {
+            Some(DrawCommand::Sdf(b)) => b.scissor != scissor,
+            _ => true,
+        };
+        if needs_new {
+            self.draws_mut()
+                .push(DrawCommand::Sdf(SdfBatch::new(scissor)));
         }
-        batch.max_index += vertices.len() as u32;
-        batch.indices.append(&mut indices);
+        match self.draws_mut().last_mut().unwrap() {
+            DrawCommand::Sdf(b) => b,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn add_sdf(&mut self, instance: Sdf) {
+        debugger_add_drawn_objects(1);
+        self.current_sdf_batch().instances.push(instance);
+    }
+
+    pub fn add_shape(&mut self, shape: &impl Shape2D) {
+        self.add_sdf(shape.sdf());
     }
 
     pub fn current_draw_n(&self) -> usize {
         self.draws().len()
-    }
-
-    pub fn add_circle(&mut self, center: Vec2, radius: Vec2, color: Color) {
-        debugger_add_drawn_objects(1);
-        self.current_circle_batch()
-            .instances
-            .push(CircleInstance::new(center, 0.0, radius, color));
-    }
-
-    pub fn add_circle_with_outline(
-        &mut self,
-        center: Vec2,
-        radius: Vec2,
-        fill_color: Color,
-        outline_thickness: f32,
-        outline_color: Color,
-    ) {
-        debugger_add_drawn_objects(1);
-        self.current_circle_batch()
-            .instances
-            .push(CircleInstance::new_with_outline(
-                center,
-                0.0,
-                radius,
-                fill_color,
-                outline_thickness,
-                outline_color,
-            ));
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub fn add_radial_gradient(
-        &mut self,
-        center: Vec2,
-        radius: Vec2,
-        inner_color: Color,
-        outer_color: Color,
-        outline_thickness: f32,
-        outline_color: Color,
-        gradient_offset: Vec2,
-    ) {
-        debugger_add_drawn_objects(1);
-        self.current_radial_batch()
-            .instances
-            .push(RadialGradientInstance {
-                center: [center.x, center.y, 0.0],
-                radius: [radius.x, radius.y],
-                outline_thickness,
-                inner_color: inner_color.for_gpu(),
-                outer_color: outer_color.for_gpu(),
-                outline_color: outline_color.for_gpu(),
-                gradient_offset: [gradient_offset.x, gradient_offset.y],
-            });
-    }
-
-    pub fn add_rounded_rectangle(
-        &mut self,
-        center: Vec2,
-        dimensions: Vec2,
-        corner_radius: f32,
-        fill_color: Color,
-        outline_thickness: f32,
-        outline_color: Color,
-    ) {
-        debugger_add_drawn_objects(1);
-        let shortest_side = dimensions.x.min(dimensions.y);
-        self.current_rounded_batch()
-            .instances
-            .push(RoundedInstance::new(
-                dimensions,
-                center,
-                0.0,
-                corner_radius.clamp(0.0, (0.5 * shortest_side).max(0.0)),
-                fill_color,
-                outline_thickness,
-                outline_color,
-            ));
-    }
-
-    pub fn current_quadratic_bezier_batch(&mut self) -> &mut QuadraticBezierBatch {
-        let scissor = current_scissor();
-        let needs_new = match self.draws().last() {
-            Some(DrawCommand::QuadraticBezier(b)) => b.scissor != scissor,
-            _ => true,
-        };
-        if needs_new {
-            self.draws_mut()
-                .push(DrawCommand::QuadraticBezier(QuadraticBezierBatch::new(
-                    scissor,
-                )));
-        }
-        match self.draws_mut().last_mut().unwrap() {
-            DrawCommand::QuadraticBezier(b) => b,
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn add_quadratic_bezier(
-        &mut self,
-        a: Vec2,
-        b: Vec2,
-        c: Vec2,
-        color: Color,
-        thickness: f32,
-    ) {
-        debugger_add_drawn_objects(1);
-        self.current_quadratic_bezier_batch()
-            .instances
-            .push(QuadraticBezier::new(a, b, c, color, thickness));
-    }
-
-    pub fn current_cubic_bezier_batch(&mut self) -> &mut CubicBezierBatch {
-        let scissor = current_scissor();
-        let needs_new = match self.draws().last() {
-            Some(DrawCommand::CubicBezier(b)) => b.scissor != scissor,
-            _ => true,
-        };
-        if needs_new {
-            self.draws_mut()
-                .push(DrawCommand::CubicBezier(CubicBezierBatch::new(scissor)));
-        }
-        match self.draws_mut().last_mut().unwrap() {
-            DrawCommand::CubicBezier(b) => b,
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn add_cubic_bezier(
-        &mut self,
-        a: Vec2,
-        b: Vec2,
-        c: Vec2,
-        d: Vec2,
-        color: Color,
-        thickness: f32,
-    ) {
-        debugger_add_drawn_objects(1);
-        self.current_cubic_bezier_batch()
-            .instances
-            .push(CubicBezier::new(a, b, c, d, color, thickness));
     }
 
     pub fn add_metaball_batch(&mut self, batch: &MetaballBatch) {
@@ -397,8 +197,24 @@ impl Renderer2D {
         ]);
     }
 
+    pub fn current_mesh_batch(&mut self) -> &mut MeshBatch {
+        let scissor = current_scissor();
+        let needs_new = match self.draws().last() {
+            Some(DrawCommand::Mesh(b)) => b.scissor != scissor,
+            _ => true,
+        };
+        if needs_new {
+            self.draws_mut()
+                .push(DrawCommand::Mesh(MeshBatch::new(scissor)));
+        }
+        match self.draws_mut().last_mut().unwrap() {
+            DrawCommand::Mesh(b) => b,
+            _ => unreachable!(),
+        }
+    }
+
     pub fn add_mesh(&mut self, vertices: &[ColorVertex2D], indices: &[u32]) {
-        let batch = self.current_shape_batch();
+        let batch = self.current_mesh_batch();
         let base_index = batch.max_index;
         for v in vertices {
             batch.vertices.push(v.solid_pattern());
@@ -415,32 +231,13 @@ impl Renderer2D {
         pattern: Pattern,
         scale: f32,
     ) {
-        let batch = self.current_shape_batch();
+        let batch = self.current_mesh_batch();
         let base_index = batch.max_index;
         for v in vertices {
             batch.vertices.push(v.to_pattern(alt_color, pattern, scale));
         }
         batch.indices.extend(indices.iter().map(|i| i + base_index));
         batch.max_index += vertices.len() as u32;
-    }
-
-    pub fn add_shape_with_pattern(
-        &mut self,
-        shape: &impl Shape2D,
-        alt_color: Color,
-        pattern: Pattern,
-        scale: f32,
-    ) {
-        debugger_add_drawn_objects(1);
-        let batch = self.current_shape_batch();
-        let (mut indices, vertices) = shape.gen_mesh(batch.max_index);
-        for vertex in &vertices {
-            batch
-                .vertices
-                .push(vertex.to_pattern(alt_color, pattern, scale));
-        }
-        batch.max_index += vertices.len() as u32;
-        batch.indices.append(&mut indices);
     }
 
     pub fn add_scene(&mut self, scene: &Scene2D) {
@@ -478,70 +275,28 @@ impl Renderer2D {
         }
     }
 
-    pub fn add_pixel(&mut self, shape: &impl Shape2D) {
+    pub fn add_pixel(&mut self, pos: Vec2, color: Color) {
         debugger_add_drawn_objects(1);
         let batch = self.current_point_batch();
-        let (_indices, vertices) = shape.gen_mesh(batch.max_index);
-        for vertex in &vertices {
-            batch.vertices.push(vertex.solid_pattern());
-        }
-        batch.max_index += vertices.len() as u32;
+        batch
+            .vertices
+            .push(ColorVertex2D::new(pos.x, pos.y, color).solid_pattern());
+        batch.max_index += 1;
     }
 
-    pub fn add_pixel_line(&mut self, shape: &impl Shape2D) {
+    pub fn add_pixel_line(&mut self, a: Vec2, b: Vec2, color: Color) {
         debugger_add_drawn_objects(1);
         let batch = self.current_line_batch();
-        let (mut indices, vertices) = shape.gen_mesh(batch.max_index);
-        for vertex in &vertices {
-            batch.vertices.push(vertex.solid_pattern());
-        }
-        batch.max_index += vertices.len() as u32;
-        batch.indices.append(&mut indices);
-    }
-
-    pub fn add_sector(
-        &mut self,
-        center: Vec2,
-        radius: Vec2,
-        color: Color,
-        start_angle: f32,
-        end_angle: f32,
-    ) {
-        debugger_add_drawn_objects(1);
-        self.current_circle_batch()
-            .instances
-            .push(CircleInstance::new_sector(
-                center,
-                0.0,
-                radius,
-                color,
-                start_angle,
-                end_angle,
-            ));
-    }
-
-    pub fn add_sector_with_outline(
-        &mut self,
-        center: Vec2,
-        radius: Vec2,
-        fill_color: Color,
-        outline_thickness: f32,
-        outline_color: Color,
-        start_angle: f32,
-        end_angle: f32,
-    ) {
-        debugger_add_drawn_objects(1);
-        self.current_circle_batch()
-            .instances
-            .push(CircleInstance::new_sector_with_outline(
-                center,
-                0.0,
-                radius,
-                fill_color,
-                outline_thickness,
-                outline_color,
-                start_angle,
-                end_angle,
-            ));
+        let base_index = batch.max_index;
+        batch
+            .vertices
+            .push(ColorVertex2D::new(a.x, a.y, color).solid_pattern());
+        batch
+            .vertices
+            .push(ColorVertex2D::new(b.x, b.y, color).solid_pattern());
+        batch
+            .indices
+            .extend_from_slice(&[base_index, base_index + 1]);
+        batch.max_index += 2;
     }
 }

@@ -148,6 +148,10 @@ pub fn set_theme_dark(dark: bool) {
     state.dark = dark;
 }
 
+pub fn get_theme_dark() -> bool {
+    get_theme_state().dark
+}
+
 pub(crate) fn init() {
     let c = argb(Color::SLATE_500);
     let theme = ThemeBuilder::with_source(c).build();

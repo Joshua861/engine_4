@@ -1,6 +1,6 @@
 use sge_vectors::vec2;
 
-use crate::base::{self, EMPTY, RoundedFill, SizedBox};
+use crate::base::{self, EMPTY, Fill, SizedBox};
 
 use super::*;
 
@@ -13,8 +13,8 @@ impl ProgressBar {
             base::ProgressBar::new(
                 value,
                 max,
-                RoundedFill::new(color, PROGRESS_HEIGHT, EMPTY).padding_right(4.0),
-                RoundedFill::new(bg, PROGRESS_HEIGHT, EMPTY),
+                Fill::rounded(color, PROGRESS_HEIGHT, EMPTY).padding_right(4.0),
+                Fill::rounded(bg, PROGRESS_HEIGHT, EMPTY),
                 id,
             ),
         )

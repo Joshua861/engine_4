@@ -1,5 +1,4 @@
 use sge_rendering::{d2::Renderer2D, dq2d, wdq2d};
-use sge_types::Metaballs;
 use shapes_2d::Shape2DExt;
 
 pub mod area;
@@ -43,8 +42,14 @@ pub fn draw_to<T: Drawable>(v: &T, renderer: Renderer2D) {
     v.draw_to(renderer)
 }
 
-impl Drawable for Metaballs {
-    fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_metaball_batch(self);
-    }
-}
+// impl Drawable for Sdf {
+//     fn draw_to(&self, renderer: Renderer2D) {
+//         draw_sdf_to(*self, renderer);
+//     }
+// }
+
+// impl Drawable for Metaballs {
+//     fn draw_to(&self, renderer: Renderer2D) {
+//         draw_metaballs_to(*self, renderer);
+//     }
+// }

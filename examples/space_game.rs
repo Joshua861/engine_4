@@ -208,7 +208,7 @@ impl Player {
 
     fn emit_movement_particles(&self) {
         let batch = ParticleOneshot::builder()
-            .shape(Circle::new(
+            .shape(&Circle::new(
                 Vec2::ZERO,
                 Vec2::splat(LINE_THICKNESS * 1.5),
                 FG,
@@ -390,7 +390,7 @@ impl Asteroid {
         let blinking = time() - self.last_hit < ASTEROID_BLINK_DURATION;
         let fill = if blinking { FG } else { BG };
 
-        draw_custom_shape_world(points.clone(), fill);
+        draw_custom_shape_world(points, fill);
         draw_circle_path_world(points, LINE_THICKNESS, FG);
     }
 }
@@ -469,7 +469,7 @@ fn get_sounds() -> &'static Sounds {
 fn spawn_hit_particles(pos: Vec2, impact_dir: Vec2) {
     play_sound(get_sounds().asteroid_hit);
     let batch = ParticleOneshot::builder()
-        .shape(Circle::new(
+        .shape(&Circle::new(
             Vec2::ZERO,
             Vec2::splat(LINE_THICKNESS * 1.5),
             FG.with_alpha(0.5),
@@ -489,7 +489,7 @@ fn spawn_hit_particles(pos: Vec2, impact_dir: Vec2) {
 fn spawn_death_particles(pos: Vec2, radius: f32) {
     play_sound(get_sounds().asteroid_death);
     let batch = ParticleOneshot::builder()
-        .shape(Circle::new(
+        .shape(&Circle::new(
             Vec2::ZERO,
             Vec2::splat(LINE_THICKNESS * 2.0),
             FG.with_alpha(0.7),

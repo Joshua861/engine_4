@@ -1,114 +1,13 @@
-use dyn_clone::DynClone;
 use sge_color::Color;
 use sge_math::collision::{Aabb2d, HasBounds2D};
-use sge_types::ColorVertex2D;
+use sge_types::{ColorVertex2D, Sdf, SdfStroke};
 use sge_vectors::{Mat3, Vec2, vec2};
 use std::f32::consts::TAU;
 
-dyn_clone::clone_trait_object!(Shape2D);
-pub trait Shape2D: HasBounds2D + DynClone {
-    fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>);
+pub trait Shape2D: HasBounds2D {
+    fn sdf(&self) -> Sdf;
     fn is_visible_in_world(&self) -> bool {
         self.bounds().is_visible_in_world()
-    }
-    fn set_rotation(&mut self, angle: f32);
-    fn set_color(&mut self, color: Color);
-    fn get_color(&self) -> Color;
-    fn set_pos(&mut self, pos: Vec2);
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct Pixel {
-    pub pos: Vec2,
-    pub color: Color,
-}
-
-impl Pixel {
-    pub fn new(pos: Vec2, color: Color) -> Self {
-        Self { pos, color }
-    }
-}
-
-impl HasBounds2D for Pixel {
-    fn bounds(&self) -> Aabb2d {
-        Aabb2d::new(self.pos, self.pos)
-    }
-}
-
-impl Shape2D for Pixel {
-    fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
-        (
-            vec![starting_index],
-            vec![ColorVertex2D::new(self.pos.x, self.pos.y, self.color)],
-        )
-    }
-
-    fn set_rotation(&mut self, _: f32) {}
-
-    fn set_color(&mut self, color: Color) {
-        self.color = color;
-    }
-
-    fn get_color(&self) -> Color {
-        self.color
-    }
-
-    fn set_pos(&mut self, pos: Vec2) {
-        self.pos = pos;
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct PixelLine {
-    pub start: Vec2,
-    pub end: Vec2,
-    pub color: Color,
-}
-
-impl PixelLine {
-    pub fn new(start: Vec2, end: Vec2, color: Color) -> Self {
-        Self { start, end, color }
-    }
-}
-
-impl HasBounds2D for PixelLine {
-    fn bounds(&self) -> Aabb2d {
-        Aabb2d::new(self.start.min(self.end), self.start.max(self.end))
-    }
-}
-
-impl Shape2D for PixelLine {
-    fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
-        (
-            vec![starting_index, starting_index + 1],
-            vec![
-                ColorVertex2D::new(self.start.x, self.start.y, self.color),
-                ColorVertex2D::new(self.end.x, self.end.y, self.color),
-            ],
-        )
-    }
-
-    fn set_rotation(&mut self, rot: f32) {
-        let center = (self.start + self.end) / 2.0;
-        let mat = Mat3::from_translation(center)
-            * Mat3::from_angle(rot)
-            * Mat3::from_translation(-center);
-        self.start = mat.transform_point2(self.start);
-        self.end = mat.transform_point2(self.end);
-    }
-
-    fn set_color(&mut self, color: Color) {
-        self.color = color;
-    }
-
-    fn get_color(&self) -> Color {
-        self.color
-    }
-
-    fn set_pos(&mut self, pos: Vec2) {
-        let offset = pos - self.start;
-        self.start += offset;
-        self.end += offset;
     }
 }
 
@@ -120,22 +19,8 @@ pub struct Circle {
 }
 
 impl Shape2D for Circle {
-    fn gen_mesh(&self, _starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
-        unimplemented!();
-    }
-
-    fn set_rotation(&mut self, _: f32) {}
-
-    fn set_color(&mut self, color: Color) {
-        self.color = color;
-    }
-
-    fn get_color(&self) -> Color {
-        self.color
-    }
-
-    fn set_pos(&mut self, pos: Vec2) {
-        self.center = pos;
+    fn sdf(&self) -> Sdf {
+        Sdf::ellipse(self.center, self.radius).with_fill_solid(self.color)
     }
 }
 
@@ -258,22 +143,14 @@ impl HasBounds2D for CircleWithOutline {
 }
 
 impl Shape2D for CircleWithOutline {
-    fn gen_mesh(&self, _starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
-        unimplemented!();
-    }
-
-    fn set_rotation(&mut self, _: f32) {}
-
-    fn set_color(&mut self, color: Color) {
-        self.outline_color = color;
-    }
-
-    fn get_color(&self) -> Color {
-        self.outline_color
-    }
-
-    fn set_pos(&mut self, pos: Vec2) {
-        self.center = pos;
+    fn sdf(&self) -> Sdf {
+        Sdf::ellipse(self.center, self.radius)
+            .with_fill_solid(self.fill_color)
+            .with_stroke(
+                self.outline_thickness,
+                self.outline_color,
+                SdfStroke::Inside,
+            )
     }
 }
 
@@ -294,23 +171,15 @@ impl HasBounds2D for RoundedRectangle {
 }
 
 impl Shape2D for RoundedRectangle {
-    fn gen_mesh(&self, _: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
-        unimplemented!()
-    }
-
-    fn set_rotation(&mut self, _: f32) {}
-
-    fn set_color(&mut self, color: Color) {
-        self.fill_color = color;
-        self.outline_color = color;
-    }
-
-    fn get_color(&self) -> Color {
-        self.fill_color
-    }
-
-    fn set_pos(&mut self, pos: Vec2) {
-        self.top_left = pos;
+    fn sdf(&self) -> Sdf {
+        Sdf::rect(self.center(), self.size)
+            .with_corner_radius(self.corner_radius)
+            .with_fill_solid(self.fill_color)
+            .with_stroke(
+                self.outline_thickness,
+                self.outline_color,
+                SdfStroke::Inside,
+            )
     }
 }
 
@@ -499,26 +368,8 @@ impl Rect {
 }
 
 impl Shape2D for Rect {
-    fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
-        let quad = self.gen_quad();
-        let indices = QUAD_INDICES.map(|n| n + starting_index).to_vec();
-        (indices, quad)
-    }
-
-    fn set_rotation(&mut self, angle: f32) {
-        self.rot = angle;
-    }
-
-    fn set_color(&mut self, color: Color) {
-        self.color = color;
-    }
-
-    fn get_color(&self) -> Color {
-        self.color
-    }
-
-    fn set_pos(&mut self, pos: Vec2) {
-        self.top_left = pos;
+    fn sdf(&self) -> Sdf {
+        Sdf::rect(self.center(), self.size).with_fill_solid(self.color)
     }
 }
 
@@ -578,36 +429,8 @@ impl HasBounds2D for Triangle {
 }
 
 impl Shape2D for Triangle {
-    fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
-        let tri = self
-            .rotated_points()
-            .map(|p| ColorVertex2D::new(p.x, p.y, self.color));
-
-        #[cfg(feature = "round_coords")]
-        let tri = tri.map(|p| p.round());
-
-        let indices = starting_index..starting_index + 3;
-        (indices.collect(), tri.to_vec())
-    }
-
-    fn set_rotation(&mut self, angle: f32) {
-        self.rot = angle;
-    }
-
-    fn set_color(&mut self, color: Color) {
-        self.color = color;
-    }
-
-    fn get_color(&self) -> Color {
-        self.color
-    }
-
-    fn set_pos(&mut self, pos: Vec2) {
-        let center = self.center();
-        let offset = pos - center;
-        for point in &mut self.points {
-            *point += offset;
-        }
+    fn sdf(&self) -> Sdf {
+        Sdf::triangle(self.points[0], self.points[1], self.points[2]).with_fill_solid(self.color)
     }
 }
 
@@ -617,7 +440,6 @@ pub struct Line2D {
     pub end: Vec2,
     pub thickness: f32,
     pub color: Color,
-    pub rot: f32,
 }
 
 impl Line2D {
@@ -627,31 +449,11 @@ impl Line2D {
             end,
             thickness,
             color,
-            rot: 0.0,
         }
-    }
-
-    pub fn with_rotation(mut self, rot: f32) -> Self {
-        self.rot = rot;
-        self
     }
 
     pub fn center(&self) -> Vec2 {
         (self.start + self.end) / 2.0
-    }
-
-    fn rotated_endpoints(&self) -> (Vec2, Vec2) {
-        if self.rot == 0.0 {
-            return (self.start, self.end);
-        }
-        let center = self.center();
-        let mat = Mat3::from_translation(center)
-            * Mat3::from_angle(self.rot)
-            * Mat3::from_translation(-center);
-        (
-            mat.transform_point2(self.start),
-            mat.transform_point2(self.end),
-        )
     }
 
     pub fn with_caps(mut self) -> Self {
@@ -681,18 +483,17 @@ impl Line2D {
 
 impl HasBounds2D for Line2D {
     fn bounds(&self) -> Aabb2d {
-        let (start, end) = self.rotated_endpoints();
         let half_thick = self.thickness * 0.5;
         Aabb2d::new(
-            start.min(end) - Vec2::splat(half_thick),
-            start.max(end) + Vec2::splat(half_thick),
+            self.start.min(self.end) - Vec2::splat(half_thick),
+            self.start.max(self.end) + Vec2::splat(half_thick),
         )
     }
 }
 
 impl Line2D {
-    fn gen_mesh(&self) -> Option<Vec<ColorVertex2D>> {
-        let (start, end) = self.rotated_endpoints();
+    pub fn points(&self) -> [Vec2; 4] {
+        let (start, end) = (self.start, self.end);
         #[cfg(feature = "round_coords")]
         let start = start.round();
         #[cfg(feature = "round_coords")]
@@ -700,56 +501,21 @@ impl Line2D {
         let direction = end - start;
         let length = direction.length();
 
-        if length == 0.0 {
-            return None;
-        }
-
         let normalized = direction / length;
         let perpendicular = Vec2::new(-normalized.y, normalized.x) * self.thickness / 2.0;
 
-        Some(vec![
-            ColorVertex2D::new(
-                start.x - perpendicular.x,
-                start.y - perpendicular.y,
-                self.color,
-            ),
-            ColorVertex2D::new(end.x - perpendicular.x, end.y - perpendicular.y, self.color),
-            ColorVertex2D::new(
-                start.x + perpendicular.x,
-                start.y + perpendicular.y,
-                self.color,
-            ),
-            ColorVertex2D::new(end.x + perpendicular.x, end.y + perpendicular.y, self.color),
-        ])
+        [
+            Vec2::new(start.x - perpendicular.x, start.y - perpendicular.y),
+            Vec2::new(end.x - perpendicular.x, end.y - perpendicular.y),
+            Vec2::new(start.x + perpendicular.x, start.y + perpendicular.y),
+            Vec2::new(end.x + perpendicular.x, end.y + perpendicular.y),
+        ]
     }
 }
 
 impl Shape2D for Line2D {
-    fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
-        if let Some(mesh) = self.gen_mesh() {
-            (QUAD_INDICES.map(|n| n + starting_index).to_vec(), mesh)
-        } else {
-            (vec![], vec![])
-        }
-    }
-
-    fn set_rotation(&mut self, angle: f32) {
-        self.rot = angle;
-    }
-
-    fn set_color(&mut self, color: Color) {
-        self.color = color;
-    }
-
-    fn get_color(&self) -> Color {
-        self.color
-    }
-
-    fn set_pos(&mut self, pos: Vec2) {
-        let center = self.center();
-        let offset = pos - center;
-        self.start += offset;
-        self.end += offset;
+    fn sdf(&self) -> Sdf {
+        Sdf::oriented_box(self.start, self.end, self.thickness).with_fill_solid(self.color)
     }
 }
 
@@ -814,123 +580,11 @@ impl Poly {
 }
 
 impl Shape2D for Poly {
-    fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
-        let (vertices, indices) = self.gen_mesh();
-        let indices = indices.iter().map(|n| n + starting_index).collect();
-        (indices, vertices)
+    fn sdf(&self) -> Sdf {
+        Sdf::star(self.center, self.radius, self.sides as f32, 1.0)
+            .with_fill_solid(self.color)
+            .with_rotation(self.rotation)
     }
-
-    fn set_rotation(&mut self, angle: f32) {
-        self.rotation = angle;
-    }
-
-    fn set_color(&mut self, color: Color) {
-        self.color = color;
-    }
-
-    fn get_color(&self) -> Color {
-        self.color
-    }
-
-    fn set_pos(&mut self, pos: Vec2) {
-        self.center = pos;
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct CustomShape {
-    pub points: Vec<Vec2>,
-    pub color: Color,
-}
-
-impl CustomShape {
-    pub fn new(points: Vec<Vec2>, color: Color) -> Self {
-        Self { points, color }
-    }
-}
-
-impl HasBounds2D for CustomShape {
-    fn bounds(&self) -> Aabb2d {
-        if self.points.is_empty() {
-            return Aabb2d::new(Vec2::ZERO, Vec2::ZERO);
-        }
-
-        let mut min = self.points[0];
-        let mut max = self.points[0];
-
-        for point in &self.points[1..] {
-            min = min.min(*point);
-            max = max.max(*point);
-        }
-
-        Aabb2d::new(min, max)
-    }
-}
-
-impl Shape2D for CustomShape {
-    fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
-        let (vertices, indices) = gen_mesh_from_points(&self.points, self.color);
-        let indices = indices.iter().map(|n| n + starting_index).collect();
-        (indices, vertices)
-    }
-
-    fn set_rotation(&mut self, _: f32) {
-        unimplemented!()
-    }
-
-    fn set_color(&mut self, color: Color) {
-        self.color = color;
-    }
-
-    fn get_color(&self) -> Color {
-        self.color
-    }
-
-    fn set_pos(&mut self, pos: Vec2) {
-        let bounds = self.bounds();
-        let center = (bounds.min + bounds.max) / 2.0;
-        let offset = pos - center;
-        for point in &mut self.points {
-            *point += offset;
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct RadialGradient {
-    pub center: Vec2,
-    pub radius: Vec2,
-    pub inner_color: Color,
-    pub outer_color: Color,
-    pub outline_thickness: f32,
-    pub outline_color: Color,
-    pub gradient_offset: Vec2,
-}
-
-impl HasBounds2D for RadialGradient {
-    fn bounds(&self) -> Aabb2d {
-        Aabb2d::from_center_size(self.center, self.radius * 2.0)
-    }
-}
-
-impl Shape2D for RadialGradient {
-    fn gen_mesh(&self, _starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
-        unimplemented!()
-    }
-
-    fn get_color(&self) -> Color {
-        self.inner_color
-    }
-
-    fn set_color(&mut self, color: Color) {
-        self.inner_color = color;
-    }
-
-    fn set_pos(&mut self, pos: Vec2) {
-        self.center = pos;
-    }
-
-    fn set_rotation(&mut self, _angle: f32) {}
 }
 
 #[derive(Clone, Debug)]
@@ -951,22 +605,14 @@ impl HasBounds2D for Sector {
 }
 
 impl Shape2D for Sector {
-    fn gen_mesh(&self, _starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
-        unimplemented!()
-    }
-
-    fn set_rotation(&mut self, _: f32) {}
-
-    fn set_color(&mut self, color: Color) {
-        self.fill_color = color;
-    }
-
-    fn get_color(&self) -> Color {
-        self.fill_color
-    }
-
-    fn set_pos(&mut self, pos: Vec2) {
-        self.center = pos;
+    fn sdf(&self) -> Sdf {
+        Sdf::sector(self.center, self.radius, self.start_angle, self.end_angle)
+            .with_fill_solid(self.fill_color)
+            .with_stroke(
+                self.outline_thickness,
+                self.outline_color,
+                SdfStroke::Inside,
+            )
     }
 }
 
@@ -991,7 +637,7 @@ pub const UNIT_QUAD: [ColorVertex2D; 4] = [
     },
 ];
 
-fn gen_mesh_from_points(points: &[Vec2], color: Color) -> (Vec<ColorVertex2D>, Vec<u32>) {
+pub fn gen_mesh_from_points(points: &[Vec2], color: Color) -> (Vec<ColorVertex2D>, Vec<u32>) {
     if points.len() < 3 {
         return (vec![], vec![]);
     }

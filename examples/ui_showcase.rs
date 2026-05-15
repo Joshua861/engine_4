@@ -1,4 +1,5 @@
 use core::f32;
+use std::f32::consts::PI;
 
 use sge::{
     icons::{ICON_BOMB, ICON_CARET_DOWN, ICON_CIRCLE_NOTCH, ICON_PLUS_CIRCLE},
@@ -144,7 +145,7 @@ fn aspect_ratio() -> UiRef {
 fn active_fill() -> UiRef {
     SizedBox::new(
         Vec2::splat(300.0),
-        ActiveFill::new(
+        Fill::active(
             SCHEME.bg1,
             SCHEME.bg2,
             SCHEME.bg3,
@@ -156,13 +157,13 @@ fn active_fill() -> UiRef {
 
 fn align() -> UiRef {
     fn container(x: AlignType, y: AlignType) -> UiRef {
-        RoundedFill::new(
+        Fill::rounded(
             SCHEME.bg1,
             20.0,
             Align::new(
                 x,
                 y,
-                RoundedFill::new(
+                Fill::rounded(
                     SCHEME.bg2,
                     10.0,
                     Center::new(Text::mono(format!("{}\n{}", x, y))),
@@ -220,24 +221,25 @@ fn pattern_fill() -> UiRef {
     Col::with_gap(
         20.0,
         [
-            PatternBoxFill::new(
-                Color::YELLOW_500,
-                Color::TRANSPARENT,
-                Pattern::NeswLines,
-                50.0,
-                EMPTY,
-            )
-            .border(Color::YELLOW_500, 10.0)
-            .sized_wh(600.0, 100.0),
-            PatternBoxFill::new(
-                Color::NEUTRAL_100,
-                Color::PINK_100,
-                Pattern::Triangles,
-                40.0,
-                Padding::all(30.0, Text::bold_with_color("Hello!!! <3", Color::BLACK)),
-            )
-            .border(Color::WHITE, 10.0)
-            .square(300.0),
+            Fill::builder()
+                .color(Color::YELLOW_500)
+                .alt_color(Color::TRANSPARENT)
+                .pattern(SdfFill::Lines)
+                .pattern_scale(1.0)
+                .pattern_angle(0.75 * PI)
+                .child(EMPTY)
+                .build()
+                .border(Color::YELLOW_500, 10.0)
+                .sized_wh(600.0, 100.0),
+            Fill::builder()
+                .color(Color::NEUTRAL_100)
+                .alt_color(Color::PINK_100)
+                .pattern(SdfFill::Dots)
+                .pattern_scale(4.0)
+                .child(Text::bold_with_color("Hello!!! <3", Color::BLACK))
+                .build()
+                .border(Color::WHITE, 10.0)
+                .square(300.0),
         ],
     )
 }
@@ -328,7 +330,7 @@ fn fill() -> UiRef {
     Col::with_gap(
         20.0,
         [
-            RoundedFill::new(SCHEME.fg0, *value, EMPTY).square(200.0),
+            Fill::rounded(SCHEME.fg0, *value, EMPTY).square(200.0),
             flat::Slider::alternate(value, 0.0, 100.0, id!()).max_width(200.0),
             text("Draws a box fill if radius is 0, and a rounded fill otherwise"),
         ],
@@ -340,10 +342,10 @@ fn gradient_fill() -> UiRef {
         2,
         2,
         [
-            GradientFill::top_to_bottom(SCHEME.bg3, SCHEME.bg0, EMPTY),
-            GradientFill::bottom_to_top(SCHEME.bg3, SCHEME.bg0, EMPTY),
-            GradientFill::left_to_right(SCHEME.bg3, SCHEME.bg0, EMPTY),
-            GradientFill::right_to_left(SCHEME.bg3, SCHEME.bg0, EMPTY),
+            Fill::gradient(SCHEME.bg3, SCHEME.bg0, 0.0, EMPTY),
+            Fill::gradient(SCHEME.bg3, SCHEME.bg0, PI * 0.5, EMPTY),
+            Fill::gradient(SCHEME.bg3, SCHEME.bg0, PI, EMPTY),
+            Fill::gradient(SCHEME.bg3, SCHEME.bg0, PI * 1.5, EMPTY),
         ],
     )
     .square(400.0)
@@ -539,7 +541,7 @@ fn progress_bar() -> UiRef {
             ProgressBar::new(
                 state.progress as f32,
                 5.0,
-                RoundedFill::new(SCHEME.fg1, 10.0, EMPTY),
+                Fill::rounded(SCHEME.fg1, 10.0, EMPTY),
                 EMPTY,
                 id!(),
             )
@@ -557,7 +559,7 @@ fn rounded_fill() -> UiRef {
     Col::with_gap(
         20.0,
         [
-            RoundedFill::new(SCHEME.fg0, *value, EMPTY).square(200.0),
+            Fill::rounded(SCHEME.fg0, *value, EMPTY).square(200.0),
             flat::Slider::alternate(value, 0.0, 100.0, id!()).max_width(200.0),
         ],
     )
@@ -577,7 +579,7 @@ fn scroll() -> UiRef {
         .map(|n| {
             SizedBox::height(
                 40.0,
-                RoundedHoverFill::new(SCHEME.bg2, SCHEME.bg3, 7.0, Center::new(text(n))),
+                Fill::rounded_hover(SCHEME.bg2, SCHEME.bg3, 7.0, Center::new(text(n))),
             )
         })
         .collect::<Vec<_>>();
@@ -652,8 +654,7 @@ fn slider() -> UiRef {
 
 fn fancy_slider(value: &mut usize) -> UiRef {
     let max = 10;
-    let bar = MultiPointGradientFill::new(
-        Orientation::Horizontal,
+    let bar = MultipointGradientFill::horizontal(
         (0..10)
             .map(|n| {
                 let hue = n as f32 * 36.0;
@@ -661,12 +662,38 @@ fn fancy_slider(value: &mut usize) -> UiRef {
                 GradientPoint::new(color, 1.0)
             })
             .collect::<Vec<_>>(),
+        EMPTY,
     )
     .min_height(10.0)
     .padding_vertical(10.0);
-    let handle = RoundedFill::new(Color::WHITE, 5.0, EMPTY).sized_wh(20.0, 30.0);
+    let handle = Fill::builder()
+        .color(Color::WHITE)
+        .corner_radius(5.0)
+        .shadow_color(Color::BLACK)
+        .shadow_radius(10.0)
+        .child(
+            Text::mono_colored(*value, Color::NEUTRAL_500)
+                .center_horizontal()
+                .padding_top(3.0),
+        )
+        .build()
+        .sized_wh(20.0, 30.0);
 
     Slider::new(value, 0, max, handle, bar, id!())
+}
+
+fn multipoint_gradient_fill() -> UiRef {
+    MultipointGradientFill::horizontal(
+        (0..10)
+            .map(|n| {
+                let hue = n as f32 * 36.0;
+                let color = Color::from_hsl(hue, 1.0, 0.5);
+                GradientPoint::new(color, 1.0)
+            })
+            .collect::<Vec<_>>(),
+        EMPTY,
+    )
+    .square(200.0)
 }
 
 fn stack() -> UiRef {
@@ -834,20 +861,6 @@ fn tooltip() -> UiRef {
         .collect::<Vec<_>>(),
     )
     .fit()
-}
-
-fn multipoint_gradient_fill() -> UiRef {
-    MultiPointGradientFill::new(
-        Orientation::Horizontal,
-        (0..10)
-            .map(|n| {
-                let hue = n as f32 * 36.0;
-                let color = Color::from_hsl(hue, 1.0, 0.5);
-                GradientPoint::new(color, 1.0)
-            })
-            .collect::<Vec<_>>(),
-    )
-    .square(200.0)
 }
 
 fn modal() -> UiRef {
