@@ -9,6 +9,9 @@
 - [ ] test all fill parameters
 - [ ] do more testing with shadows (like when should they run? and what parameters
      do they break under)
+dithering for gradients 
+reimplement multigradients
+reimplement gradient lines
 
 - [-] High priority bugs:
   - [X] tailwind colors are wrong. oklch conversion is probably wrong
