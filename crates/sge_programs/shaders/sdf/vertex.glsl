@@ -1,7 +1,7 @@
 #version 140
 in vec2 position;
 in vec3 center;
-in vec2 dimensions;
+in vec2 bounding_box;
 in vec4 shape_params_a;
 in vec4 shape_params_b;
 in vec4 fill_color_a;
@@ -56,13 +56,15 @@ void main() {
 
     int st = stroke_type;
     float outer_stroke = (st == 2 || st == 3) ? stroke_width : 0.0;
-    float shadow_reach = shadow_radius + max(abs(shadow_offset.x), abs(shadow_offset.y));
+    float shadow_reach = shadow_radius + length(shadow_offset);
     float padding = max(outer_stroke, shadow_reach) + 2.0;
-    vec2 half_size = dimensions + vec2(padding);
-    vec2 world_pos = center.xy + position * half_size * 2.0;
+    float shape_radius = length(bounding_box);
+    vec2 half_size = vec2(shape_radius) + vec2(padding);
+    vec2 world_pos = center.xy + position * half_size;
+    v_local_pos = position * half_size;
 
-    v_local_pos = position * half_size * 2.0;
-    v_dimensions = dimensions;
+    v_local_pos = position * half_size;
+    v_dimensions = bounding_box;
     v_rotation = rotation;
     v_shape_type = shape_type;
     v_corner_radius = corner_radius;

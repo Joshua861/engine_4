@@ -3,10 +3,9 @@ use crate::get_render_state;
 use crate::post_processing::PostProcessingEffect;
 use crate::{DrawQueues, d2::DrawQueue2D};
 use glium::Texture2d;
-use glium::framebuffer::DepthRenderBuffer;
 use glium::{
     Surface,
-    framebuffer::{RenderBuffer, SimpleFrameBuffer},
+    framebuffer::SimpleFrameBuffer,
     texture::{DepthTexture2d, TextureCreationError},
     uniform,
 };

@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::f32::consts::TAU;
 
 use sge::*;
 
@@ -11,46 +11,104 @@ fn main() {
 
         controller.update();
 
-        let sdf = SdfInstance::star(vec2(0.0, 0.0), 100.0, 5.0, PI)
-            .with_rotation(time() * 2.)
-            .with_shadow(
-                vec2(
-                    oscillate_t(5.0, 20.0, time() * 4.0),
-                    oscillate_t(10.0, 40.0, time() * 4.0),
-                ),
-                0.5,
-                Color::SLATE_600,
-            )
-            .with_corner_radius(15.0)
-            .with_fill(
-                Color::YELLOW_500,
-                Color::YELLOW_400,
-                0.3,
-                10.0,
-                SdfFill::Dots,
-            )
-            .with_stroke(10.0, Color::YELLOW_200, SdfStroke::Outside);
-        draw_sdf_world(sdf);
+        let mut cursor = Vec2::ZERO;
 
-        let points = [
-            vec2(10.0, 10.0),
-            vec2(20.0, 40.0),
-            vec2(40.0, 40.0),
-            vec2(30.0, 20.0),
-        ];
+        for (i, f) in [
+            |c| Sdf::rect(c, vec2(100.0, 50.0)),
+            |c| Sdf::square(c, 100.0),
+            |c| Sdf::circle(c, 50.0),
+            |c| Sdf::ellipse(c, vec2(50.0, 25.0)),
+            |c| {
+                Sdf::quad(
+                    c + vec2(-50.0, -50.0),
+                    c + vec2(50.0, -50.0),
+                    c + vec2(50.0, 50.0),
+                    c + vec2(-50.0, 50.0),
+                )
+            },
+            |c| Sdf::sector(c, Vec2::splat(50.0), time(), time() + oscillate(0.5, 5.0)),
+            |c| {
+                Sdf::arc(
+                    c,
+                    Vec2::splat(50.0),
+                    20.0,
+                    time(),
+                    time() + oscillate(0.5, 5.0),
+                )
+            },
+            |c| {
+                Sdf::ring(
+                    c,
+                    Vec2::splat(50.0),
+                    20.0,
+                    time(),
+                    time() + oscillate(0.5, 5.0),
+                )
+            },
+            |c| {
+                Sdf::triangle(
+                    c + vec2(0.0, -50.0),
+                    c + vec2(-50.0, 50.0),
+                    c + vec2(50.0, 50.0),
+                )
+            },
+            |c| Sdf::pentagon(c, 50.0),
+            |c| Sdf::hexagon(c, 50.0),
+            |c| Sdf::octogon(c, 50.0),
+            |c| Sdf::hexagram(c, 50.0),
+            |c| Sdf::pentagram(c, 50.0),
+            |c| Sdf::star(c, 50.0, 12.0, 3.0),
+            |c| Sdf::moon(c, 50.0, 25.0, 40.0),
+            |c| Sdf::heart(c, 50.0),
+            |c| {
+                Sdf::quadratic_bezier(
+                    c + vec2(-50.0, -50.0),
+                    c + vec2(50.0, 0.0),
+                    c + vec2(50.0, -50.0),
+                )
+            },
+            |c| Sdf::quadratic_circle(c, 50.0),
+            |c| Sdf::segment(c + vec2(-50.0, -50.0), c + vec2(50.0, 50.0)),
+            |c| Sdf::oriented_box(c + vec2(-50.0, -50.0), c + vec2(50.0, 50.0), 30.0),
+        ]
+        .iter()
+        .enumerate()
+        {
+            let palette = Palette::PALETTES[i % 22];
+            let main = palette.v400;
+            let alt = palette.v500;
+            let outline = palette.v200;
 
-        let sdf = SdfInstance::quad(
-            vec2(10.0, 10.0),
-            vec2(20.0, 40.0),
-            vec2(40.0, 40.0),
-            vec2(30.0, 20.0),
-        )
-        .with_stroke(1.0, Color::WHITE, SdfStroke::Centered)
-        .with_fill_solid(Color::RED_500);
-        draw_sdf_world(sdf);
+            let sdf = f(cursor);
+            let thickness = if sdf.shape_type == SdfShape::Ring {
+                0.0
+            } else {
+                5.0
+            };
+            let radius = if sdf.shape_type == SdfShape::Ring
+                || sdf.shape_type == SdfShape::Heart
+                || sdf.shape_type == SdfShape::QuadraticCircle
+            {
+                0.0
+            } else {
+                5.0
+            };
+            let sdf = sdf
+                .with_fill(main, alt, 0.0, 5.0, unsafe {
+                    std::mem::transmute((i + 1) as i32)
+                })
+                .with_stroke(thickness, outline, SdfStroke::Outside)
+                .with_corner_radius(radius)
+                .with_shadow(vec2(10.0, 20.0), 0.5, Color::SLATE_600);
 
-        for point in points {
-            draw_circle_world(point, 1.0, Color::BLACK);
+            cursor += vec2(200.0, 0.0);
+
+            if cursor.x > 1000.0 {
+                cursor.x = 0.0;
+                cursor.y += 200.0;
+            }
+
+            draw_sdf_world(sdf);
         }
 
         vignette_screen(Color::SLATE_700, 0.1);

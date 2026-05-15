@@ -21,7 +21,7 @@ async fn main() -> anyhow::Result<()> {
     loop {
         clear_screen(Color::NEUTRAL_900);
 
-        balls.draw_world();
+        draw_metaballs_world(balls);
 
         if key_pressed(KeyCode::Space) {
             cool_stuff = !cool_stuff;

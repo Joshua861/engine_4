@@ -16,7 +16,6 @@ anyhow = "1"
 bon = "3.8.1"
 const-random = "0.1.18"
 crossbeam-channel = "0.5.15"
-dyn-clone = "1.0.20"
 egui_glium = "0.31.1"
 env_logger = { version = "0.11.8", default-features = false }
 fontdue = "0.9.3"
@@ -169,7 +168,7 @@ default = [
     "ui",
     "material_ui",
     "network",
-    "clipboard"
+    "clipboard",
 ]
 audio = ["dep:sge_audio"]
 debugging = ["dep:sge_debugging"]

@@ -691,20 +691,40 @@ pub enum SdfShape {
     X,
     QuadraticBezier,
     QuadraticCircle,
+    Segment,
+    OrientedBox,
+    CubicBezier,
 }
 
 #[repr(i32)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SdfFill {
     Solid = 0,
-    Gradient,
-    Checker,
-    Lines,
-    Dots,
-    Grid,
-    Waves,
-    ConcentricRings,
-    RadialGradient,
+    Gradient = 1,
+    Checker = 2,
+    Lines = 3,
+    Dots = 4,
+    Grid = 5,
+    Waves = 6,
+    ConcentricRings = 7,
+    RadialGradient = 8,
+    CrossHatch = 9,
+    SparseDots = 10,
+    Bricks = 11,
+    Herringbone = 12,
+    Triangles = 13,
+    ConcentricSquares = 14,
+    Textured = 15,
+    Truchet = 16,
+    RandomTiles = 17,
+    DiagonalWaves = 18,
+    Topology = 19,
+    Zebra = 20,
+    FishScales = 21,
+    Maze = 22,
+    Moire = 23,
+    LeopardSpots = 24,
+    Rings = 25,
 }
 
 #[repr(i32)]
@@ -719,7 +739,7 @@ pub enum SdfStroke {
 implement_vertex!(
     SdfInstanceGpu,
     center,
-    dimensions,
+    bounding_box,
     shape_params_a,
     shape_params_b,
     fill_color_a,
@@ -733,10 +753,10 @@ implement_vertex!(
 );
 
 #[derive(Clone, Copy, Debug)]
-pub struct SdfInstance {
+pub struct Sdf {
     pub center: Vec3,
     // half extents
-    pub dimensions: Vec2,
+    pub bounding_box: Vec2,
     pub rotation: f32,
 
     pub shape_type: SdfShape,
@@ -747,8 +767,11 @@ pub struct SdfInstance {
     // Triangle: [ax, ay, bx, by, cx, cy, ...]
     // Quad: [ax, ay, bx, by, cx, cy, dx, dy]
     // Star: [n_sides, m_ratio, ...]
-    // Moon: [center, outer_radius, inner_offset, inner_radius],
+    // Moon: [center, outer_radius, inner_offset, inner_radius]
     // QuadraticBezier: [ax, ay, bx, by, cx, cy, ...]
+    // Segment: [ax, ay, bx, by, ...]
+    // Oriented box: [ax ,ay, bx, by, thickness, ...]
+    // CubicBezier: [ax, ay, bx, by, cx, cy, dx, dy]
     pub shape_params_a: [f32; 4],
     pub shape_params_b: [f32; 4],
 
@@ -771,7 +794,7 @@ pub struct SdfInstance {
 #[derive(Clone, Copy, Debug)]
 pub struct SdfInstanceGpu {
     pub center: [f32; 3],
-    pub dimensions: [f32; 2],
+    pub bounding_box: [f32; 2],
     pub shape_params_a: [f32; 4],
     pub shape_params_b: [f32; 4],
     pub fill_color_a: [f32; 4],
@@ -788,10 +811,10 @@ pub struct SdfInstanceGpu {
     pub misc_d: [f32; 4],
 }
 
-fn default_instance(center: Vec3, dimensions: Vec2, shape_type: SdfShape) -> SdfInstance {
-    SdfInstance {
+fn default_instance(center: Vec3, bounding_box: Vec2, shape_type: SdfShape) -> Sdf {
+    Sdf {
         center,
-        dimensions,
+        bounding_box,
         rotation: 0.0,
         shape_type,
         corner_radius: 0.0,
@@ -814,7 +837,7 @@ fn default_instance(center: Vec3, dimensions: Vec2, shape_type: SdfShape) -> Sdf
 
 #[derive(Clone)]
 pub struct SdfBatch {
-    pub instances: Vec<SdfInstance>,
+    pub instances: Vec<Sdf>,
     pub scissor: Option<glium::Rect>,
 }
 
@@ -827,15 +850,11 @@ impl SdfBatch {
     }
 }
 
-impl SdfInstance {
+impl Sdf {
     pub fn to_gpu(&self) -> SdfInstanceGpu {
-        // let dimensions = self.dimensions;
-        // let shadow_expansion = self.shadow_radius + self.shadow_offset.length();
-        // let dimensions = dimensions + Vec2::splat(shadow_expansion);
-
         SdfInstanceGpu {
             center: self.center.to_array(),
-            dimensions: self.dimensions.to_array(),
+            bounding_box: self.bounding_box.to_array(),
             shape_params_a: self.shape_params_a,
             shape_params_b: self.shape_params_b,
             fill_color_a: self.fill_color_a.for_gpu(),
@@ -868,6 +887,20 @@ impl SdfInstance {
         default_instance(center.extend(0.0), size * 0.5, SdfShape::Rect)
     }
 
+    pub fn rect_tl(top_left: Vec2, size: Vec2) -> Self {
+        let center = top_left + size * 0.5;
+        default_instance(center.extend(0.0), size * 0.5, SdfShape::Rect)
+    }
+
+    pub fn square(center: Vec2, size: f32) -> Self {
+        default_instance(center.extend(0.0), Vec2::splat(size * 0.5), SdfShape::Rect)
+    }
+
+    pub fn square_tl(top_left: Vec2, size: f32) -> Self {
+        let center = top_left + Vec2::splat(size * 0.5);
+        default_instance(center.extend(0.0), Vec2::splat(size * 0.5), SdfShape::Rect)
+    }
+
     pub fn circle(center: Vec2, radius: f32) -> Self {
         default_instance(center.extend(0.0), Vec2::splat(radius), SdfShape::Ellipse)
     }
@@ -881,9 +914,13 @@ impl SdfInstance {
         let max_coord = a.max(b).max(c).max(d);
         let dimensions = (max_coord - min_coord) * 0.5;
         let center = (min_coord + max_coord) * 0.5;
+        let la = a - center;
+        let lb = b - center;
+        let lc = c - center;
+        let ld = d - center;
         let mut inst = default_instance(center.extend(0.0), dimensions, SdfShape::Quad);
-        inst.shape_params_a = [a.x, a.y, b.x, b.y];
-        inst.shape_params_b = [c.x, c.y, d.x, d.y];
+        inst.shape_params_a = [la.x, la.y, lb.x, lb.y];
+        inst.shape_params_b = [lc.x, lc.y, ld.x, ld.y];
         inst
     }
 
@@ -918,19 +955,16 @@ impl SdfInstance {
     }
 
     pub fn triangle(a: Vec2, b: Vec2, c: Vec2) -> Self {
-        let center = (a + b + c) / 3.0;
-
-        let min = Vec2::new(a.x.min(b.x).min(c.x), a.y.min(b.y).min(c.y));
-
-        let max = Vec2::new(a.x.max(b.x).max(c.x), a.y.max(b.y).max(c.y));
-
+        let min = a.min(b).min(c);
+        let max = a.max(b).max(c);
+        let center = (min + max) * 0.5;
         let dimensions = (max - min) * 0.5;
-
+        let la = a - center;
+        let lb = b - center;
+        let lc = c - center;
         let mut inst = default_instance(center.extend(0.0), dimensions, SdfShape::Triangle);
-
-        inst.shape_params_a = [a.x, a.y, b.x, b.y];
-        inst.shape_params_b = [c.x, c.y, 0.0, 0.0];
-
+        inst.shape_params_a = [la.x, la.y, lb.x, lb.y];
+        inst.shape_params_b = [lc.x, lc.y, 0.0, 0.0];
         inst
     }
 
@@ -974,20 +1008,48 @@ impl SdfInstance {
         default_instance(center.extend(0.0), Vec2::splat(radius), SdfShape::Heart)
     }
 
-    pub fn cross(center: Vec2, size: Vec2) -> Self {
-        default_instance(center.extend(0.0), size * 0.5, SdfShape::Cross)
-    }
+    // pub fn cross(center: Vec2, size: Vec2) -> Self {
+    //     default_instance(center.extend(0.0), size * 0.5, SdfShape::Cross)
+    // }
 
-    pub fn x_shape(center: Vec2, size: Vec2) -> Self {
-        default_instance(center.extend(0.0), size * 0.5, SdfShape::X)
-    }
+    // pub fn x_shape(center: Vec2, size: Vec2) -> Self {
+    //     default_instance(center.extend(0.0), size * 0.5, SdfShape::X)
+    // }
 
     pub fn quadratic_bezier(a: Vec2, b: Vec2, c: Vec2) -> Self {
-        let center = (a + b + c) / 3.0;
-        let dimensions = Vec2::new((a - c).length() * 0.5, (b - c).length() * 0.5);
+        let (min, max) = quadratic_bezier_bounds(a, b, c);
+
+        let center = (min + max) * 0.5;
+        let dimensions = (max - min) * 0.5;
+
+        let la = a - center;
+        let lb = b - center;
+        let lc = c - center;
+
         let mut inst = default_instance(center.extend(0.0), dimensions, SdfShape::QuadraticBezier);
-        inst.shape_params_a = [a.x, a.y, b.x, b.y];
-        inst.shape_params_b = [c.x, c.y, 0.0, 0.0];
+
+        inst.shape_params_a = [la.x, la.y, lb.x, lb.y];
+        inst.shape_params_b = [lc.x, lc.y, 0.0, 0.0];
+
+        inst
+    }
+
+    pub fn cubic_bezier(a: Vec2, b: Vec2, c: Vec2, d: Vec2) -> Self {
+        let (min, max) = cubic_bezier_bounds(a, b, c, d);
+
+        let center = (min + max) * 0.5;
+        let dimensions = (max - min) * 0.5;
+
+        let la = a - center;
+        let lb = b - center;
+        let lc = c - center;
+        let ld = d - center;
+
+        let mut inst = default_instance(center.extend(0.0), dimensions, SdfShape::CubicBezier);
+
+        inst.shape_params_a = [la.x, la.y, lb.x, lb.y];
+        inst.shape_params_b = [lc.x, lc.y, ld.x, ld.y];
+
         inst
     }
 
@@ -997,6 +1059,31 @@ impl SdfInstance {
             Vec2::splat(radius),
             SdfShape::QuadraticCircle,
         )
+    }
+
+    pub fn segment(a: Vec2, b: Vec2) -> Self {
+        let min = a.min(b);
+        let max = a.max(b);
+        let center = (min + max) * 0.5;
+        let bb = (max - min) * 0.5;
+        let la = a - center;
+        let lb = b - center;
+        let mut inst = default_instance(center.extend(0.0), bb, SdfShape::Segment);
+        inst.shape_params_a = [la.x, la.y, lb.x, lb.y];
+        inst
+    }
+
+    pub fn oriented_box(a: Vec2, b: Vec2, thickness: f32) -> Self {
+        let min = a.min(b);
+        let max = a.max(b);
+        let center = (min + max) * 0.5;
+        let bb = ((max - min) * 0.5) + thickness;
+        let la = a - center;
+        let lb = b - center;
+        let mut inst = default_instance(center.extend(0.0), bb, SdfShape::OrientedBox);
+        inst.shape_params_a = [la.x, la.y, lb.x, lb.y];
+        inst.shape_params_b = [thickness, 0.0, 0.0, 0.0];
+        inst
     }
 
     pub fn get_position(&self) -> Vec2 {
@@ -1014,10 +1101,10 @@ impl SdfInstance {
     }
 
     pub fn get_dimensions(&self) -> Vec2 {
-        self.dimensions
+        self.bounding_box
     }
     pub fn set_dimensions(&mut self, d: Vec2) {
-        self.dimensions = d;
+        self.bounding_box = d;
     }
 
     pub fn get_rotation(&self) -> f32 {
@@ -1153,18 +1240,20 @@ impl SdfInstance {
         self
     }
 
-    pub fn with_fill_gradient(
-        mut self,
-        color_a: Color,
-        color_b: Color,
-        angle: f32,
-        scale: f32,
-    ) -> Self {
+    pub fn with_fill_gradient(mut self, color_a: Color, color_b: Color, angle: f32) -> Self {
         self.fill_type = SdfFill::Gradient;
         self.fill_color_a = color_a;
         self.fill_color_b = color_b;
         self.fill_angle = angle;
-        self.fill_scale = scale;
+        self.fill_scale = 1.0;
+        self
+    }
+
+    pub fn with_fill_radial_gradient(mut self, color_a: Color, color_b: Color) -> Self {
+        self.fill_type = SdfFill::RadialGradient;
+        self.fill_color_a = color_a;
+        self.fill_color_b = color_b;
+        self.fill_scale = 1.0;
         self
     }
 
@@ -1238,4 +1327,82 @@ impl SdfInstance {
         self.fill_offset = offset;
         self
     }
+}
+
+fn quadratic_bezier_bounds(p0: Vec2, p1: Vec2, p2: Vec2) -> (Vec2, Vec2) {
+    let mut min = p0.min(p2);
+    let mut max = p0.max(p2);
+
+    for axis in 0..2 {
+        let a = if axis == 0 { p0.x } else { p0.y };
+        let b = if axis == 0 { p1.x } else { p1.y };
+        let c = if axis == 0 { p2.x } else { p2.y };
+
+        let denom = a - 2.0 * b + c;
+
+        if denom.abs() > f32::EPSILON {
+            let t = (a - b) / denom;
+
+            if (0.0..=1.0).contains(&t) {
+                let s = 1.0 - t;
+
+                let q = s * s * a + 2.0 * s * t * b + t * t * c;
+
+                if axis == 0 {
+                    min.x = min.x.min(q);
+                    max.x = max.x.max(q);
+                } else {
+                    min.y = min.y.min(q);
+                    max.y = max.y.max(q);
+                }
+            }
+        }
+    }
+
+    (min, max)
+}
+
+fn cubic_bezier_bounds(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2) -> (Vec2, Vec2) {
+    let mut min = p0.min(p3);
+    let mut max = p0.max(p3);
+
+    for axis in 0..2 {
+        let p0v = if axis == 0 { p0.x } else { p0.y };
+        let p1v = if axis == 0 { p1.x } else { p1.y };
+        let p2v = if axis == 0 { p2.x } else { p2.y };
+        let p3v = if axis == 0 { p3.x } else { p3.y };
+
+        // IQ formulation
+        let c = -p0v + p1v;
+        let b = p0v - 2.0 * p1v + p2v;
+        let a = -p0v + 3.0 * p1v - 3.0 * p2v + p3v;
+
+        let h = b * b - a * c;
+
+        if h >= 0.0 && a.abs() > f32::EPSILON {
+            let g = h.sqrt();
+
+            let t1 = ((-b - g) / a).clamp(0.0, 1.0);
+            let t2 = ((-b + g) / a).clamp(0.0, 1.0);
+
+            for t in [t1, t2] {
+                let s = 1.0 - t;
+
+                let q = s * s * s * p0v
+                    + 3.0 * s * s * t * p1v
+                    + 3.0 * s * t * t * p2v
+                    + t * t * t * p3v;
+
+                if axis == 0 {
+                    min.x = min.x.min(q);
+                    max.x = max.x.max(q);
+                } else {
+                    min.y = min.y.min(q);
+                    max.y = max.y.max(q);
+                }
+            }
+        }
+    }
+
+    (min, max)
 }

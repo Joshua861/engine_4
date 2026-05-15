@@ -204,13 +204,16 @@ fn main() {
                     }
                 }
 
-                draw_radial_gradient_circle_with_outline(
-                    cursor_pos,
-                    FORCE_RADIUS,
-                    Color::CYAN_500.with_alpha(0.2),
-                    Color::CYAN_500.with_alpha(0.15),
-                    3.0,
-                    Color::WHITE,
+                draw_sdf(
+                    Sdf::circle(cursor_pos, FORCE_RADIUS)
+                        .with_fill(
+                            Color::CYAN_500.with_alpha(0.2),
+                            Color::CYAN_500.with_alpha(0.15),
+                            0.0,
+                            1.0,
+                            SdfFill::RadialGradient,
+                        )
+                        .with_stroke(3.0, Color::WHITE, SdfStroke::Inside),
                 );
             }
 

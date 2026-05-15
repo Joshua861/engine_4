@@ -87,8 +87,6 @@ pub fn init_custom(mut opts: Opts) -> Result<(), InitError> {
     sge_ui::init_ui();
     user_storage::init();
     sge_physics::init();
-    #[cfg(feature = "ecs")]
-    sge_ecs::init();
     sge_exec::init();
 
     info!("Finished initializing engine.");
@@ -111,9 +109,6 @@ pub async fn next_frame() {
 }
 
 fn next_frame_sync() {
-    #[cfg(feature = "ecs")]
-    sge_ecs::update();
-
     let engine_start_time = Instant::now();
 
     let has_input_event = process_events();

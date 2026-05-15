@@ -1,12 +1,11 @@
-use dyn_clone::DynClone;
 use sge_color::Color;
 use sge_math::collision::{Aabb2d, HasBounds2D};
-use sge_types::{ColorVertex2D, SdfInstance, SdfStroke};
+use sge_types::{ColorVertex2D, Sdf, SdfStroke};
 use sge_vectors::{Mat3, Vec2, vec2};
 use std::f32::consts::TAU;
 
 pub trait Shape2D: HasBounds2D {
-    fn sdf(&self) -> SdfInstance;
+    fn sdf(&self) -> Sdf;
     fn is_visible_in_world(&self) -> bool {
         self.bounds().is_visible_in_world()
     }
@@ -20,8 +19,8 @@ pub struct Circle {
 }
 
 impl Shape2D for Circle {
-    fn sdf(&self) -> SdfInstance {
-        SdfInstance::ellipse(self.center, self.radius).with_fill_solid(self.color)
+    fn sdf(&self) -> Sdf {
+        Sdf::ellipse(self.center, self.radius).with_fill_solid(self.color)
     }
 }
 
@@ -144,8 +143,8 @@ impl HasBounds2D for CircleWithOutline {
 }
 
 impl Shape2D for CircleWithOutline {
-    fn sdf(&self) -> SdfInstance {
-        SdfInstance::ellipse(self.center, self.radius)
+    fn sdf(&self) -> Sdf {
+        Sdf::ellipse(self.center, self.radius)
             .with_fill_solid(self.fill_color)
             .with_stroke(
                 self.outline_thickness,
@@ -172,8 +171,8 @@ impl HasBounds2D for RoundedRectangle {
 }
 
 impl Shape2D for RoundedRectangle {
-    fn sdf(&self) -> SdfInstance {
-        SdfInstance::rect(self.center(), self.size)
+    fn sdf(&self) -> Sdf {
+        Sdf::rect(self.center(), self.size)
             .with_corner_radius(self.corner_radius)
             .with_fill_solid(self.fill_color)
             .with_stroke(
@@ -369,8 +368,8 @@ impl Rect {
 }
 
 impl Shape2D for Rect {
-    fn sdf(&self) -> SdfInstance {
-        SdfInstance::rect(self.center(), self.size).with_fill_solid(self.color)
+    fn sdf(&self) -> Sdf {
+        Sdf::rect(self.center(), self.size).with_fill_solid(self.color)
     }
 }
 
@@ -430,9 +429,8 @@ impl HasBounds2D for Triangle {
 }
 
 impl Shape2D for Triangle {
-    fn sdf(&self) -> SdfInstance {
-        SdfInstance::triangle(self.points[0], self.points[1], self.points[2])
-            .with_fill_solid(self.color)
+    fn sdf(&self) -> Sdf {
+        Sdf::triangle(self.points[0], self.points[1], self.points[2]).with_fill_solid(self.color)
     }
 }
 
@@ -494,7 +492,7 @@ impl HasBounds2D for Line2D {
 }
 
 impl Line2D {
-    fn points(&self) -> [Vec2; 4] {
+    pub fn points(&self) -> [Vec2; 4] {
         let (start, end) = (self.start, self.end);
         #[cfg(feature = "round_coords")]
         let start = start.round();
@@ -516,9 +514,8 @@ impl Line2D {
 }
 
 impl Shape2D for Line2D {
-    fn sdf(&self) -> SdfInstance {
-        let [a, b, c, d] = self.points();
-        SdfInstance::quad(a, b, c, d).with_fill_solid(self.color)
+    fn sdf(&self) -> Sdf {
+        Sdf::oriented_box(self.start, self.end, self.thickness).with_fill_solid(self.color)
     }
 }
 
@@ -583,8 +580,8 @@ impl Poly {
 }
 
 impl Shape2D for Poly {
-    fn sdf(&self) -> SdfInstance {
-        SdfInstance::star(self.center, self.radius, self.sides as f32, 1.0)
+    fn sdf(&self) -> Sdf {
+        Sdf::star(self.center, self.radius, self.sides as f32, 1.0)
             .with_fill_solid(self.color)
             .with_rotation(self.rotation)
     }
@@ -608,8 +605,8 @@ impl HasBounds2D for Sector {
 }
 
 impl Shape2D for Sector {
-    fn sdf(&self) -> SdfInstance {
-        SdfInstance::sector(self.center, self.radius, self.start_angle, self.end_angle)
+    fn sdf(&self) -> Sdf {
+        Sdf::sector(self.center, self.radius, self.start_angle, self.end_angle)
             .with_fill_solid(self.fill_color)
             .with_stroke(
                 self.outline_thickness,

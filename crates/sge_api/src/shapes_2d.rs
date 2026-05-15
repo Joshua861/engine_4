@@ -1,5 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 
+use std::f32::consts::TAU;
+
 use sge_color::Color;
 use sge_macros::draw_shape_variants;
 use sge_math::collision::{self, HasBounds2D, Polygon};
@@ -11,7 +13,7 @@ use sge_rendering::{
 };
 use sge_shapes::d2::*;
 pub use sge_types::Orientation;
-use sge_types::{ColorVertex2D, SdfInstance, SdfStroke};
+use sge_types::{Metaballs, Sdf, SdfStroke};
 use sge_vectors::{Vec2, vec2};
 
 use crate::draw_to;
@@ -630,42 +632,6 @@ impl ToCollider<Polygon> for Poly {
     }
 }
 
-fn draw_square_outline_path(
-    points: &[Vec2],
-    color: Color,
-    thickness: f32,
-    mut renderer: Renderer2D,
-) {
-    points.array_windows().for_each(|[a, b]| {
-        renderer.add_shape(&Line2D::new(*a, *b, thickness, color).with_caps());
-    });
-
-    renderer
-        .add_shape(&Line2D::new(points[points.len() - 1], points[0], thickness, color).with_caps());
-}
-
-fn draw_circle_outline_path(
-    points: &[Vec2],
-    thickness: f32,
-    color: Color,
-    mut renderer: Renderer2D,
-) {
-    points
-        .iter()
-        .for_each(|p| Circle::new(*p, Vec2::splat(thickness / 2.0), color).draw_to(renderer));
-
-    points.array_windows().for_each(|[a, b]| {
-        renderer.add_shape(&Line2D::new(*a, *b, thickness, color));
-    });
-
-    renderer.add_shape(&Line2D::new(
-        points[points.len() - 1],
-        points[0],
-        thickness,
-        color,
-    ));
-}
-
 draw_variants!(
     fn circle_line(start: Vec2, end: Vec2, thickness: f32, color: Color) [renderer] {
         draw_circle_to(start, thickness / 2.0, color, renderer);
@@ -676,8 +642,8 @@ draw_variants!(
 
 #[derive(Debug, Clone, Copy)]
 pub struct GradientPoint {
-    width: f32,
-    color: Color,
+    pub width: f32,
+    pub color: Color,
 }
 
 impl GradientPoint {
@@ -686,16 +652,70 @@ impl GradientPoint {
     }
 }
 
-draw_variants! {
-    fn quadratic_bezier(a: Vec2, b: Vec2, c: Vec2, color: Color, thickness: f32) [renderer] {
-        let mut renderer = renderer;
-        renderer.add_sdf(
-        SdfInstance::quadratic_bezier(a, b, c).with_stroke(thickness / 2.0, color, SdfStroke::Outside));
+pub fn multipoint_gradient_internal(
+    top_left: Vec2,
+    size: Vec2,
+    points: Vec<GradientPoint>,
+    orientation: Orientation,
+    renderer: Renderer2D,
+) {
+    let total_width = points.iter().map(|p| p.width).sum::<f32>();
+    let main_axis = orientation.main(size);
+    let width_multiplier = main_axis / total_width;
+    let cross = orientation.cross(size);
+
+    let angle = match orientation {
+        Orientation::Horizontal => 0.0,
+        Orientation::Vertical => std::f32::consts::FRAC_PI_2,
+    };
+
+    let mut cursor = top_left;
+
+    for i in 0..points.len() {
+        let point = points[i];
+        let width = point.width * width_multiplier;
+        let top_left = cursor;
+        let size = orientation.create_vec2(width, cross);
+        let next_color = points.get(i + 1).map(|p| p.color).unwrap_or(point.color);
+
+        let sdf = Sdf::rect_tl(top_left, size).with_fill_gradient(point.color, next_color, angle);
+        draw_sdf_to(sdf, renderer);
+
+        cursor += orientation.create_vec2(width, 0.0);
     }
 }
 
 draw_variants! {
-    fn sdf(sdf: SdfInstance) [renderer] {
+    fn multipoint_gradient(
+        top_left: Vec2,
+        size: Vec2,
+        points: Vec<GradientPoint>,
+        orientation: Orientation,
+    ) [renderer] {
+        multipoint_gradient_internal(top_left, size, points, orientation, renderer);
+    }
+}
+
+draw_variants! {
+    fn quadratic_bezier(a: Vec2, b: Vec2, c: Vec2, color: Color, thickness: f32) [renderer] {
+        let mut renderer = renderer;
+        renderer.add_sdf(
+            Sdf::quadratic_bezier(a, b, c).with_fill_solid(color).with_corner_radius(thickness / 2.0)
+        );
+    }
+}
+
+draw_variants! {
+    fn cubic_bezier(a: Vec2, b: Vec2, c: Vec2, d: Vec2, color: Color, thickness: f32) [renderer] {
+        let mut renderer = renderer;
+        renderer.add_sdf(
+            Sdf::cubic_bezier(a, b, c, d).with_fill_solid(color).with_corner_radius(thickness / 2.0)
+        );
+    }
+}
+
+draw_variants! {
+    fn sdf(sdf: Sdf) [renderer] {
         let mut renderer = renderer;
         renderer.add_sdf(sdf);
     }
@@ -720,5 +740,149 @@ draw_variants! {
         let mut renderer = renderer;
         let (vertices, indices) = gen_mesh_from_points(&points, color);
         renderer.add_mesh(&vertices, &indices);
+    }
+}
+
+draw_variants! {
+    fn quad(points: [Vec2; 4], color: Color) [renderer] {
+        let mut renderer = renderer;
+        let [a,b,c,d] = points;
+        let sdf = Sdf::quad(a, b, c, d).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+//ring
+draw_variants! {
+    fn ring(center: Vec2, radius: f32, thickness: f32, start_angle: f32, end_angle: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::ring(center, Vec2::splat(radius), thickness, start_angle, end_angle)
+            .with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+draw_variants! {
+    fn full_ring(center: Vec2, radius: f32, thickness: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::ring(center, Vec2::splat(radius), thickness, 0.0, TAU)
+            .with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// arc
+draw_variants! {
+    fn arc(center: Vec2, radius: f32, thickness: f32, start_angle: f32, end_angle: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::ring(center, Vec2::splat(radius), thickness, start_angle, end_angle)
+            .with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// pentagon
+draw_variants! {
+    fn pentagon(center: Vec2, radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::pentagon(center, radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// octogon
+draw_variants! {
+    fn octogon(center: Vec2, radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::octogon(center, radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// hexagram
+draw_variants! {
+    fn hexagram(center: Vec2, radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::hexagram(center, radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// pentagram
+draw_variants! {
+    fn pentagram(center: Vec2, radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::pentagram(center, radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// star
+draw_variants! {
+    fn star(center: Vec2, radius: f32,n_sides: usize, m_ratio: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::star(center, radius, n_sides as f32, m_ratio).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// moon
+draw_variants! {
+    fn moon(center: Vec2, outer_radius: f32, inner_offset: f32, inner_radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::moon(center, outer_radius, inner_offset, inner_radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// heart
+draw_variants! {
+    fn heart(center: Vec2, radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::heart(center, radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// // cross
+// draw_variants! {
+//     fn cross(center: Vec2, radius: Vec2, color: Color) [renderer] {
+//         let mut renderer = renderer;
+//         let sdf = Sdf::cross(center, radius).with_fill_solid(color);
+//         draw_sdf_to(sdf, renderer);
+//     }
+// }
+
+// // x_shape
+// draw_variants! {
+//     fn x_shape(center: Vec2, radius: Vec2, color: Color) [renderer] {
+//         let mut renderer = renderer;
+//         let sdf = Sdf::x_shape(center, radius).with_fill_solid(color);
+//         draw_sdf_to(sdf, renderer);
+//     }
+// }
+
+// quadratic_circle
+draw_variants! {
+    fn quadratic_circle(center: Vec2, radius: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::quadratic_circle(center, radius).with_fill_solid(color);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+// rounded_line
+draw_variants! {
+    fn rounded_line(start: Vec2, end:Vec2, thickness: f32, color: Color) [renderer] {
+        let mut renderer = renderer;
+        let sdf = Sdf::segment(start, end).with_fill_solid(color).with_corner_radius(thickness / 2.0);
+        draw_sdf_to(sdf, renderer);
+    }
+}
+
+draw_variants! {
+    fn metaballs(metaballs: Metaballs) [renderer] {
+        let mut renderer = renderer;
+        renderer.add_metaball_batch(metaballs.get());
     }
 }

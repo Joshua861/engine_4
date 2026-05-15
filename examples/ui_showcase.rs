@@ -23,6 +23,7 @@ const NODES: &[(&str, fn() -> UiRef)] = &[
     ("Fill/box", box_fill),
     ("Fill/fill", fill),
     ("Fill/gradient", gradient_fill),
+    ("Fill/multigradient", multipoint_gradient_fill),
     ("Fill/pattern", pattern_fill),
     ("Fill/rounded", rounded_fill),
     ("Flow", flow),
@@ -653,15 +654,18 @@ fn slider() -> UiRef {
 
 fn fancy_slider(value: &mut usize) -> UiRef {
     let max = 10;
-    let bar = Fill::builder()
-        .pattern(SdfFill::Gradient)
-        .color(Color::RED_500)
-        .alt_color(Color::BLUE_500)
-        .corner_radius(5.0)
-        .child(EMPTY)
-        .build()
-        .min_height(10.0)
-        .padding_vertical(10.0);
+    let bar = MultipointGradientFill::horizontal(
+        (0..10)
+            .map(|n| {
+                let hue = n as f32 * 36.0;
+                let color = Color::from_hsl(hue, 1.0, 0.5);
+                GradientPoint::new(color, 1.0)
+            })
+            .collect::<Vec<_>>(),
+        EMPTY,
+    )
+    .min_height(10.0)
+    .padding_vertical(10.0);
     let handle = Fill::builder()
         .color(Color::WHITE)
         .corner_radius(5.0)
@@ -676,6 +680,20 @@ fn fancy_slider(value: &mut usize) -> UiRef {
         .sized_wh(20.0, 30.0);
 
     Slider::new(value, 0, max, handle, bar, id!())
+}
+
+fn multipoint_gradient_fill() -> UiRef {
+    MultipointGradientFill::horizontal(
+        (0..10)
+            .map(|n| {
+                let hue = n as f32 * 36.0;
+                let color = Color::from_hsl(hue, 1.0, 0.5);
+                GradientPoint::new(color, 1.0)
+            })
+            .collect::<Vec<_>>(),
+        EMPTY,
+    )
+    .square(200.0)
 }
 
 fn stack() -> UiRef {

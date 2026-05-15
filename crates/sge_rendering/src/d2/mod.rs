@@ -8,9 +8,7 @@ use sge_math::transform::Transform2D;
 use sge_shapes::d2::{QUAD_INDICES, Shape2D, UNIT_QUAD};
 use sge_textures::TextureRef;
 use sge_types::{
-    CircleInstance, ColorVertex2D, CubicBezier, CubicBezierBatch, LineBatch, MeshBatch,
-    MetaballBatch, Pattern, PointBatch, QuadraticBezier, QuadraticBezierBatch,
-    RadialGradientInstance, RoundedInstance, SdfBatch, SdfInstance,
+    ColorVertex2D, LineBatch, MeshBatch, MetaballBatch, Pattern, PointBatch, Sdf, SdfBatch,
 };
 use sge_vectors::{Mat4, Rect, Vec2, Vec3};
 use sge_window::get_display;
@@ -115,7 +113,7 @@ impl Renderer2D {
         }
     }
 
-    pub fn add_sdf(&mut self, instance: SdfInstance) {
+    pub fn add_sdf(&mut self, instance: Sdf) {
         debugger_add_drawn_objects(1);
         self.current_sdf_batch().instances.push(instance);
     }

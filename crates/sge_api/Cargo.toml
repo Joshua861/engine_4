@@ -19,4 +19,3 @@ sge_shapes.workspace = true
 sge_textures.workspace = true
 sge_types.workspace = true
 sge_utils.workspace = true
-dyn-clone.workspace = true

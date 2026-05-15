@@ -2,12 +2,12 @@ use std::f32::consts::{FRAC_PI_2, TAU};
 
 use bon::bon;
 use rayon::{iter::ParallelIterator, slice::ParallelSliceMut};
-use sge_api::shapes_2d::{Shape2DExt, draw_sdf, draw_sdf_world};
+use sge_api::shapes_2d::{draw_sdf, draw_sdf_world};
 use sge_color::Color;
 use sge_rng::rand;
 use sge_shapes::d2::Shape2D;
 use sge_time::{time, time_since};
-use sge_types::SdfInstance;
+use sge_types::Sdf;
 use sge_vectors::Vec2;
 
 pub struct ParticleSystem {
@@ -99,7 +99,7 @@ impl Default for ParticleSystem {
 }
 
 pub struct Particle {
-    pub shape: SdfInstance,
+    pub shape: Sdf,
     pub pos: Vec2,
     pub additional_velocity: Vec2,
     pub angular_velocity: f32,
@@ -146,7 +146,7 @@ impl Particle {
 
 #[derive(Clone)]
 pub struct ParticleOneshot {
-    pub shape: SdfInstance,
+    pub shape: Sdf,
     pub color_randomness: Color,
     pub quantity: usize,
     pub quantity_randomness: f32,
@@ -277,7 +277,7 @@ impl ParticleOneshot {
 
 #[derive(Clone)]
 pub struct ParticleEmitter {
-    pub shape: SdfInstance,
+    pub shape: Sdf,
     pub color_randomness: Color,
     pub size_randomness: f32,
     pub direction: f32,

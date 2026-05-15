@@ -1,3 +1,5 @@
+use std::f32::consts::FRAC_PI_2;
+
 use icons::*;
 use sge::prelude::*;
 use ui::prelude::*;
@@ -61,7 +63,7 @@ impl State {
                             .map(|n| {
                                 SizedBox::height(
                                     40.0,
-                                    RoundedHoverFill::new(
+                                    Fill::rounded_hover(
                                         Color::GRAY_800,
                                         Color::GRAY_700,
                                         7.0,
@@ -109,9 +111,10 @@ impl State {
                             w95::Card::new(0.0, ImageNode::from_texture(self.guy)),
                         ),
                         w95::ProgressBar::new(vec2(200.0, 20.0), self.progress, 1.0, id!()),
-                        GradientFill::top_to_bottom(
+                        Fill::gradient(
                             Color::NEUTRAL_100,
                             w95::PRIMARY,
+                            FRAC_PI_2,
                             Center::new(AspectRatio::new(
                                 4.0,
                                 BoxFill::new(
@@ -271,7 +274,7 @@ impl State {
                                 Border::all(
                                     5.0,
                                     Color::WHITE,
-                                    HoverBoxFill::new(Color::BLACK, Color::WHITE, EMPTY),
+                                    Fill::hover(Color::BLACK, Color::WHITE, EMPTY),
                                 )
                             })
                             .collect::<Vec<_>>(),

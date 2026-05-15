@@ -2,7 +2,7 @@ use easy_ext::ext;
 use sge_color::Color;
 use sge_rendering::api::draw_texture_scaled;
 use sge_textures::TextureRef;
-use sge_types::{Area, SdfFill, SdfInstance};
+use sge_types::{Area, Sdf, SdfFill};
 
 use crate::shapes_2d::{draw_rect, draw_sdf};
 
@@ -21,7 +21,7 @@ pub impl Area {
         fill_type: SdfFill,
     ) {
         draw_sdf(
-            SdfInstance::rect(self.center(), self.size)
+            Sdf::rect(self.center(), self.size)
                 .with_fill(color_a, color_b, angle, scale, fill_type),
         );
     }

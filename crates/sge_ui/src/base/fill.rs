@@ -1,5 +1,5 @@
 use sge_api::{area::AreaExt, shapes_2d::draw_sdf};
-use sge_types::{SdfFill, SdfInstance, SdfStroke};
+use sge_types::{Sdf, SdfFill, SdfStroke};
 
 use super::*;
 
@@ -247,7 +247,7 @@ impl UiNode for Fill {
             &self.base
         };
 
-        let sdf = SdfInstance::rect(area.center(), area.size)
+        let sdf = Sdf::rect(area.center(), area.size)
             .with_corner_radius(style.corner_radius)
             .with_fill(
                 style.fill_color_a,

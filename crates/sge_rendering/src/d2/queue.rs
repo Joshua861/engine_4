@@ -1,4 +1,3 @@
-use glium::{BlendingFunction, LinearBlendingFactor};
 use sge_programs::{FLAT_PROGRAM, METABALL_PROGRAM, SDF_PROGRAM, TEXTURED_PROGRAM};
 use sge_types::Vertex2D;
 

@@ -52,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
     let mut ps = ParticleSystem::new();
 
     let jump_particles = ParticleOneshot::builder()
-        .shape(Rect::new_square(
+        .shape(&Rect::new_square(
             Vec2::ZERO,
             10.0,
             Color::WHITE.with_alpha(0.3),
@@ -69,7 +69,7 @@ async fn main() -> anyhow::Result<()> {
         .build();
 
     let land_particles = ParticleOneshot::builder()
-        .shape(Rect::new_square(
+        .shape(&Rect::new_square(
             Vec2::ZERO,
             10.0,
             Color::WHITE.with_alpha(0.1),

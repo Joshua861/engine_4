@@ -102,8 +102,8 @@ pub use sge_time::{
     toggle_physics_timer,
 };
 pub use sge_types::{
-    Area, BufferError, ColorVertex2D, MaterialVertex3D, Pattern, SdfFill, SdfInstance, SdfShape,
-    SdfStroke, SpriteVertex, TexturedVertex2D, Verbosity, Vertex3D, window_area,
+    Area, BufferError, ColorVertex2D, MaterialVertex3D, Pattern, Sdf, SdfFill, SdfShape, SdfStroke,
+    SpriteVertex, TexturedVertex2D, Verbosity, Vertex3D, window_area,
 };
 pub use sge_types::{Metaball, Metaballs};
 pub use sge_utils::RotatingArray;
@@ -251,34 +251,6 @@ mod debug_visualisations {
     pub use sge_debug_visualisations::*;
 }
 
-#[cfg(feature = "ecs")]
-pub use sge_ecs::bevy_ecs;
-#[cfg(feature = "ecs")]
-pub mod ecs {
-    pub use sge_ecs::bevy_ecs::prelude::{
-        Add, Added, Allow, AnyOf, AppTypeRegistry, ApplyDeferred, BevyError, Bundle, Changed,
-        ChildOf, ChildSpawner, ChildSpawnerCommands, Children, Command, Commands, Component,
-        ContainsEntity, Deferred, Despawn, DetectChanges, DetectChangesMut, Entity, EntityCommand,
-        EntityCommands, EntityEvent, EntityMapper, EntityMut, EntityRef, EntityWorldMut, Event,
-        FilteredResources, FilteredResourcesMut, FromWorld, Has, If, In, InMut, InRef, Insert,
-        IntoScheduleConfigs, IntoSystem, IntoSystemSet, Local, Message, MessageMutator,
-        MessageReader, MessageWriter, Messages, Mut, Name, NameOrEntity, NonSend, NonSendMut,
-        Observer, On, Or, ParallelCommands, ParamSet, Populated, Query, QueryBuilder, QueryState,
-        ReadOnlySystem, Ref, ReflectComponent, ReflectEvent, ReflectFromWorld, ReflectResource,
-        RelationshipTarget, Remove, RemovedComponents, Replace, Res, ResMut, Resource, Result,
-        Schedule, Schedules, Single, Spawn, SpawnIter, SpawnRelated, SpawnWith, System,
-        SystemCondition, SystemIn, SystemInput, SystemParamBuilder, SystemParamFunction, SystemSet,
-        With, WithOneRelated, WithRelated, Without, any_component_removed, any_match_filter,
-        any_with_component, children, condition_changed, condition_changed_to, not, on_message,
-        related, resource_added, resource_changed, resource_changed_or_removed, resource_equals,
-        resource_exists, resource_exists_and_changed, resource_exists_and_equals, resource_removed,
-        run_once,
-    };
-    pub use sge_ecs::{
-        Acceleration2D, AngularVelocity2D, DrawScreen, DrawWorld, Ecs, MovementBundle, Position2D,
-        Rotation2D, ShapeComponent, Velocity2D,
-    };
-}
 pub use crate::{next_frame, run_async};
 pub use sge_exec::{FrameFuture, fs::*, futures::join, start_coroutine, wait_for, wait_for_frames};
 

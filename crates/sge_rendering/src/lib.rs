@@ -2,7 +2,7 @@ use d2::{DrawQueue2D, Renderer2D};
 use d3::DrawQueue3D;
 use glium::{
     Rect, Surface, Texture2d,
-    framebuffer::{DepthRenderBuffer, RenderBuffer, SimpleFrameBuffer},
+    framebuffer::{SimpleFrameBuffer},
     texture::{DepthTexture2d, TextureCreationError},
     uniform,
 };

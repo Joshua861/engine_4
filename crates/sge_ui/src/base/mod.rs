@@ -35,6 +35,9 @@ pub use empty::*;
 mod fill;
 pub use fill::*;
 
+mod multipoint_gradient;
+pub use multipoint_gradient::*;
+
 mod fit;
 pub use fit::*;
 
