@@ -1,5 +1,3 @@
-use std::f32::consts::TAU;
-
 use sge::*;
 
 #[main("SDF")]
