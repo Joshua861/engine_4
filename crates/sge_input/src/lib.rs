@@ -1,3 +1,4 @@
+#[cfg(feature = "clipboard")]
 use arboard::Clipboard;
 #[cfg(feature = "gamepad")]
 pub use gilrs;
@@ -110,7 +111,7 @@ impl Action {
 pub enum InputError {
     #[cfg(feature = "gamepad")]
     Gilrs(GilrsError),
-    #[cfg(feature = "gamepad")]
+    #[cfg(feature = "clipboard")]
     Clipboard(arboard::Error),
     Other(&'static str),
 }

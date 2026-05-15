@@ -9,8 +9,8 @@ repository = "https://github.com/LilyRL/sge"
 
 [features]
 precise_cursor_movement = []
-gamepad = ["gilrs"]
-clipboard = []
+gamepad = ["dep:gilrs"]
+clipboard = ["dep:arboard"]
 
 [dependencies]
 sge_vectors.workspace = true
@@ -22,5 +22,5 @@ log.workspace = true
 sge_types.workspace = true
 glutin-winit.workspace = true
 winit.workspace = true
-arboard = "3.6.1"
+arboard = { version = "3.6.1", optional = true }
 open = "5.3.4"
