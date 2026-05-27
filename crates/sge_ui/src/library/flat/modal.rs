@@ -18,7 +18,7 @@ impl Modal {
 
         let contents = Col::new([
             Border::bottom(
-                BorderStyle::new(2.0, super::BG3),
+                BorderStyle::custom(2.0, super::BG3, base::BorderType::Rectangle),
                 Stack::new([
                     Padding::tblr(10.0, 15.0, 10.0, 10.0, Text::nowrap(title)),
                     Align::center_right(

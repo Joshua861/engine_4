@@ -6,8 +6,21 @@ use std::f32::consts::TAU;
 
 pub trait Shape2D: HasBounds2D {
     fn sdf(&self) -> Sdf;
+
+    fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>);
+
     fn is_visible_in_world(&self) -> bool {
         self.bounds().is_visible_in_world()
+    }
+}
+
+impl Shape2D for Sdf {
+    fn sdf(&self) -> Sdf {
+        *self
+    }
+
+    fn gen_mesh(&self, _starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
+        unimplemented!()
     }
 }
 
@@ -21,6 +34,10 @@ pub struct Circle {
 impl Shape2D for Circle {
     fn sdf(&self) -> Sdf {
         Sdf::ellipse(self.center, self.radius).with_fill_solid(self.color)
+    }
+
+    fn gen_mesh(&self, _starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
+        unimplemented!()
     }
 }
 
@@ -152,6 +169,10 @@ impl Shape2D for CircleWithOutline {
                 SdfStroke::Inside,
             )
     }
+
+    fn gen_mesh(&self, _starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
+        unimplemented!()
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -180,6 +201,10 @@ impl Shape2D for RoundedRectangle {
                 self.outline_color,
                 SdfStroke::Inside,
             )
+    }
+
+    fn gen_mesh(&self, _starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
+        unimplemented!()
     }
 }
 
@@ -332,15 +357,9 @@ impl Rect {
 
     pub fn tri_points(&self) -> [Vec2; 4] {
         if self.rot == 0.0 {
-            #[cfg(not(feature = "round_coords"))]
             let top_left = self.top_left;
-            #[cfg(feature = "round_coords")]
-            let top_left = self.top_left.round();
 
-            #[cfg(not(feature = "round_coords"))]
             let size = self.size;
-            #[cfg(feature = "round_coords")]
-            let size = self.size.round();
 
             let tl = top_left;
             let br = top_left + size;
@@ -370,6 +389,12 @@ impl Rect {
 impl Shape2D for Rect {
     fn sdf(&self) -> Sdf {
         Sdf::rect(self.center(), self.size).with_fill_solid(self.color)
+    }
+
+    fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
+        let quad = self.gen_quad();
+        let indices = QUAD_INDICES.map(|n| n + starting_index).to_vec();
+        (indices, quad)
     }
 }
 
@@ -412,10 +437,7 @@ impl Triangle {
             * Mat3::from_translation(-center);
         let points = self.points.map(|p| mat.transform_point2(p));
 
-        #[cfg(not(feature = "round_coords"))]
         return points;
-        #[cfg(feature = "round_coords")]
-        return points.map(|p| p.round());
     }
 }
 
@@ -431,6 +453,15 @@ impl HasBounds2D for Triangle {
 impl Shape2D for Triangle {
     fn sdf(&self) -> Sdf {
         Sdf::triangle(self.points[0], self.points[1], self.points[2]).with_fill_solid(self.color)
+    }
+
+    fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
+        let tri = self
+            .rotated_points()
+            .map(|p| ColorVertex2D::new(p.x, p.y, self.color));
+
+        let indices = starting_index..starting_index + 3;
+        (indices.collect(), tri.to_vec())
     }
 }
 
@@ -494,10 +525,6 @@ impl HasBounds2D for Line2D {
 impl Line2D {
     pub fn points(&self) -> [Vec2; 4] {
         let (start, end) = (self.start, self.end);
-        #[cfg(feature = "round_coords")]
-        let start = start.round();
-        #[cfg(feature = "round_coords")]
-        let end = end.round();
         let direction = end - start;
         let length = direction.length();
 
@@ -511,9 +538,21 @@ impl Line2D {
             Vec2::new(end.x + perpendicular.x, end.y + perpendicular.y),
         ]
     }
+
+    pub fn gen_mesh(&self) -> Vec<ColorVertex2D> {
+        self.points()
+            .iter()
+            .map(|p| ColorVertex2D::new(p.x, p.y, self.color))
+            .collect()
+    }
 }
 
 impl Shape2D for Line2D {
+    fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
+        let mesh = self.gen_mesh();
+        (QUAD_INDICES.map(|n| n + starting_index).to_vec(), mesh)
+    }
+
     fn sdf(&self) -> Sdf {
         Sdf::oriented_box(self.start, self.end, self.thickness).with_fill_solid(self.color)
     }
@@ -551,13 +590,7 @@ impl Poly {
     }
 
     pub fn gen_points(&self) -> Vec<Vec2> {
-        #[cfg(feature = "round_coords")]
-        let center = self.center.round();
-        #[cfg(not(feature = "round_coords"))]
         let center = self.center;
-        #[cfg(feature = "round_coords")]
-        let radius = self.radius.round();
-        #[cfg(not(feature = "round_coords"))]
         let radius = self.radius;
 
         let mut points = Vec::with_capacity(self.sides);
@@ -584,6 +617,12 @@ impl Shape2D for Poly {
         Sdf::star(self.center, self.radius, self.sides as f32, 1.0)
             .with_fill_solid(self.color)
             .with_rotation(self.rotation)
+    }
+
+    fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
+        let (vertices, indices) = self.gen_mesh();
+        let indices = indices.iter().map(|n| n + starting_index).collect();
+        (indices, vertices)
     }
 }
 
@@ -614,6 +653,10 @@ impl Shape2D for Sector {
                 SdfStroke::Inside,
             )
     }
+
+    fn gen_mesh(&self, _: u32) -> (Vec<u32>, Vec<ColorVertex2D>) {
+        unimplemented!()
+    }
 }
 
 pub const QUAD_INDICES: [u32; 6] = [0, 1, 2, 1, 2, 3];
@@ -643,15 +686,9 @@ pub fn gen_mesh_from_points(points: &[Vec2], color: Color) -> (Vec<ColorVertex2D
     }
 
     let mut polygon_builder = lyon::tessellation::path::Path::builder();
-    #[cfg(not(feature = "round_coords"))]
     polygon_builder.begin(lyon::math::point(points[0].x, points[0].y));
-    #[cfg(feature = "round_coords")]
-    polygon_builder.begin(lyon::math::point(points[0].x.round(), points[0].y.round()));
     for point in &points[1..] {
-        #[cfg(not(feature = "round_coords"))]
         polygon_builder.line_to(lyon::math::point(point.x, point.y));
-        #[cfg(feature = "round_coords")]
-        polygon_builder.line_to(lyon::math::point(point.x.round(), point.y.round()));
     }
     polygon_builder.end(false);
     let polygon = polygon_builder.build();

@@ -18,13 +18,12 @@ fn main() {
             |c| Sdf::ellipse(c, vec2(50.0, 25.0)),
             |c| {
                 Sdf::quad(
-                    c + vec2(-50.0, -50.0),
-                    c + vec2(50.0, -50.0),
-                    c + vec2(50.0, 50.0),
-                    c + vec2(-50.0, 50.0),
+                    c + vec2(-40.0, -30.0),
+                    c + vec2(50.0, -35.0),
+                    c + vec2(40.0, 45.0),
+                    c + vec2(-30.0, 44.0),
                 )
             },
-            |c| Sdf::sector(c, Vec2::splat(50.0), time(), time() + oscillate(0.5, 5.0)),
             |c| {
                 Sdf::arc(
                     c,
@@ -43,6 +42,7 @@ fn main() {
                     time() + oscillate(0.5, 5.0),
                 )
             },
+            |c| Sdf::sector(c, Vec2::splat(50.0), time(), time() + oscillate(0.5, 5.0)),
             |c| {
                 Sdf::triangle(
                     c + vec2(0.0, -50.0),
@@ -55,14 +55,22 @@ fn main() {
             |c| Sdf::octogon(c, 50.0),
             |c| Sdf::hexagram(c, 50.0),
             |c| Sdf::pentagram(c, 50.0),
-            |c| Sdf::star(c, 50.0, 12.0, 3.0),
+            |c| Sdf::star(c, 50.0, 12.0, 6.0),
             |c| Sdf::moon(c, 50.0, 25.0, 40.0),
             |c| Sdf::heart(c, 50.0),
             |c| {
                 Sdf::quadratic_bezier(
+                    c + vec2(-50.0, 50.0),
+                    c + vec2(0.0, -50.0),
+                    c + vec2(50.0, 50.0),
+                )
+            },
+            |c| {
+                Sdf::cubic_bezier(
+                    c + vec2(-50.0, 50.0),
                     c + vec2(-50.0, -50.0),
-                    c + vec2(50.0, 0.0),
                     c + vec2(50.0, -50.0),
+                    c + vec2(50.0, 50.0),
                 )
             },
             |c| Sdf::quadratic_circle(c, 50.0),
@@ -89,14 +97,14 @@ fn main() {
             {
                 0.0
             } else {
-                5.0
+                10.0
             };
             let sdf = sdf
                 .with_fill(main, alt, 0.0, 5.0, unsafe {
                     std::mem::transmute((i + 1) as i32)
                 })
                 .with_stroke(thickness, outline, SdfStroke::Outside)
-                .with_corner_radius(radius)
+                .with_corner_radius(oscillate(0.0, radius))
                 .with_shadow(vec2(10.0, 20.0), 0.5, Color::SLATE_600);
 
             cursor += vec2(200.0, 0.0);
@@ -110,6 +118,8 @@ fn main() {
         }
 
         vignette_screen(Color::SLATE_700, 0.1);
+
+        draw_fps_bg();
 
         if should_quit() {
             break;

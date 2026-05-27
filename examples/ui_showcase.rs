@@ -731,14 +731,17 @@ fn window() -> UiRef {
         state.open = !state.open;
     }
 
-    flat::FloatingWindow::custom(
-        "Example window",
-        size,
-        vec2((window_width() - size.x) / 2.0, 100.0),
-        id,
-        Center::new(text("This is a floating window. You can drag it around!")),
-    )
-    .max_width(300.0)
+    Stack::new([
+        text("Press Esc to toggle window."),
+        flat::FloatingWindow::custom(
+            "Example window",
+            size,
+            vec2((window_width() - size.x) / 2.0, 100.0),
+            id,
+            Center::new(text("This is a floating window. You can drag it around!")),
+        )
+        .max_width(300.0),
+    ])
 }
 
 fn text(text: impl ToString) -> UiRef {

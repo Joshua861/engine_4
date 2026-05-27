@@ -1,4 +1,5 @@
-use sge_api::shapes_2d::{draw_dashed_line, draw_quad};
+use sge_api::shapes_2d::{draw_dashed_line, draw_quad, draw_rect};
+use sge_vectors::vec2;
 
 use super::*;
 
@@ -82,26 +83,14 @@ impl BorderStyle {
                 draw_quad([a, c, d, b], self.color);
             }
             BorderType::Rectangle => {
-                let (point_a, point_b) = match side {
-                    Side::Top => (
-                        a + Vec2::new(0.0, self.thickness),
-                        b + Vec2::new(0.0, self.thickness),
-                    ),
-                    Side::Left => (
-                        a + Vec2::new(self.thickness, 0.0),
-                        b + Vec2::new(self.thickness, 0.0),
-                    ),
-                    Side::Bottom => (
-                        a - Vec2::new(0.0, self.thickness),
-                        b - Vec2::new(0.0, self.thickness),
-                    ),
-                    Side::Right => (
-                        a - Vec2::new(self.thickness, 0.0),
-                        b - Vec2::new(self.thickness, 0.0),
-                    ),
+                let (a, b) = match side {
+                    Side::Top => (a, b + Vec2::new(0.0, self.thickness)),
+                    Side::Left => (a, b + Vec2::new(self.thickness, 0.0)),
+                    Side::Bottom => (a - vec2(0.0, self.thickness), b),
+                    Side::Right => (a - vec2(self.thickness, 0.0), b),
                 };
 
-                draw_quad([a, point_a, point_b, b], self.color);
+                draw_rect(a, b - a, self.color);
             }
             BorderType::Dashed(_) | BorderType::Dotted => {
                 let half_thickness = self.thickness / 2.0;
@@ -247,7 +236,7 @@ impl Border {
         let style = BorderStyle {
             thickness,
             color,
-            ty: BorderType::Solid,
+            ty: BorderType::Rectangle,
         };
         Self {
             top: style,

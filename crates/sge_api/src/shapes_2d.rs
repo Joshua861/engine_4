@@ -19,43 +19,58 @@ use sge_vectors::{Vec2, vec2};
 use crate::draw_to;
 
 pub trait Shape2DExt: Shape2D + Sized {
+    const USE_SDF: bool;
+
+    #[inline]
     fn draw_to(&self, mut renderer: Renderer2D) {
-        renderer.add_shape(self);
+        if Self::USE_SDF {
+            renderer.add_shape_sdf(self);
+        } else {
+            renderer.add_shape_mesh(self);
+        }
     }
 
+    #[inline]
     fn draw(&self) {
         self.draw_to(draw_queue_2d().renderer())
     }
 
+    #[inline]
     fn draw_world(&self) {
         if self.is_visible_in_world() {
             self.draw_to(world_draw_queue_2d().renderer())
         }
     }
 
+    #[inline]
     fn draw_outline_to(&self, mut renderer: Renderer2D, thickness: f32, color: Color) {
         renderer.add_sdf(self.sdf().with_stroke(thickness, color, SdfStroke::Inside));
     }
 
+    #[inline]
     fn draw_with_outline_to(&self, renderer: Renderer2D, thickness: f32, color: Color) {
         self.draw_to(renderer);
         self.draw_outline_to(renderer, thickness, color);
     }
 
+    #[inline]
     fn draw_outline(&self, thickness: f32, color: Color) {
         self.draw_outline_to(draw_queue_2d().renderer(), thickness, color);
     }
 
+    #[inline]
     fn draw_outline_world(&self, thickness: f32, color: Color) {
         if self.is_visible_in_world() {
             self.draw_outline_to(world_draw_queue_2d().renderer(), thickness, color);
         }
     }
 
+    #[inline]
     fn draw_with_outline(&self, thickness: f32, color: Color) {
         self.draw_with_outline_to(draw_queue_2d().renderer(), thickness, color);
     }
 
+    #[inline]
     fn draw_with_outline_world(&self, thickness: f32, color: Color) {
         if self.is_visible_in_world() {
             self.draw_with_outline_to(world_draw_queue_2d().renderer(), thickness, color);
@@ -63,7 +78,41 @@ pub trait Shape2DExt: Shape2D + Sized {
     }
 }
 
-impl<T: Shape2D> Shape2DExt for T {}
+impl Shape2DExt for Sdf {
+    const USE_SDF: bool = true;
+}
+
+impl Shape2DExt for Circle {
+    const USE_SDF: bool = true;
+}
+
+impl Shape2DExt for Sector {
+    const USE_SDF: bool = true;
+}
+
+impl Shape2DExt for CircleWithOutline {
+    const USE_SDF: bool = true;
+}
+
+impl Shape2DExt for RoundedRectangle {
+    const USE_SDF: bool = true;
+}
+
+impl Shape2DExt for Rect {
+    const USE_SDF: bool = false;
+}
+
+impl Shape2DExt for Triangle {
+    const USE_SDF: bool = false;
+}
+
+impl Shape2DExt for Line2D {
+    const USE_SDF: bool = false;
+}
+
+impl Shape2DExt for Poly {
+    const USE_SDF: bool = false;
+}
 
 macro_rules! draw_variants {
     (
@@ -150,11 +199,11 @@ draw_variants! {
 
 draw_variants! {
     fn ellipse(center: Vec2, radius: Vec2, color: Color) {
-        screen(renderer) { renderer.add_shape(&Circle::new(center, radius, color)); }
+        screen(renderer) { renderer.add_shape_sdf(&Circle::new(center, radius, color)); }
         world(renderer)  {
             let shape = Circle { center, radius, color };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_shape(&Circle::new(center, radius, color));
+                renderer.add_shape_sdf(&Circle::new(center, radius, color));
             }
         }
     }
@@ -222,12 +271,12 @@ draw_variants! {
     ) {
         screen(renderer) {
             let shape = Sector { center, radius: Vec2::splat(radius), fill_color: color, start_angle, end_angle, outline_color: Color::TRANSPARENT, outline_thickness: 0.0 };
-            renderer.add_shape(&shape);
+            renderer.add_shape_sdf(&shape);
         }
         world(renderer) {
             let shape = Sector { center, radius: Vec2::splat(radius), fill_color: color, start_angle, end_angle, outline_color: Color::TRANSPARENT, outline_thickness: 0.0 };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_shape(&shape);
+                renderer.add_shape_sdf(&shape);
             }
         }
     }
@@ -240,12 +289,12 @@ draw_variants! {
     ) {
         screen(renderer) {
             let shape = Sector { center, radius: Vec2::splat(radius), fill_color: Color::TRANSPARENT, start_angle, end_angle, outline_color, outline_thickness: thickness };
-            renderer.add_shape(&shape);
+            renderer.add_shape_sdf(&shape);
         }
         world(renderer) {
             let shape = Sector { center, radius: Vec2::splat(radius), fill_color: Color::TRANSPARENT, start_angle, end_angle, outline_color, outline_thickness: thickness };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_shape(&shape);
+                renderer.add_shape_sdf(&shape);
             }
         }
     }
@@ -258,12 +307,12 @@ draw_variants! {
     ) {
         screen(renderer) {
             let shape = Sector { center, radius: Vec2::splat(radius), fill_color, start_angle, end_angle, outline_color, outline_thickness: thickness };
-            renderer.add_shape(&shape);
+            renderer.add_shape_sdf(&shape);
         }
         world(renderer) {
             let shape = Sector { center, radius: Vec2::splat(radius), fill_color, start_angle, end_angle, outline_color, outline_thickness: thickness };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_shape(&shape);
+                renderer.add_shape_sdf(&shape);
             }
         }
     }
@@ -275,12 +324,12 @@ draw_variants! {
     ) {
         screen(renderer) {
             let shape = Sector { center, radius, fill_color: color, start_angle, end_angle, outline_color: Color::TRANSPARENT, outline_thickness: 0.0 };
-            renderer.add_shape(&shape);
+            renderer.add_shape_sdf(&shape);
         }
         world(renderer) {
             let shape = Sector { center, radius, fill_color: color, start_angle, end_angle, outline_color: Color::TRANSPARENT, outline_thickness: 0.0 };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_shape(&shape);
+                renderer.add_shape_sdf(&shape);
             }
         }
     }
@@ -293,12 +342,12 @@ draw_variants! {
     ) {
         screen(renderer) {
             let shape = Sector { center, radius, fill_color: Color::TRANSPARENT, start_angle, end_angle, outline_color, outline_thickness: thickness };
-            renderer.add_shape(&shape);
+            renderer.add_shape_sdf(&shape);
         }
         world(renderer) {
             let shape = Sector { center, radius, fill_color: Color::TRANSPARENT, start_angle, end_angle, outline_color, outline_thickness: thickness };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_shape(&shape);
+                renderer.add_shape_sdf(&shape);
             }
         }
     }
@@ -311,12 +360,12 @@ draw_variants! {
     ) {
         screen(renderer) {
             let shape = Sector { center, radius, fill_color, start_angle, end_angle, outline_color, outline_thickness: thickness };
-            renderer.add_shape(&shape);
+            renderer.add_shape_sdf(&shape);
         }
         world(renderer) {
             let shape = Sector { center, radius, fill_color, start_angle, end_angle, outline_color, outline_thickness: thickness };
             if shape.bounds().is_visible_in_world() {
-                renderer.add_shape(&shape);
+                renderer.add_shape_sdf(&shape);
             }
         }
     }

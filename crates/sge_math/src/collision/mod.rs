@@ -1,7 +1,8 @@
-use sge_vectors::Vec2;
 use glium::winit::event::MouseButton;
 use sge_camera::get_camera_2d_mut;
 use sge_input::{cursor, mouse_held, mouse_pressed};
+use sge_types::Sdf;
+use sge_vectors::{Vec2, Vec3Swizzles};
 use sge_window::{window_height, window_width};
 
 pub mod ray;
@@ -137,6 +138,12 @@ impl Aabb2d {
 
 pub trait HasBounds2D {
     fn bounds(&self) -> Aabb2d;
+}
+
+impl HasBounds2D for Sdf {
+    fn bounds(&self) -> Aabb2d {
+        Aabb2d::from_center_size(self.center.xy(), self.bounding_box)
+    }
 }
 
 impl HasBounds2D for Circle {

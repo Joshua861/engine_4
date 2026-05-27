@@ -159,7 +159,7 @@ default = [
     "audio",
     "debugging",
     "debug_visualisations",
-    # "ecs",
+    "round_coords",
     "extra_fonts",
     "gamepad",
     "input",
@@ -179,7 +179,7 @@ extra_fonts = ["text", "sge_text/extra_fonts"]
 gamepad = ["input", "sge_input/gamepad"]
 input = ["dep:sge_input"]
 precise_cursor_movement = ["sge_input/precise_cursor_movement"]
-round_coords = ["sge_shapes/round_coords", "sge_rendering/round_coords"]
+round_coords = ["sge_rendering/round_coords"]
 text = ["dep:sge_text"]
 ui = ["extra_fonts", "dep:sge_ui"]
 network = ["sge_exec/network"]

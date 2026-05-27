@@ -256,3 +256,5 @@ pub use sge_exec::{FrameFuture, fs::*, futures::join, start_coroutine, wait_for,
 
 #[cfg(feature = "network")]
 pub use sge_exec::net;
+
+pub use std::f32::consts::*;

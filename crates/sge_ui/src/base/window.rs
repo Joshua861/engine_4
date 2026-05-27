@@ -106,7 +106,7 @@ impl FloatingWindow {
         // outline
         draw_rect_with_outline(
             area.top_left,
-            area.size,
+            area.size + vec2(0.0, 2.0),
             self.bg,
             self.border.thickness,
             self.border.color,

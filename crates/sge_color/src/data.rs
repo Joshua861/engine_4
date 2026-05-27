@@ -1,13 +1,159 @@
 use super::*;
 impl Color {
-    pub const WHITE: Self = Self::new(1.0, 1.0, 1.0);
-    pub const BLACK: Self = Self::new(0.0, 0.0, 0.0);
     pub const TRANSPARENT: Self = Self {
         r: 0.0,
         g: 0.0,
         b: 0.0,
         a: 0.0,
     };
+    pub const ALICE_BLUE: Self = Self::hex(0xF0F8FF);
+    pub const ANTIQUE_WHITE: Self = Self::hex(0xFAEBD7);
+    pub const AQUA: Self = Self::hex(0x00FFFF);
+    pub const AQUAMARINE: Self = Self::hex(0x7FFFD4);
+    pub const AZURE: Self = Self::hex(0xF0FFFF);
+    pub const BEIGE: Self = Self::hex(0xF5F5DC);
+    pub const BISQUE: Self = Self::hex(0xFFE4C4);
+    pub const BLACK: Self = Self::hex(0x000000);
+    pub const BLANCHED_ALMOND: Self = Self::hex(0xFFEBCD);
+    pub const BLUE: Self = Self::hex(0x0000FF);
+    pub const BLUE_VIOLET: Self = Self::hex(0x8A2BE2);
+    pub const BROWN: Self = Self::hex(0xA52A2A);
+    pub const BURLY_WOOD: Self = Self::hex(0xDEB887);
+    pub const CADET_BLUE: Self = Self::hex(0x5F9EA0);
+    pub const CHARTREUSE: Self = Self::hex(0x7FFF00);
+    pub const CHOCOLATE: Self = Self::hex(0xD2691E);
+    pub const CORAL: Self = Self::hex(0xFF7F50);
+    pub const CORNFLOWER_BLUE: Self = Self::hex(0x6495ED);
+    pub const CORNSILK: Self = Self::hex(0xFFF8DC);
+    pub const CRIMSON: Self = Self::hex(0xDC143C);
+    pub const CYAN: Self = Self::hex(0x00FFFF);
+    pub const DARK_BLUE: Self = Self::hex(0x00008B);
+    pub const DARK_CYAN: Self = Self::hex(0x008B8B);
+    pub const DARK_GOLDEN_ROD: Self = Self::hex(0xB8860B);
+    pub const DARK_GRAY: Self = Self::hex(0xA9A9A9);
+    pub const DARK_GREEN: Self = Self::hex(0x006400);
+    pub const DARK_GREY: Self = Self::hex(0xA9A9A9);
+    pub const DARK_KHAKI: Self = Self::hex(0xBDB76B);
+    pub const DARK_MAGENTA: Self = Self::hex(0x8B008B);
+    pub const DARK_OLIVE_GREEN: Self = Self::hex(0x556B2F);
+    pub const DARK_ORANGE: Self = Self::hex(0xFF8C00);
+    pub const DARK_ORCHID: Self = Self::hex(0x9932CC);
+    pub const DARK_RED: Self = Self::hex(0x8B0000);
+    pub const DARK_SALMON: Self = Self::hex(0xE9967A);
+    pub const DARK_SEA_GREEN: Self = Self::hex(0x8FBC8F);
+    pub const DARK_SLATE_BLUE: Self = Self::hex(0x483D8B);
+    pub const DARK_SLATE_GRAY: Self = Self::hex(0x2F4F4F);
+    pub const DARK_SLATE_GREY: Self = Self::hex(0x2F4F4F);
+    pub const DARK_TURQUOISE: Self = Self::hex(0x00CED1);
+    pub const DARK_VIOLET: Self = Self::hex(0x9400D3);
+    pub const DEEP_PINK: Self = Self::hex(0xFF1493);
+    pub const DEEP_SKY_BLUE: Self = Self::hex(0x00BFFF);
+    pub const DIM_GRAY: Self = Self::hex(0x696969);
+    pub const DIM_GREY: Self = Self::hex(0x696969);
+    pub const DODGER_BLUE: Self = Self::hex(0x1E90FF);
+    pub const FIRE_BRICK: Self = Self::hex(0xB22222);
+    pub const FLORAL_WHITE: Self = Self::hex(0xFFFAF0);
+    pub const FOREST_GREEN: Self = Self::hex(0x228B22);
+    pub const FUCHSIA: Self = Self::hex(0xFF00FF);
+    pub const GAINSBORO: Self = Self::hex(0xDCDCDC);
+    pub const GHOST_WHITE: Self = Self::hex(0xF8F8FF);
+    pub const GOLD: Self = Self::hex(0xFFD700);
+    pub const GOLDEN_ROD: Self = Self::hex(0xDAA520);
+    pub const GRAY: Self = Self::hex(0x808080);
+    pub const GREEN: Self = Self::hex(0x008000);
+    pub const GREEN_YELLOW: Self = Self::hex(0xADFF2F);
+    pub const GREY: Self = Self::hex(0x808080);
+    pub const HONEY_DEW: Self = Self::hex(0xF0FFF0);
+    pub const HOT_PINK: Self = Self::hex(0xFF69B4);
+    pub const INDIAN_RED: Self = Self::hex(0xCD5C5C);
+    pub const INDIGO: Self = Self::hex(0x4B0082);
+    pub const IVORY: Self = Self::hex(0xFFFFF0);
+    pub const KHAKI: Self = Self::hex(0xF0E68C);
+    pub const LAVENDER: Self = Self::hex(0xE6E6FA);
+    pub const LAVENDER_BLUSH: Self = Self::hex(0xFFF0F5);
+    pub const LAWN_GREEN: Self = Self::hex(0x7CFC00);
+    pub const LEMON_CHIFFON: Self = Self::hex(0xFFFACD);
+    pub const LIGHT_BLUE: Self = Self::hex(0xADD8E6);
+    pub const LIGHT_CORAL: Self = Self::hex(0xF08080);
+    pub const LIGHT_CYAN: Self = Self::hex(0xE0FFFF);
+    pub const LIGHT_GOLDEN_ROD_YELLOW: Self = Self::hex(0xFAFAD2);
+    pub const LIGHT_GRAY: Self = Self::hex(0xD3D3D3);
+    pub const LIGHT_GREEN: Self = Self::hex(0x90EE90);
+    pub const LIGHT_GREY: Self = Self::hex(0xD3D3D3);
+    pub const LIGHT_PINK: Self = Self::hex(0xFFB6C1);
+    pub const LIGHT_SALMON: Self = Self::hex(0xFFA07A);
+    pub const LIGHT_SEA_GREEN: Self = Self::hex(0x20B2AA);
+    pub const LIGHT_SKY_BLUE: Self = Self::hex(0x87CEFA);
+    pub const LIGHT_SLATE_GRAY: Self = Self::hex(0x778899);
+    pub const LIGHT_SLATE_GREY: Self = Self::hex(0x778899);
+    pub const LIGHT_STEEL_BLUE: Self = Self::hex(0xB0C4DE);
+    pub const LIGHT_YELLOW: Self = Self::hex(0xFFFFE0);
+    pub const LIME: Self = Self::hex(0x00FF00);
+    pub const LIME_GREEN: Self = Self::hex(0x32CD32);
+    pub const LINEN: Self = Self::hex(0xFAF0E6);
+    pub const MAGENTA: Self = Self::hex(0xFF00FF);
+    pub const MAROON: Self = Self::hex(0x800000);
+    pub const MEDIUM_AQUA_MARINE: Self = Self::hex(0x66CDAA);
+    pub const MEDIUM_BLUE: Self = Self::hex(0x0000CD);
+    pub const MEDIUM_ORCHID: Self = Self::hex(0xBA55D3);
+    pub const MEDIUM_PURPLE: Self = Self::hex(0x9370DB);
+    pub const MEDIUM_SEA_GREEN: Self = Self::hex(0x3CB371);
+    pub const MEDIUM_SLATE_BLUE: Self = Self::hex(0x7B68EE);
+    pub const MEDIUM_SPRING_GREEN: Self = Self::hex(0x00FA9A);
+    pub const MEDIUM_TURQUOISE: Self = Self::hex(0x48D1CC);
+    pub const MEDIUM_VIOLET_RED: Self = Self::hex(0xC71585);
+    pub const MIDNIGHT_BLUE: Self = Self::hex(0x191970);
+    pub const MINT_CREAM: Self = Self::hex(0xF5FFFA);
+    pub const MISTY_ROSE: Self = Self::hex(0xFFE4E1);
+    pub const MOCCASIN: Self = Self::hex(0xFFE4B5);
+    pub const NAVAJO_WHITE: Self = Self::hex(0xFFDEAD);
+    pub const NAVY: Self = Self::hex(0x000080);
+    pub const OLD_LACE: Self = Self::hex(0xFDF5E6);
+    pub const OLIVE: Self = Self::hex(0x808000);
+    pub const OLIVE_DRAB: Self = Self::hex(0x6B8E23);
+    pub const ORANGE: Self = Self::hex(0xFFA500);
+    pub const ORANGE_RED: Self = Self::hex(0xFF4500);
+    pub const ORCHID: Self = Self::hex(0xDA70D6);
+    pub const PALE_GOLDEN_ROD: Self = Self::hex(0xEEE8AA);
+    pub const PALE_GREEN: Self = Self::hex(0x98FB98);
+    pub const PALE_TURQUOISE: Self = Self::hex(0xAFEEEE);
+    pub const PALE_VIOLET_RED: Self = Self::hex(0xDB7093);
+    pub const PAPAYA_WHIP: Self = Self::hex(0xFFEFD5);
+    pub const PEACH_PUFF: Self = Self::hex(0xFFDAB9);
+    pub const PERU: Self = Self::hex(0xCD853F);
+    pub const PINK: Self = Self::hex(0xFFC0CB);
+    pub const PLUM: Self = Self::hex(0xDDA0DD);
+    pub const POWDER_BLUE: Self = Self::hex(0xB0E0E6);
+    pub const PURPLE: Self = Self::hex(0x800080);
+    pub const REBECCA_PURPLE: Self = Self::hex(0x663399);
+    pub const RED: Self = Self::hex(0xFF0000);
+    pub const ROSY_BROWN: Self = Self::hex(0xBC8F8F);
+    pub const ROYAL_BLUE: Self = Self::hex(0x4169E1);
+    pub const SADDLE_BROWN: Self = Self::hex(0x8B4513);
+    pub const SALMON: Self = Self::hex(0xFA8072);
+    pub const SANDY_BROWN: Self = Self::hex(0xF4A460);
+    pub const SEA_GREEN: Self = Self::hex(0x2E8B57);
+    pub const SEA_SHELL: Self = Self::hex(0xFFF5EE);
+    pub const SIENNA: Self = Self::hex(0xA0522D);
+    pub const SILVER: Self = Self::hex(0xC0C0C0);
+    pub const SKY_BLUE: Self = Self::hex(0x87CEEB);
+    pub const SLATE_BLUE: Self = Self::hex(0x6A5ACD);
+    pub const SLATE_GRAY: Self = Self::hex(0x708090);
+    pub const SLATE_GREY: Self = Self::hex(0x708090);
+    pub const SNOW: Self = Self::hex(0xFFFAFA);
+    pub const SPRING_GREEN: Self = Self::hex(0x00FF7F);
+    pub const STEEL_BLUE: Self = Self::hex(0x4682B4);
+    pub const TAN: Self = Self::hex(0xD2B48C);
+    pub const TEAL: Self = Self::hex(0x008080);
+    pub const THISTLE: Self = Self::hex(0xD8BFD8);
+    pub const TOMATO: Self = Self::hex(0xFF6347);
+    pub const TURQUOISE: Self = Self::hex(0x40E0D0);
+    pub const VIOLET: Self = Self::hex(0xEE82EE);
+    pub const WHEAT: Self = Self::hex(0xF5DEB3);
+    pub const WHITE: Self = Self::hex(0xFFFFFF);
+    pub const WHITE_SMOKE: Self = Self::hex(0xF5F5F5);
+    pub const YELLOW: Self = Self::hex(0xFFFF00);
+    pub const YELLOW_GREEN: Self = Self::hex(0x9ACD32);
     pub const AMBER_50: Self = Self::new(1f32, 0.9845062f32, 0.919994f32);
     pub const AMBER_100: Self = Self::new(0.99700004f32, 0.9530825f32, 0.7775238f32);
     pub const AMBER_200: Self = Self::new(0.99572986f32, 0.90120494f32, 0.5221891f32);
@@ -825,21 +971,83 @@ impl Palette {
 }
 use phf::phf_map;
 pub static COLOR_MAP: phf::Map<&'static str, Color> = phf_map! {
-    "WHITE" => Color::WHITE, "BLACK" => Color::BLACK, "TRANSPARENT" =>
-    Color::TRANSPARENT, "AMBER_50" => Color::AMBER_50, "AMBER0.5" => Color::AMBER_50,
-    "AMBER05" => Color::AMBER_50, "AMBER_100" => Color::AMBER_100, "AMBER1" =>
-    Color::AMBER_100, "AMBER_200" => Color::AMBER_200, "AMBER2" => Color::AMBER_200,
-    "AMBER_300" => Color::AMBER_300, "AMBER3" => Color::AMBER_300, "AMBER_400" =>
-    Color::AMBER_400, "AMBER4" => Color::AMBER_400, "AMBER_500" => Color::AMBER_500,
-    "AMBER5" => Color::AMBER_500, "AMBER_600" => Color::AMBER_600, "AMBER6" =>
-    Color::AMBER_600, "AMBER_700" => Color::AMBER_700, "AMBER7" => Color::AMBER_700,
-    "AMBER_800" => Color::AMBER_800, "AMBER8" => Color::AMBER_800, "AMBER_900" =>
-    Color::AMBER_900, "AMBER9" => Color::AMBER_900, "AMBER_950" => Color::AMBER_950,
-    "AMBER9.5" => Color::AMBER_950, "AMBER95" => Color::AMBER_950, "BLUE_50" =>
-    Color::BLUE_50, "BLUE0.5" => Color::BLUE_50, "BLUE05" => Color::BLUE_50, "BLUE_100"
-    => Color::BLUE_100, "BLUE1" => Color::BLUE_100, "BLUE_200" => Color::BLUE_200,
-    "BLUE2" => Color::BLUE_200, "BLUE_300" => Color::BLUE_300, "BLUE3" =>
-    Color::BLUE_300, "BLUE_400" => Color::BLUE_400, "BLUE4" => Color::BLUE_400,
+    "TRANSPARENT" => Color::TRANSPARENT, "ALICEBLUE" => Color::ALICE_BLUE, "ANTIQUEWHITE"
+    => Color::ANTIQUE_WHITE, "AQUA" => Color::AQUA, "AQUAMARINE" => Color::AQUAMARINE,
+    "AZURE" => Color::AZURE, "BEIGE" => Color::BEIGE, "BISQUE" => Color::BISQUE, "BLACK"
+    => Color::BLACK, "BLANCHEDALMOND" => Color::BLANCHED_ALMOND, "BLUE" => Color::BLUE,
+    "BLUEVIOLET" => Color::BLUE_VIOLET, "BROWN" => Color::BROWN, "BURLYWOOD" =>
+    Color::BURLY_WOOD, "CADETBLUE" => Color::CADET_BLUE, "CHARTREUSE" =>
+    Color::CHARTREUSE, "CHOCOLATE" => Color::CHOCOLATE, "CORAL" => Color::CORAL,
+    "CORNFLOWERBLUE" => Color::CORNFLOWER_BLUE, "CORNSILK" => Color::CORNSILK, "CRIMSON"
+    => Color::CRIMSON, "CYAN" => Color::CYAN, "DARKBLUE" => Color::DARK_BLUE, "DARKCYAN"
+    => Color::DARK_CYAN, "DARKGOLDENROD" => Color::DARK_GOLDEN_ROD, "DARKGRAY" =>
+    Color::DARK_GRAY, "DARKGREEN" => Color::DARK_GREEN, "DARKGREY" => Color::DARK_GREY,
+    "DARKKHAKI" => Color::DARK_KHAKI, "DARKMAGENTA" => Color::DARK_MAGENTA,
+    "DARKOLIVEGREEN" => Color::DARK_OLIVE_GREEN, "DARKORANGE" => Color::DARK_ORANGE,
+    "DARKORCHID" => Color::DARK_ORCHID, "DARKRED" => Color::DARK_RED, "DARKSALMON" =>
+    Color::DARK_SALMON, "DARKSEAGREEN" => Color::DARK_SEA_GREEN, "DARKSLATEBLUE" =>
+    Color::DARK_SLATE_BLUE, "DARKSLATEGRAY" => Color::DARK_SLATE_GRAY, "DARKSLATEGREY" =>
+    Color::DARK_SLATE_GREY, "DARKTURQUOISE" => Color::DARK_TURQUOISE, "DARKVIOLET" =>
+    Color::DARK_VIOLET, "DEEPPINK" => Color::DEEP_PINK, "DEEPSKYBLUE" =>
+    Color::DEEP_SKY_BLUE, "DIMGRAY" => Color::DIM_GRAY, "DIMGREY" => Color::DIM_GREY,
+    "DODGERBLUE" => Color::DODGER_BLUE, "FIREBRICK" => Color::FIRE_BRICK, "FLORALWHITE"
+    => Color::FLORAL_WHITE, "FORESTGREEN" => Color::FOREST_GREEN, "FUCHSIA" =>
+    Color::FUCHSIA, "GAINSBORO" => Color::GAINSBORO, "GHOSTWHITE" => Color::GHOST_WHITE,
+    "GOLD" => Color::GOLD, "GOLDENROD" => Color::GOLDEN_ROD, "GRAY" => Color::GRAY,
+    "GREEN" => Color::GREEN, "GREENYELLOW" => Color::GREEN_YELLOW, "GREY" => Color::GREY,
+    "HONEYDEW" => Color::HONEY_DEW, "HOTPINK" => Color::HOT_PINK, "INDIANRED" =>
+    Color::INDIAN_RED, "INDIGO" => Color::INDIGO, "IVORY" => Color::IVORY, "KHAKI" =>
+    Color::KHAKI, "LAVENDER" => Color::LAVENDER, "LAVENDERBLUSH" =>
+    Color::LAVENDER_BLUSH, "LAWNGREEN" => Color::LAWN_GREEN, "LEMONCHIFFON" =>
+    Color::LEMON_CHIFFON, "LIGHTBLUE" => Color::LIGHT_BLUE, "LIGHTCORAL" =>
+    Color::LIGHT_CORAL, "LIGHTCYAN" => Color::LIGHT_CYAN, "LIGHTGOLDENRODYELLOW" =>
+    Color::LIGHT_GOLDEN_ROD_YELLOW, "LIGHTGRAY" => Color::LIGHT_GRAY, "LIGHTGREEN" =>
+    Color::LIGHT_GREEN, "LIGHTGREY" => Color::LIGHT_GREY, "LIGHTPINK" =>
+    Color::LIGHT_PINK, "LIGHTSALMON" => Color::LIGHT_SALMON, "LIGHTSEAGREEN" =>
+    Color::LIGHT_SEA_GREEN, "LIGHTSKYBLUE" => Color::LIGHT_SKY_BLUE, "LIGHTSLATEGRAY" =>
+    Color::LIGHT_SLATE_GRAY, "LIGHTSLATEGREY" => Color::LIGHT_SLATE_GREY,
+    "LIGHTSTEELBLUE" => Color::LIGHT_STEEL_BLUE, "LIGHTYELLOW" => Color::LIGHT_YELLOW,
+    "LIME" => Color::LIME, "LIMEGREEN" => Color::LIME_GREEN, "LINEN" => Color::LINEN,
+    "MAGENTA" => Color::MAGENTA, "MAROON" => Color::MAROON, "MEDIUMAQUAMARINE" =>
+    Color::MEDIUM_AQUA_MARINE, "MEDIUMBLUE" => Color::MEDIUM_BLUE, "MEDIUMORCHID" =>
+    Color::MEDIUM_ORCHID, "MEDIUMPURPLE" => Color::MEDIUM_PURPLE, "MEDIUMSEAGREEN" =>
+    Color::MEDIUM_SEA_GREEN, "MEDIUMSLATEBLUE" => Color::MEDIUM_SLATE_BLUE,
+    "MEDIUMSPRINGGREEN" => Color::MEDIUM_SPRING_GREEN, "MEDIUMTURQUOISE" =>
+    Color::MEDIUM_TURQUOISE, "MEDIUMVIOLETRED" => Color::MEDIUM_VIOLET_RED,
+    "MIDNIGHTBLUE" => Color::MIDNIGHT_BLUE, "MINTCREAM" => Color::MINT_CREAM, "MISTYROSE"
+    => Color::MISTY_ROSE, "MOCCASIN" => Color::MOCCASIN, "NAVAJOWHITE" =>
+    Color::NAVAJO_WHITE, "NAVY" => Color::NAVY, "OLDLACE" => Color::OLD_LACE, "OLIVE" =>
+    Color::OLIVE, "OLIVEDRAB" => Color::OLIVE_DRAB, "ORANGE" => Color::ORANGE,
+    "ORANGERED" => Color::ORANGE_RED, "ORCHID" => Color::ORCHID, "PALEGOLDENROD" =>
+    Color::PALE_GOLDEN_ROD, "PALEGREEN" => Color::PALE_GREEN, "PALETURQUOISE" =>
+    Color::PALE_TURQUOISE, "PALEVIOLETRED" => Color::PALE_VIOLET_RED, "PAPAYAWHIP" =>
+    Color::PAPAYA_WHIP, "PEACHPUFF" => Color::PEACH_PUFF, "PERU" => Color::PERU, "PINK"
+    => Color::PINK, "PLUM" => Color::PLUM, "POWDERBLUE" => Color::POWDER_BLUE, "PURPLE"
+    => Color::PURPLE, "REBECCAPURPLE" => Color::REBECCA_PURPLE, "RED" => Color::RED,
+    "ROSYBROWN" => Color::ROSY_BROWN, "ROYALBLUE" => Color::ROYAL_BLUE, "SADDLEBROWN" =>
+    Color::SADDLE_BROWN, "SALMON" => Color::SALMON, "SANDYBROWN" => Color::SANDY_BROWN,
+    "SEAGREEN" => Color::SEA_GREEN, "SEASHELL" => Color::SEA_SHELL, "SIENNA" =>
+    Color::SIENNA, "SILVER" => Color::SILVER, "SKYBLUE" => Color::SKY_BLUE, "SLATEBLUE"
+    => Color::SLATE_BLUE, "SLATEGRAY" => Color::SLATE_GRAY, "SLATEGREY" =>
+    Color::SLATE_GREY, "SNOW" => Color::SNOW, "SPRINGGREEN" => Color::SPRING_GREEN,
+    "STEELBLUE" => Color::STEEL_BLUE, "TAN" => Color::TAN, "TEAL" => Color::TEAL,
+    "THISTLE" => Color::THISTLE, "TOMATO" => Color::TOMATO, "TURQUOISE" =>
+    Color::TURQUOISE, "VIOLET" => Color::VIOLET, "WHEAT" => Color::WHEAT, "WHITE" =>
+    Color::WHITE, "WHITESMOKE" => Color::WHITE_SMOKE, "YELLOW" => Color::YELLOW,
+    "YELLOWGREEN" => Color::YELLOW_GREEN, "AMBER_50" => Color::AMBER_50, "AMBER0.5" =>
+    Color::AMBER_50, "AMBER05" => Color::AMBER_50, "AMBER_100" => Color::AMBER_100,
+    "AMBER1" => Color::AMBER_100, "AMBER_200" => Color::AMBER_200, "AMBER2" =>
+    Color::AMBER_200, "AMBER_300" => Color::AMBER_300, "AMBER3" => Color::AMBER_300,
+    "AMBER_400" => Color::AMBER_400, "AMBER4" => Color::AMBER_400, "AMBER_500" =>
+    Color::AMBER_500, "AMBER5" => Color::AMBER_500, "AMBER_600" => Color::AMBER_600,
+    "AMBER6" => Color::AMBER_600, "AMBER_700" => Color::AMBER_700, "AMBER7" =>
+    Color::AMBER_700, "AMBER_800" => Color::AMBER_800, "AMBER8" => Color::AMBER_800,
+    "AMBER_900" => Color::AMBER_900, "AMBER9" => Color::AMBER_900, "AMBER_950" =>
+    Color::AMBER_950, "AMBER9.5" => Color::AMBER_950, "AMBER95" => Color::AMBER_950,
+    "BLUE_50" => Color::BLUE_50, "BLUE0.5" => Color::BLUE_50, "BLUE05" => Color::BLUE_50,
+    "BLUE_100" => Color::BLUE_100, "BLUE1" => Color::BLUE_100, "BLUE_200" =>
+    Color::BLUE_200, "BLUE2" => Color::BLUE_200, "BLUE_300" => Color::BLUE_300, "BLUE3"
+    => Color::BLUE_300, "BLUE_400" => Color::BLUE_400, "BLUE4" => Color::BLUE_400,
     "BLUE_500" => Color::BLUE_500, "BLUE5" => Color::BLUE_500, "BLUE_600" =>
     Color::BLUE_600, "BLUE6" => Color::BLUE_600, "BLUE_700" => Color::BLUE_700, "BLUE7"
     => Color::BLUE_700, "BLUE_800" => Color::BLUE_800, "BLUE8" => Color::BLUE_800,

@@ -28,7 +28,7 @@ impl FloatingWindow {
             .id(id)
             .bg(BG0)
             .padding(10.0)
-            .border(BorderStyle::new(2.0, BG3))
+            .border(BorderStyle::custom(2.0, BG3, BorderType::Rectangle))
             .button_color(BG4)
             .default_position(pos)
             .active_button_color(BG4.lighten(0.2))

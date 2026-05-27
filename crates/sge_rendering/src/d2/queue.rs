@@ -154,12 +154,12 @@ impl DrawQueue2D {
 
     fn common_draw_params(
         scissor: Option<glium::Rect>,
-        alpha_blend: bool,
+        premultiplied: bool,
     ) -> DrawParameters<'static> {
         DrawParameters {
             point_size: Some(1.0),
             line_width: Some(1.0),
-            blend: if alpha_blend {
+            blend: if premultiplied {
                 Blend {
                     color: glium::BlendingFunction::Addition {
                         source: glium::LinearBlendingFactor::One,

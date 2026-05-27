@@ -1,7 +1,7 @@
-use std::f32::consts::TAU;
+use std::f32::consts::{GOLDEN_RATIO, TAU};
 
 use sge_api::shapes_2d::draw_sdf;
-use sge_time::oscillate;
+use sge_time::oscillate_t;
 use sge_types::Sdf;
 
 use super::*;
@@ -18,10 +18,10 @@ impl LoadingSpinner {
 impl UiNode for LoadingSpinner {
     fn draw(&self, area: Area, _: &UiState) -> Vec2 {
         let area = area.square();
-        let thickness = area.size.x / 10.0;
+        let thickness = area.size.x / 8.0;
 
         let a = (time() * 7.0) % TAU;
-        let b = a + oscillate(0.5, TAU - 0.5);
+        let b = a - oscillate_t(0.4, TAU - 0.5, time() * GOLDEN_RATIO);
 
         let sdf =
             Sdf::ring(area.center(), area.size / 2.0, thickness, a, b).with_fill_solid(self.0);

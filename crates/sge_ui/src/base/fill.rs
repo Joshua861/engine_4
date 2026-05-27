@@ -79,7 +79,7 @@ impl Default for FillStyle {
 #[bon::bon]
 impl Fill {
     pub fn new(fill_color: Color, child: Child) -> UiRef {
-        Self::builder().color(fill_color).child(child).build()
+        BoxFill::new(fill_color, child)
     }
 
     pub fn rounded(fill_color: Color, corner_radius: f32, child: Child) -> UiRef {
@@ -275,7 +275,7 @@ impl UiNode for Fill {
 
 impl UiRef {
     pub fn fill(self, color: Color) -> UiRef {
-        Fill::new(color, self)
+        BoxFill::new(color, self)
     }
 
     pub fn rounded_fill(self, color: Color, radius: f32) -> UiRef {

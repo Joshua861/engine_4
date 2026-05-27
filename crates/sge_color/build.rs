@@ -1,9 +1,11 @@
 use std::fs;
 use std::path::Path;
 
+use heck::ToShoutySnakeCase;
 use palette::{IntoColor, Oklch, Srgb};
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote};
+use syn::Ident;
 
 fn oklch_to_srgb(l: f32, c: f32, h: f32) -> (f32, f32, f32) {
     let oklch = Oklch::new(l, c, h);
@@ -31,16 +33,33 @@ fn main() {
     let mut palette_const_idents: Vec<proc_macro2::Ident> = Vec::new();
 
     color_impl_items.extend(quote! {
-        pub const WHITE: Self = Self::new(1.0, 1.0, 1.0);
-        pub const BLACK: Self = Self::new(0.0, 0.0, 0.0);
         pub const TRANSPARENT: Self = Self { r: 0.0, g: 0.0, b: 0.0, a: 0.0 };
     });
 
     color_map_entries.extend(quote! {
-        "WHITE" => Color::WHITE,
-        "BLACK" => Color::BLACK,
         "TRANSPARENT" => Color::TRANSPARENT,
     });
+
+    let css_json = fs::read_to_string("css.json").expect("failed to read colors.json");
+    let css_data: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_str(&css_json).expect("failed to parse css.json");
+
+    for (color_name, hex) in css_data {
+        let name = color_name.to_shouty_snake_case();
+        let name_ident = Ident::new(&name, Span::call_site());
+        let name = name.replace("_", "");
+        let hex = hex.to_string();
+        let hex_int = hex.strip_prefix("\"#").unwrap().strip_suffix('\"').unwrap();
+        let hex_int = syn::LitInt::new(&format!("0x{}", hex_int), Span::call_site());
+
+        color_map_entries.extend(quote! {
+            #name => Color::#name_ident,
+        });
+
+        color_impl_items.extend(quote! {
+            pub const #name_ident: Self = Self::hex(#hex_int);
+        });
+    }
 
     for (color_name, brightnesses) in &data {
         let brightnesses = brightnesses.as_object().expect("expected object");

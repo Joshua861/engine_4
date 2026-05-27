@@ -883,6 +883,32 @@ impl Sdf {
         }
     }
 
+    pub fn round_coords(&mut self) {
+        self.center = self.center.round();
+        self.fill_offset = self.fill_offset.round();
+        self.shadow_offset = self.shadow_offset.round();
+
+        if self.shape_type == SdfShape::Quad || self.shape_type == SdfShape::Triangle {}
+
+        match self.shape_type {
+            SdfShape::Quad
+            | SdfShape::Triangle
+            | SdfShape::CubicBezier
+            | SdfShape::OrientedBox
+            | SdfShape::Segment
+            | SdfShape::Moon
+            | SdfShape::Star
+            | SdfShape::QuadraticBezier => {
+                self.shape_params_a = self.shape_params_a.map(|x| x.round());
+                self.shape_params_b = self.shape_params_b.map(|x| x.round());
+            }
+            SdfShape::Ring | SdfShape::Arc => {
+                self.shape_params_a[2] = self.shape_params_a[2].round();
+            }
+            _ => (),
+        }
+    }
+
     pub fn rect(center: Vec2, size: Vec2) -> Self {
         default_instance(center.extend(0.0), size * 0.5, SdfShape::Rect)
     }
@@ -1038,7 +1064,7 @@ impl Sdf {
         let (min, max) = cubic_bezier_bounds(a, b, c, d);
 
         let center = (min + max) * 0.5;
-        let dimensions = (max - min) * 0.5;
+        let dimensions = (max - min) * 0.6;
 
         let la = a - center;
         let lb = b - center;
@@ -1372,7 +1398,6 @@ fn cubic_bezier_bounds(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2) -> (Vec2, Vec2) {
         let p2v = if axis == 0 { p2.x } else { p2.y };
         let p3v = if axis == 0 { p3.x } else { p3.y };
 
-        // IQ formulation
         let c = -p0v + p1v;
         let b = p0v - 2.0 * p1v + p2v;
         let a = -p0v + 3.0 * p1v - 3.0 * p2v + p3v;

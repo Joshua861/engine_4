@@ -6,7 +6,7 @@ use sge_api::shapes_2d::{draw_sdf, draw_sdf_world};
 use sge_color::Color;
 use sge_rng::rand;
 use sge_shapes::d2::Shape2D;
-use sge_time::{time, time_since};
+use sge_time::{delta_time, time, time_since};
 use sge_types::Sdf;
 use sge_vectors::Vec2;
 
@@ -125,13 +125,14 @@ impl Particle {
     }
 
     fn step(&mut self) {
-        self.direction += self.angular_velocity;
-        self.additional_velocity += self.acceleration;
-        self.pos += self.additional_velocity;
-        self.pos += Vec2::new(self.direction.cos(), self.direction.sin()) * self.speed;
-        self.rotation += self.rotation_speed;
+        let d = delta_time() * 60.0;
+        self.direction += self.angular_velocity * d;
+        self.additional_velocity += self.acceleration * d;
+        self.pos += self.additional_velocity * d;
+        self.pos += Vec2::new(self.direction.cos(), self.direction.sin()) * self.speed * d;
+        self.rotation += self.rotation_speed * d;
         self.shape.fill_color_a = self.current_color();
-        self.shape.rotation = self.rotation;
+        self.shape.rotation = self.rotation * d;
         self.shape.set_position(self.pos);
     }
 
@@ -232,6 +233,7 @@ impl ParticleOneshot {
                 color.b + (rand::<f32>() - 0.5) * self.color_randomness.b,
                 color.a + (rand::<f32>() - 0.5) * self.color_randomness.a,
             );
+            let end_color = (color - shape.get_color()) + self.end_color;
             shape.set_color(color);
             shape.set_position(pos);
             let initial_rotation =
@@ -264,7 +266,7 @@ impl ParticleOneshot {
                 rotation_speed,
                 spawn_time: time(),
                 lifetime,
-                end_color: self.end_color,
+                end_color,
                 start_color: color,
                 pos,
                 angular_velocity,
@@ -364,6 +366,8 @@ impl ParticleEmitter {
             vary(color.b, self.color_randomness.b),
             vary(color.a, self.color_randomness.a),
         );
+
+        let end_color = (color - shape.get_color()) + self.end_color;
         shape.set_color(color);
         shape.set_position(pos);
         let initial_rotation =
@@ -396,7 +400,7 @@ impl ParticleEmitter {
             rotation_speed,
             spawn_time: time(),
             lifetime,
-            end_color: self.end_color,
+            end_color,
             start_color: color,
             pos,
             angular_velocity,

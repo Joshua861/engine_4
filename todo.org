@@ -11,6 +11,15 @@
 - [X] dithering for gradients
 - [X] reimplement multigradients
 - [X] reimplement gradient lines
+- [ ] trying to draw a grid of squares shows gaps between them. rects are not
+  exact, also quads.
+- [ ] advertise better
+- [ ] docs
+- [ ] move rich text to UI and change syntax to be like markdown. probably need to change to a different method of adding colours like with |red| instead
+- [ ] move to stable rust
+- [ ] support underline colour and style (wavy?)
+- [ ] shiny metallic fill effect like the image
+- [ ] ssaa
 
 - [-] High priority bugs:
   - [X] tailwind colors are wrong. oklch conversion is probably wrong
@@ -25,6 +34,7 @@
 - [ ] miniquad backend + web
 - [ ] bitmap fonts
 - [ ] ui slideshow from markdown render to textures
+- [X] css colours
 - [ ] unload refs
 - [ ] set target fps
 - [ ] get screen to world ray

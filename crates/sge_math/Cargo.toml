@@ -13,3 +13,4 @@ glium.workspace = true
 sge_camera.workspace = true
 sge_input.workspace = true
 sge_window.workspace = true
+sge_types.workspace = true

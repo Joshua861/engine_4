@@ -3,8 +3,6 @@ use sge::prelude::*;
 
 #[main("Graphs")]
 async fn main() -> AResult<()> {
-    init("Graphs")?;
-
     let mut pan = PanningCameraController::new();
 
     let mut network = Network::new();

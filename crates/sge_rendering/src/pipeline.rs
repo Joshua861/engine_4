@@ -3,6 +3,7 @@ use crate::get_render_state;
 use crate::post_processing::PostProcessingEffect;
 use crate::{DrawQueues, d2::DrawQueue2D};
 use glium::Texture2d;
+use glium::framebuffer::{DepthRenderBuffer, RenderBuffer};
 use glium::{
     Surface,
     framebuffer::SimpleFrameBuffer,
@@ -17,26 +18,26 @@ use sge_textures::{SgeTexture, TextureRef};
 use sge_vectors::{Mat4, UVec2, Vec2, Vec3};
 use sge_window::{get_display, get_display_mut, get_window_state};
 
+const SAMPLES: u32 = 4;
+
 pub struct RenderTexture {
     pub dimensions: UVec2,
     pub color_texture: TextureRef,
     pub depth_texture: DepthTexture2d,
+    pub msaa_color: RenderBuffer,
+    pub msaa_depth: DepthRenderBuffer,
 }
 
 impl RenderTexture {
     pub fn framebuffer(&mut self) -> SimpleFrameBuffer<'_> {
         let window = get_window_state();
-        SimpleFrameBuffer::with_depth_buffer(
-            &window.display,
-            &self.color_texture.gl_texture,
-            &self.depth_texture,
-        )
-        .unwrap()
+        SimpleFrameBuffer::with_depth_buffer(&window.display, &self.msaa_color, &self.msaa_depth)
+            .unwrap()
     }
 
     pub fn resolve(&self) {
         let display = get_display();
-        let msaa_fbo = SimpleFrameBuffer::new(display, &self.color_texture.gl_texture).unwrap();
+        let msaa_fbo = SimpleFrameBuffer::new(display, &self.msaa_color).unwrap();
         let resolved_fbo =
             SimpleFrameBuffer::new(display, &self.color_texture.get().gl_texture).unwrap();
         msaa_fbo.blit_whole_color_to(
@@ -207,8 +208,8 @@ impl RenderPipeline {
         match self.clear_color {
             ClearColor::DontClear => (),
             ClearColor::Default => {
-                a.framebuffer().clear_color(0.0, 0.0, 0.0, 0.0);
-                b.framebuffer().clear_color(0.0, 0.0, 0.0, 0.0);
+                a.framebuffer().clear_color(0.0, 0.0, 0.0, 1.0);
+                b.framebuffer().clear_color(0.0, 0.0, 0.0, 1.0);
             }
             ClearColor::Clear(c) => {
                 a.framebuffer().clear_color(c.r, c.g, c.b, c.a);
@@ -324,12 +325,29 @@ pub(crate) fn empty_render_texture(
 ) -> Result<RenderTexture, TextureCreationError> {
     let window = get_window_state();
     let facade = &window.display;
+    let samples = SAMPLES;
     let texture = Texture2d::empty(facade, width, height)?;
     let texture = SgeTexture::new(texture).create();
     Ok(RenderTexture {
         dimensions: UVec2::new(width, height),
         depth_texture: DepthTexture2d::empty(facade, width, height)?,
         color_texture: texture,
+        msaa_color: RenderBuffer::new_multisample(
+            facade,
+            glium::texture::UncompressedFloatFormat::U8U8U8U8,
+            width,
+            height,
+            samples,
+        )
+        .unwrap(),
+        msaa_depth: DepthRenderBuffer::new_multisample(
+            facade,
+            glium::texture::DepthFormat::I24,
+            width,
+            height,
+            samples,
+        )
+        .unwrap(),
     })
 }
 

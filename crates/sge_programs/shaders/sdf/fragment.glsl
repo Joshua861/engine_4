@@ -22,6 +22,7 @@ in vec4 v_shadow_color;
 out vec4 frag_color;
 
 const float BIAS = 0.0001;
+const float SMOOTHNESS = 0.5;
 
 float hash(vec2 p) {
     p = fract(p * vec2(234.34, 435.345));
@@ -354,15 +355,23 @@ float eval_sdf(vec2 p) {
     float cr = v_corner_radius;
 
     if (v_shape_type == 0) {
+        // rounded box already handles this correctly
         d = sdf_rounded_box(p, v_dimensions, cr);
     }
     else if (v_shape_type == 1) {
-        d = sdf_ellipse(p, v_dimensions) - cr;
+        // shrink ellipse axes by cr, then expand — keeps outer boundary stable
+        d = sdf_ellipse(p, max(v_dimensions - cr, vec2(0.001))) - cr;
     }
     else if (v_shape_type == 2) {
         vec2 a = vec2(v_shape_params[0], v_shape_params[1]);
         vec2 b = vec2(v_shape_params[2], v_shape_params[3]);
         vec2 c = vec2(v_shape_params[4], v_shape_params[5]);
+        // scale points inward by cr to compensate
+        vec2 center = (a + b + c) / 3.0;
+        float scale = max(0.0, 1.0 - cr / max(length(a - center), 0.001));
+        a = center + (a - center) * scale;
+        b = center + (b - center) * scale;
+        c = center + (c - center) * scale;
         d = sdf_triangle(p, a, b, c) - cr;
     }
     else if (v_shape_type == 3) {
@@ -370,17 +379,23 @@ float eval_sdf(vec2 p) {
         vec2 b = vec2(v_shape_params[2], v_shape_params[3]);
         vec2 c = vec2(v_shape_params[4], v_shape_params[5]);
         vec2 dd = vec2(v_shape_params[6], v_shape_params[7]);
+        vec2 center = (a + b + c + dd) / 4.0;
+        float scale = max(0.0, 1.0 - cr / max(length(a - center), 0.001));
+        a = center + (a - center) * scale;
+        b = center + (b - center) * scale;
+        c = center + (c - center) * scale;
+        dd = center + (dd - center) * scale;
         vec2 points[4] = vec2[4](a, b, c, dd);
         d = sdf_quad(points, p) - cr;
     }
     else if (v_shape_type == 4) {
-        float radius = v_dimensions.x;
+        float radius = max(v_dimensions.x - cr, 0.001);
         d = sdf_sector(p, radius, v_shape_params[0], v_shape_params[1]) - cr;
     }
     else if (v_shape_type == 5) {
         float radius = v_dimensions.x;
         float thickness = v_shape_params[2];
-        d = sdf_ring(p, radius, thickness, v_shape_params[0], v_shape_params[1]) - cr;
+        d = sdf_ring(p, radius, max(thickness - cr * 2.0, 0.001), v_shape_params[0], v_shape_params[1]) - cr;
     }
     else if (v_shape_type == 6) {
         float mid = (v_shape_params[0] + v_shape_params[1]) * 0.5;
@@ -391,38 +406,39 @@ float eval_sdf(vec2 p) {
         rp.x = abs(rp.x);
         float ra = v_dimensions.x;
         float rb = v_shape_params[2] / 4.0;
-        d = ((sc.y * rp.x > sc.x * rp.y) ? length(rp - sc * ra) : abs(length(rp) - ra)) - rb - cr;
+        d = ((sc.y * rp.x > sc.x * rp.y) ? length(rp - sc * ra) : abs(length(rp) - ra)) - rb;
     }
     else if (v_shape_type == 7) {
-        d = sdf_pentagon(p, v_dimensions.x) - cr;
+        d = sdf_pentagon(p, max(v_dimensions.x - cr, 0.001)) - cr;
     }
     else if (v_shape_type == 8) {
-        d = sdf_hexagon(p, v_dimensions.x) - cr;
+        d = sdf_hexagon(p, max(v_dimensions.x - cr, 0.001)) - cr;
     }
     else if (v_shape_type == 9) {
-        d = sdf_octogon(p, v_dimensions.x) - cr;
+        d = sdf_octogon(p, max(v_dimensions.x - cr, 0.001)) - cr;
     }
     else if (v_shape_type == 10) {
-        d = sdf_hexagram(p, v_dimensions.x) - cr;
+        d = sdf_hexagram(p, max(v_dimensions.x - cr, 0.001)) - cr;
     }
     else if (v_shape_type == 11) {
-        d = sdf_pentagram(p, v_dimensions.x) - cr;
+        d = sdf_pentagram(p, max(v_dimensions.x - cr, 0.001)) - cr;
     }
     else if (v_shape_type == 12) {
         float n = max(v_shape_params[0], 2.0);
         float m = clamp(v_shape_params[1], 2.0, n);
-        d = sdf_star(p, v_dimensions.x, n, m) - cr;
+        d = sdf_star(p, max(v_dimensions.x - cr, 0.001), n, m) - cr;
     }
     else if (v_shape_type == 13) {
-        d = sdf_moon(p, v_shape_params[0], v_dimensions.x, v_shape_params[1]) - cr;
+        d = sdf_moon(p, v_shape_params[0], max(v_dimensions.x - cr, 0.001), v_shape_params[1]) - cr;
     }
     else if (v_shape_type == 14) {
-        float s = v_dimensions.x;
+        float s = v_dimensions.x * 2.0;
         d = sdf_heart(vec2(p.x, -(p.y + s * -0.6)) / s) * s - cr;
+        // heart has no simple radius to shrink; offset-only rounding accepted
     }
     else if (v_shape_type == 15) {
         vec2 b = vec2(v_shape_params[0], v_shape_params[1]);
-        d = sdf_cross(p, b, 0.0) - cr;
+        d = sdf_cross(p, max(b - cr, vec2(0.001)), 0.0) - cr;
     }
     else if (v_shape_type == 16) {
         d = sdf_x(p, v_shape_params[0], cr);
@@ -431,7 +447,7 @@ float eval_sdf(vec2 p) {
         vec2 a = vec2(v_shape_params[0], v_shape_params[1]);
         vec2 b = vec2(v_shape_params[2], v_shape_params[3]);
         vec2 c = vec2(v_shape_params[4], v_shape_params[5]);
-        d = sdf_quadratic_bezier(p, a, b, c) - cr;
+        d = sdf_quadratic_bezier(p, a, b, c) - cr * 0.5;
     }
     else if (v_shape_type == 18) {
         float s = v_dimensions.x;
@@ -439,11 +455,12 @@ float eval_sdf(vec2 p) {
     } else if (v_shape_type == 19) {
         vec2 a = vec2(v_shape_params[0], v_shape_params[1]);
         vec2 b = vec2(v_shape_params[2], v_shape_params[3]);
-        d = sdf_segment(p, a, b) - cr;
+        d = sdf_segment(p, a, b) - cr * 0.5;
     } else if (v_shape_type == 20) {
         vec2 a = vec2(v_shape_params[0], v_shape_params[1]);
         vec2 b = vec2(v_shape_params[2], v_shape_params[3]);
-        float thickness = v_shape_params[4];
+        float thickness = v_shape_params[4] - cr * 2.0;
+        vec2 center = (a + b) * 0.5;
         d = sdf_orientedBox(p, a, b, thickness) - cr;
     }
     else if (v_shape_type == 21) {
@@ -451,8 +468,7 @@ float eval_sdf(vec2 p) {
         vec2 b = vec2(v_shape_params[2], v_shape_params[3]);
         vec2 c = vec2(v_shape_params[4], v_shape_params[5]);
         vec2 d0 = vec2(v_shape_params[6], v_shape_params[7]);
-
-        d = sdf_cubic_bezier(p, a, b, c, d0) - cr;
+        d = sdf_cubic_bezier(p, a, b, c, d0) - cr * 0.5;
     }
 
     return d;
@@ -820,12 +836,7 @@ void main() {
     final_color = alpha_blend(final_color, shadow_final);
     final_color = alpha_blend(final_color, fill_final);
     final_color = alpha_blend(final_color, stroke_final);
-
-    // if (final_color.a > 0.0) {
-    //     frag_color = final_color;
-    // } else {
-    //     frag_color = vec4(0.0, 0.0, 0.0, 1.0);
-    // }
-
     frag_color = final_color;
+
+    // frag_color = vec4(1.0, 0.0, 0.0, 1.0);
 }

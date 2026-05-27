@@ -1,3 +1,5 @@
+use std::f32::consts::FRAC_PI_2;
+
 use sge::*;
 
 #[main("Screenshot")]
@@ -55,7 +57,6 @@ fn draw_screenshots(screenshots: &[TextureRef]) {
 async fn draw_pattern() {
     let mut hue = 0.0;
     let mut offset = vec2(0.0, 0.0);
-    let tile_size = Vec2::splat(100.0);
 
     loop {
         hue += 20.0 * delta_time();
@@ -63,22 +64,16 @@ async fn draw_pattern() {
         let color = Color::from_oklch(0.727, 0.1219, hue);
         let alt_color = color.darken_oklch(0.05);
 
-        offset += vec2(100.0, 50.0) * delta_time();
-        offset %= tile_size * 2.0;
+        offset -= vec2(0.5, 0.25) * delta_time();
 
-        let width = (window_width() / tile_size.x).ceil() as isize;
-        let height = (window_height() / tile_size.y).ceil() as isize;
-
-        for x in -2..width {
-            for y in -2..height {
-                let pos = Vec2::new(x as f32 * tile_size.x, y as f32 * tile_size.y) + offset;
-                let color = if (x + y) % 2 == 0 { color } else { alt_color };
-
-                draw_rect(pos, tile_size, color);
-            }
-        }
+        draw_sdf(
+            Sdf::rect_tl(vec2(0.0, 0.0), window_size())
+                .with_fill(color, alt_color, FRAC_PI_2, 5.0, SdfFill::Truchet)
+                .with_fill_offset(offset),
+        );
 
         let r = min_window_dimension() / 5.0;
+
         draw_circle(window_center(), r, Color::BLACK);
         push_scissor(Area::new(vec2(window_center().x, 0.0), window_size()).to_rect());
         draw_circle(window_center(), r, Color::WHITE);

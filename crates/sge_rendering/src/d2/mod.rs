@@ -47,7 +47,7 @@ pub struct SpriteVertex {
     pub color: [f32; 4],
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum RendererType {
     Screen,
     World,
@@ -113,13 +113,29 @@ impl Renderer2D {
         }
     }
 
-    pub fn add_sdf(&mut self, instance: Sdf) {
+    #[allow(unused_mut)]
+    pub fn add_sdf(&mut self, mut instance: Sdf) {
         debugger_add_drawn_objects(1);
+        #[cfg(feature = "round_coords")]
+        if self.ty == RendererType::Screen {
+            instance.round_coords();
+        }
         self.current_sdf_batch().instances.push(instance);
     }
 
-    pub fn add_shape(&mut self, shape: &impl Shape2D) {
+    pub fn add_shape_sdf(&mut self, shape: &impl Shape2D) {
         self.add_sdf(shape.sdf());
+    }
+
+    pub fn add_shape_mesh(&mut self, shape: &impl Shape2D) {
+        let batch = self.current_mesh_batch();
+        let base_index = batch.max_index;
+        let (indices, vertices) = shape.gen_mesh(base_index);
+        batch.max_index += vertices.len() as u32;
+        for v in vertices {
+            batch.vertices.push(v.solid_pattern());
+        }
+        batch.indices.extend(indices);
     }
 
     pub fn current_draw_n(&self) -> usize {

@@ -7,9 +7,6 @@ description = "Shape types for SGE"
 license = "MIT"
 repository = "https://github.com/LilyRL/sge"
 
-[features]
-round_coords = []
-
 [dependencies]
 sge_vectors.workspace = true
 lyon.workspace = true

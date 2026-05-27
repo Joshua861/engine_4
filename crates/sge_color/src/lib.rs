@@ -1,4 +1,7 @@
-use std::fmt::Debug;
+use std::{
+    fmt::Debug,
+    ops::{Add, AddAssign, Sub, SubAssign},
+};
 
 use egui_glium::egui_winit::egui::Color32;
 use palette::{Hsl, IntoColor, LinSrgb, LinSrgba, Oklch, Srgb, Srgba};
@@ -61,6 +64,10 @@ impl Color {
 
     pub fn to_u8(&self) -> (u8, u8, u8) {
         (convert(self.r), convert(self.g), convert(self.b))
+    }
+
+    pub fn from_string(s: impl AsRef<str>) -> Option<Self> {
+        str_to_color(s)
     }
 
     pub fn to_rgba_u8(&self) -> (u8, u8, u8, u8) {
@@ -170,6 +177,16 @@ impl Color {
         let alpha = hex & 0x000000FF;
 
         Self::from_rgba_u8(red as u8, green as u8, blue as u8, alpha as u8)
+    }
+
+    pub fn to_hex(&self) -> u32 {
+        let (r, g, b, a) = self.to_rgba_u8();
+        ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8) | (a as u32)
+    }
+
+    pub fn to_hex_string(&self) -> String {
+        let (r, g, b, a) = self.to_rgba_u8();
+        format!("#{:02X}{:02X}{:02X}{:02X}", r, g, b, a)
     }
 
     pub fn from_hsla(hue: f32, saturation: f32, lightness: f32, alpha: f32) -> Self {
@@ -454,6 +471,7 @@ pub fn str_to_color(s: impl AsRef<str>) -> Option<Color> {
 
     let s = s
         .replace("_", "")
+        .replace(" ", "")
         .replace("00", "")
         .replace("950", "9.5")
         .replace("50", "0.5")
@@ -513,5 +531,49 @@ impl Palette {
             self.v950, self.v900, self.v800, self.v700, self.v600, self.v500, self.v400, self.v300,
             self.v200, self.v100, self.v50,
         ]
+    }
+}
+
+impl Add for Color {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::from_rgba(
+            self.r + rhs.r,
+            self.g + rhs.g,
+            self.b + rhs.b,
+            self.a + rhs.a,
+        )
+    }
+}
+
+impl Sub for Color {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::from_rgba(
+            self.r - rhs.r,
+            self.g - rhs.g,
+            self.b - rhs.b,
+            self.a - rhs.a,
+        )
+    }
+}
+
+impl AddAssign for Color {
+    fn add_assign(&mut self, rhs: Self) {
+        self.r += rhs.r;
+        self.g += rhs.g;
+        self.b += rhs.b;
+        self.a += rhs.a;
+    }
+}
+
+impl SubAssign for Color {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.r -= rhs.r;
+        self.g -= rhs.g;
+        self.b -= rhs.b;
+        self.a -= rhs.a;
     }
 }
