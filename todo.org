@@ -8,6 +8,7 @@
 - [X] test all shapes under all conditions
 - [X] test all fill parameters
 - [ ] do more testing with shadows (like when should they run? and what parameters
+- [ ] sdf text for zooming in
 - [X] dithering for gradients
 - [X] reimplement multigradients
 - [X] reimplement gradient lines
@@ -204,8 +205,8 @@
     statistics about progress and they can render it themselves. sounds good to me
 - [ ] benchmarks
 - [ ] normal mapping in 2d and 3d
-- [ ] metaballs
-  - [ ] SDF in 2D?
+- [X] metaballs
+  - [X] SDF in 2D?
 - [ ] Svelte(fire) style magic for multiplayer. just have some kind of struct /
   macro thing that detects the difference between the state of the struct
   between frames and automatically handles that between players

@@ -188,16 +188,20 @@ impl Renderer2D {
             [tex_min_x, tex_max_y],
         ];
 
+        let round = cfg!(feature = "round_coords") && self.ty == RendererType::Screen;
+
         let batch = self.current_sprite_batch(texture);
         let base_index = batch.vertices.len() as u32;
 
         for i in 0..4 {
             let v = mat.transform_point3(corners[i]);
+            let position = if round {
+                [v.x.round(), v.y.round(), 0.0]
+            } else {
+                [v.x, v.y, 0.0]
+            };
             batch.vertices.push(SpriteVertex {
-                #[cfg(not(feature = "round_coords"))]
-                position: [v.x, v.y, 0.0],
-                #[cfg(feature = "round_coords")]
-                position: [v.x.round(), v.y.round(), 0.0],
+                position,
                 tex_coords: tex_coords[i],
                 color: color_gpu,
             });
