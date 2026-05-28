@@ -1,4 +1,4 @@
-use sge_math::lerp;
+use sge_animation::lerp;
 use sge_vectors::vec2;
 
 use super::*;

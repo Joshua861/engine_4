@@ -40,3 +40,4 @@ strum_macros = "0.28.0"
 sge_exec = { version = "1.0.0", path = "../sge_exec" }
 sge_debugging.workspace = true
 fuzzy-matcher = "0.3.7"
+sge_animation.workspace = true
