@@ -30,3 +30,4 @@ termcolor.workspace = true
 thiserror.workspace = true
 sge_api.workspace = true
 bon.workspace = true
+owo-colors = "4.3.0"

@@ -81,8 +81,8 @@ fn main() -> anyhow::Result<()> {
                         )
                         .scroll(id!()),
                     )
-                    .fill(SCHEME.bg1)
-                    .scroll(id!()),
+                    .scroll(id!())
+                    .fill(SCHEME.bg1),
                 ),
                 FlexBox::Flex(BoxFill::new(
                     SCHEME.bg0,
@@ -756,7 +756,7 @@ fn rich_text_page() -> UiRef {
     if !storage_exists::<State>() {
         storage_store_state(State {
             rich_text: rich_text(
-                "{green5}Uncommon{r} items, like the {ul}{purple5}Magic power gem{r} can be very {red5}powerful{r}.",
+                r#"<font size=30><font italic color=green5>Uncommon</font> items, like the <font color=purple5><ul>Magic power gem</ul></font> can be very <font bold color=red5>powerful</font></font><font size=50 color=yellow5 bold>!!!</font>"#,
             ).unwrap(),
         });
     }
@@ -764,13 +764,9 @@ fn rich_text_page() -> UiRef {
     let rich_text = storage_get_state::<State>().rich_text.clone();
     let dbg = format!("{:#?}", &rich_text);
 
-    Col::with_gap(
-        40.0,
-        [
-            RichTextNode::with_size(rich_text, 32),
-            Text::mono_nowrap(dbg),
-        ],
-    )
+    Col::with_gap(40.0, [RichTextNode::new(rich_text), Text::mono_nowrap(dbg)])
+        .padding_bottom(100.0)
+        .scroll(id!())
 }
 
 fn hyperlink() -> UiRef {

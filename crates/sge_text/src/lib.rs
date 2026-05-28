@@ -20,12 +20,125 @@ pub mod wrapped_text;
 
 pub use wrapped_text::*;
 
-pub struct SgeFont {
+pub const DEFAULT_FONT_SIZE: usize = TextDrawParams::DEFAULT.font_size;
+
+#[cfg(feature = "extra_fonts")]
+pub const SANS_TYPEFACE: Typeface = Typeface {
+    base: SANS,
+    bold: Some(SANS_BOLD),
+    italic: Some(SANS_ITALIC),
+    bold_italic: Some(SANS_BOLD_ITALIC),
+    display: Some(SANS_DISPLAY),
+};
+
+pub const MONO_TYPEFACE: Typeface = Typeface {
+    base: MONO,
+    bold: None,
+    italic: None,
+    bold_italic: None,
+    display: None,
+};
+
+pub struct Font {
     font: fontdue::Font,
     atlas: TextureAtlas,
     characters: HashMap<Glyph, CharacterInfo>,
     /// not the same as font ref
     id: u32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Typeface {
+    pub base: FontRef,
+    pub bold: Option<FontRef>,
+    pub italic: Option<FontRef>,
+    pub bold_italic: Option<FontRef>,
+    pub display: Option<FontRef>,
+}
+
+impl Typeface {
+    pub fn get_font(&self, font_type: FontType) -> FontRef {
+        match font_type {
+            FontType::Regular => self.base,
+            FontType::Bold => self.bold.unwrap_or(self.base),
+            FontType::Italic => self.italic.unwrap_or(self.base),
+            FontType::BoldItalic => self.bold_italic.unwrap_or(self.bold.unwrap_or(self.base)),
+            FontType::Display => self.display.unwrap_or(self.bold.unwrap_or(self.base)),
+        }
+    }
+}
+
+#[cfg(feature = "extra_fonts")]
+impl Default for Typeface {
+    fn default() -> Self {
+        SANS_TYPEFACE
+    }
+}
+
+#[cfg(not(feature = "extra_fonts"))]
+impl Default for Typeface {
+    fn default() -> Self {
+        MONO_TYPEFACE
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FontType {
+    Regular,
+    Bold,
+    Italic,
+    BoldItalic,
+    Display,
+}
+
+impl FontType {
+    pub fn toggle_bold(&mut self) {
+        *self = match self {
+            Self::Regular => Self::Bold,
+            Self::Italic => Self::BoldItalic,
+            Self::Bold => Self::Regular,
+            Self::BoldItalic => Self::Italic,
+            Self::Display => Self::Bold,
+        };
+    }
+
+    pub fn toggle_italic(&mut self) {
+        *self = match self {
+            Self::Regular => Self::Italic,
+            Self::Bold => Self::BoldItalic,
+            Self::Italic => Self::Regular,
+            Self::BoldItalic => Self::Bold,
+            Self::Display => Self::Italic,
+        };
+    }
+
+    pub fn set_bold(&mut self, bold: bool) {
+        match (&self, bold) {
+            (Self::Regular, true) => *self = Self::Bold,
+            (Self::Italic, true) => *self = Self::BoldItalic,
+            (Self::Bold, false) => *self = Self::Regular,
+            (Self::BoldItalic, false) => *self = Self::Italic,
+            _ => {}
+        }
+    }
+
+    pub fn set_italic(&mut self, italic: bool) {
+        match (&self, italic) {
+            (Self::Regular, true) => *self = Self::Italic,
+            (Self::Bold, true) => *self = Self::BoldItalic,
+            (Self::Italic, false) => *self = Self::Regular,
+            (Self::BoldItalic, false) => *self = Self::Bold,
+            _ => {}
+        }
+    }
+
+    pub fn is_italic(&self) -> bool {
+        matches!(self, Self::Italic | Self::BoldItalic)
+    }
+
+    pub fn is_bold(&self) -> bool {
+        matches!(self, Self::Bold | Self::BoldItalic)
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -49,7 +162,7 @@ pub struct Glyph {
     size: usize, // using usize because i just dont like the idea of using a hashmap of f32 keys, right? that sounds bad right?
 }
 
-gen_ref_type!(SgeFont, FontRef, fonts);
+gen_ref_type!(Font, FontRef, fonts);
 
 impl Default for FontRef {
     fn default() -> Self {
@@ -114,6 +227,7 @@ impl FontRef {
                 position,
                 color,
                 do_dpi_scaling,
+                ..Default::default()
             },
         )
     }
@@ -134,6 +248,7 @@ impl FontRef {
                 position,
                 color,
                 do_dpi_scaling,
+                ..Default::default()
             },
         )
     }
@@ -184,6 +299,7 @@ impl FontRef {
         color: Color,
         do_dpi_scaling: bool,
         line_spacing: f32,
+        transform: Transform2D,
     ) -> TextDimensions {
         draw_multiline_text_ex(
             text,
@@ -206,6 +322,7 @@ impl FontRef {
         color: Color,
         do_dpi_scaling: bool,
         line_spacing: f32,
+        transform: Transform2D,
     ) -> TextDimensions {
         draw_multiline_text_world_ex(
             text,
@@ -228,8 +345,8 @@ pub enum LoadFontError {
     Io(std::io::Error),
 }
 
-impl SgeFont {
-    pub(crate) fn load_from_bytes(bytes: &[u8]) -> Result<SgeFont, LoadFontError> {
+impl Font {
+    pub(crate) fn load_from_bytes(bytes: &[u8]) -> Result<Font, LoadFontError> {
         Self::load_from_bytes_with_atlas(TextureAtlas::new()?, bytes)
     }
 
@@ -391,7 +508,7 @@ impl SgeFont {
 }
 
 pub fn create_ttf_font(bytes: &[u8]) -> Result<FontRef, LoadFontError> {
-    SgeFont::load_from_bytes(bytes).map(|f| f.create())
+    Font::load_from_bytes(bytes).map(|f| f.create())
 }
 
 #[derive(Clone, Copy)]
@@ -406,6 +523,14 @@ pub struct TextDrawParams {
 
 #[bon::bon]
 impl TextDrawParams {
+    pub const DEFAULT: Self = Self {
+        font: None,
+        font_size: 16,
+        color: Color::NEUTRAL_100,
+        do_dpi_scaling: false,
+        position: Vec2::ZERO,
+    };
+
     #[builder]
     pub fn builder(
         font: Option<FontRef>,
@@ -427,13 +552,7 @@ impl TextDrawParams {
 
 impl Default for TextDrawParams {
     fn default() -> Self {
-        Self {
-            font: None,
-            font_size: 16,
-            color: Color::NEUTRAL_100,
-            do_dpi_scaling: false,
-            position: Vec2::ZERO,
-        }
+        Self::DEFAULT
     }
 }
 
@@ -654,7 +773,7 @@ pub fn draw_text_size_world(text: impl ToString, position: Vec2, size: usize) ->
 }
 
 pub fn load_font_sync(bytes: &[u8]) -> Result<FontRef, LoadFontError> {
-    SgeFont::load_from_bytes(bytes).map(|f| f.create())
+    Font::load_from_bytes(bytes).map(|f| f.create())
 }
 
 pub fn measure_text(text: impl ToString) -> TextDimensions {

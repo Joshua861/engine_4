@@ -130,6 +130,7 @@ impl UiNode for TextInput {
                     font: Some(self.font),
                     font_size: self.font_size,
                     position: inner.top_left,
+                    ..Default::default()
                 },
             )
         } else {
@@ -141,6 +142,7 @@ impl UiNode for TextInput {
                     font: Some(self.font),
                     font_size: self.font_size,
                     position: inner.top_left,
+                    ..Default::default()
                 },
             )
         };

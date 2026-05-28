@@ -13,3 +13,4 @@ log.workspace = true
 sge_color.workspace = true
 sge_text.workspace = true
 sge_types.workspace = true
+sge_window.workspace = true

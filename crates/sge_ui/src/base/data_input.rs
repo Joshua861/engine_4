@@ -159,6 +159,7 @@ impl<T: DataInputValue> UiNode for DataInput<T> {
                     font: Some(self.font),
                     font_size: self.font_size,
                     position: inner.top_left,
+                    ..Default::default()
                 },
             )
         } else {
@@ -170,6 +171,7 @@ impl<T: DataInputValue> UiNode for DataInput<T> {
                     font: Some(self.font),
                     font_size: self.font_size,
                     position: inner.top_left,
+                    ..Default::default()
                 },
             )
         };

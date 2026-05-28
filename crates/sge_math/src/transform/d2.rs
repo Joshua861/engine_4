@@ -25,6 +25,10 @@ impl Transform2D {
         Self::IDENTITY
     }
 
+    pub const fn identity() -> Self {
+        Self::IDENTITY
+    }
+
     pub fn update_matrix(&mut self) {
         if !self.dirty {
             return;

@@ -202,7 +202,7 @@ pub use text::*;
 mod text {
     pub use sge_text::rich_text::*;
     pub use sge_text::{
-        FontRef, Glyph, LoadFontError, MONO, SANS_ITALIC, SgeFont, TextDimensions, TextDrawParams,
+        Font, FontRef, Glyph, LoadFontError, MONO, SANS_ITALIC, TextDimensions, TextDrawParams,
         TextMeasureCache, create_ttf_font, default_font, draw_colored_text,
         draw_colored_text_world, draw_multiline_text, draw_multiline_text_ex,
         draw_multiline_text_size, draw_multiline_text_size_world, draw_multiline_text_world,

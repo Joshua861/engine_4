@@ -10,44 +10,36 @@ pub struct Hyperlink;
 
 impl Hyperlink {
     pub fn new(href: impl ToString) -> UiRef {
-        let rich_text = RichTextNode::new(RichText::new(vec![RichTextBlock::custom(
+        let rich_text = RichTextNode::new(RichText::new(vec![RichTextBlock::underlined(
             href.to_string(),
             Color::SKY_500,
-            true,
-            false,
         )]));
 
         base::Hyperlink::new(href, rich_text)
     }
 
     pub fn with_title(href: impl ToString, title: impl ToString) -> UiRef {
-        let rich_text = RichTextNode::new(RichText::new(vec![RichTextBlock::custom(
-            title.to_string(),
+        let rich_text = RichTextNode::new(RichText::new(vec![RichTextBlock::underlined(
+            title,
             Color::SKY_500,
-            true,
-            false,
         )]));
 
         base::Hyperlink::new(href, rich_text)
     }
 
     pub fn dark(href: impl ToString) -> UiRef {
-        let rich_text = RichTextNode::new(RichText::new(vec![RichTextBlock::custom(
+        let rich_text = RichTextNode::new(RichText::new(vec![RichTextBlock::underlined(
             href.to_string(),
             Color::BLUE_700,
-            true,
-            false,
         )]));
 
         base::Hyperlink::new(href, rich_text)
     }
 
     pub fn with_title_dark(href: impl ToString, title: impl ToString) -> UiRef {
-        let rich_text = RichTextNode::new(RichText::new(vec![RichTextBlock::custom(
-            title.to_string(),
-            Color::BLUE_700,
-            true,
-            false,
+        let rich_text = RichTextNode::new(RichText::new(vec![RichTextBlock::underlined(
+            title,
+            Color::BLUE_500,
         )]));
 
         base::Hyperlink::new(href, rich_text)

@@ -1,3 +1,5 @@
+use core::f32;
+
 use log::warn;
 use sge_color::Color;
 use sge_vectors::Vec2;
@@ -6,7 +8,7 @@ use super::*;
 use sge_text::{
     FontRef, MONO, SANS, SANS_BOLD, SANS_BOLD_ITALIC, SANS_DISPLAY, SANS_ITALIC, TextDrawParams,
     draw_multiline_text_ex, measure_multiline_text_ex, measure_wrapped_text,
-    rich_text::RichTextDrawParams, wrapped_text::draw_wrapped_text_in_area,
+    wrapped_text::draw_wrapped_text_in_area,
 };
 
 #[derive(Debug)]
@@ -44,6 +46,7 @@ impl From<Text> for TextDrawParams {
             color: value.color,
             position: Vec2::ZERO,
             do_dpi_scaling: value.do_dpi_scaling,
+            ..Default::default()
         }
     }
 }
@@ -56,6 +59,7 @@ impl From<&Text> for TextDrawParams {
             color: value.color,
             position: Vec2::ZERO,
             do_dpi_scaling: value.do_dpi_scaling,
+            ..Default::default()
         }
     }
 }
@@ -417,104 +421,33 @@ impl UiNode for Text {
 #[derive(Debug)]
 pub struct RichTextNode {
     text: sge_text::rich_text::RichText,
-    font: FontRef,
-    font_size: usize,
-    /// scale the font size by the DPI scaling of your monitor
-    do_dpi_scaling: bool,
     line_spacing: f32,
-    wrap: bool,
 }
 
 impl RichTextNode {
     pub fn new(text: sge_text::rich_text::RichText) -> UiRef {
         Self {
             text,
-            font: SANS,
-            font_size: TextDrawParams::default().font_size,
-            do_dpi_scaling: TextDrawParams::default().do_dpi_scaling,
-            line_spacing: 1.2,
-            wrap: true,
+            line_spacing: 1.1,
         }
         .to_ref()
     }
 
-    pub fn with_size(text: sge_text::rich_text::RichText, font_size: usize) -> UiRef {
-        Self {
-            text,
-            font: SANS,
-            font_size,
-            do_dpi_scaling: TextDrawParams::default().do_dpi_scaling,
-            line_spacing: 1.2,
-            wrap: true,
-        }
-        .to_ref()
-    }
-
-    pub fn with_size_font(
-        text: sge_text::rich_text::RichText,
-        font_size: usize,
-        font: FontRef,
-    ) -> UiRef {
-        Self {
-            text,
-            font,
-            font_size,
-            do_dpi_scaling: TextDrawParams::default().do_dpi_scaling,
-            line_spacing: 1.2,
-            wrap: true,
-        }
-        .to_ref()
-    }
-
-    pub fn custom(
-        text: sge_text::rich_text::RichText,
-        params: RichTextDrawParams,
-        wrap: bool,
-    ) -> UiRef {
-        Self {
-            text,
-            font: params.font.unwrap_or(SANS),
-            font_size: params.font_size,
-            do_dpi_scaling: params.do_dpi_scaling,
-            line_spacing: params.line_spacing,
-            wrap,
-        }
-        .to_ref()
-    }
-
-    fn to_params(&self) -> RichTextDrawParams {
-        RichTextDrawParams {
-            font: Some(self.font),
-            font_size: self.font_size,
-            do_dpi_scaling: self.do_dpi_scaling,
-            line_spacing: self.line_spacing,
-            position: Vec2::ZERO,
-        }
+    pub fn with_line_spacing(text: sge_text::rich_text::RichText, line_spacing: f32) -> UiRef {
+        Self { text, line_spacing }.to_ref()
     }
 }
 
 impl UiNode for RichTextNode {
     fn draw(&self, area: Area, _: &UiState) -> Vec2 {
-        if self.wrap {
-            let params = self.to_params();
-            self.text.draw_in_area(area, params).size
-        } else {
-            let mut params = self.to_params();
-            params.position = area.top_left;
-            self.text.draw(params).size
-        }
+        self.text.draw(area, self.line_spacing).size
     }
 
     fn preferred_dimensions(&self) -> Vec2 {
-        let params = self.to_params();
-        self.text.measure(params).size
+        self.text.measure(f32::INFINITY, self.line_spacing)
     }
 
     fn size(&self, area: Area) -> Vec2 {
-        if self.wrap {
-            self.text.measure_in_area(area, self.to_params())
-        } else {
-            self.preferred_dimensions()
-        }
+        self.text.measure(area.width(), self.line_spacing)
     }
 }

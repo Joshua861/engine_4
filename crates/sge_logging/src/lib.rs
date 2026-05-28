@@ -1,10 +1,11 @@
-use sge_vectors::Vec2;
 use log::{Level, LevelFilter, Log};
 use sge_color::Color;
-use sge_types::Verbosity;
+use sge_types::{Area, Verbosity};
+use sge_vectors::Vec2;
+use sge_window::window_size;
 use std::fs::File;
 
-use sge_text::rich_text::{RichText, RichTextBlock, RichTextDrawParams};
+use sge_text::rich_text::{RichText, RichTextBlock};
 
 pub(crate) struct UnitLogger;
 static LOGGER: UnitLogger = UnitLogger;
@@ -86,13 +87,7 @@ impl Logger {
 
             let line = &self.lines[i];
 
-            let dimensions = line.draw(RichTextDrawParams {
-                do_dpi_scaling: false,
-                position: cursor,
-                font_size: 16,
-                font: None,
-                ..Default::default()
-            });
+            let dimensions = line.draw(Area::new(cursor, window_size()), 1.0);
             cursor.y += dimensions.size.y;
         }
     }
@@ -135,13 +130,15 @@ impl Logger {
         let level_text = Self::text(record.level());
 
         match self.verbosity {
-            Verbosity::Low => Some(RichText::new(vec![RichTextBlock::from_str(s, color)])),
+            Verbosity::Low => Some(RichText::new(vec![
+                RichTextBlock::from_color(s, color).with_mono(),
+            ])),
             Verbosity::Medium => Some(RichText::new(vec![
-                RichTextBlock::from_str(level_text, color),
-                RichTextBlock::new(format!(" {s}"), Color::WHITE),
+                RichTextBlock::from_color(level_text, color).with_mono(),
+                RichTextBlock::from_color(format!(" {s}"), Color::WHITE).with_mono(),
             ])),
             Verbosity::High => Some(RichText::new(vec![
-                RichTextBlock::new(
+                RichTextBlock::from_color(
                     format!(
                         "[{}::{}:{}]",
                         record.module_path().unwrap_or("??"),
@@ -149,9 +146,10 @@ impl Logger {
                         record.line().unwrap_or(0)
                     ),
                     Color::NEUTRAL_500,
-                ),
-                RichTextBlock::from_str(level_text, color),
-                RichTextBlock::new(format!(" {s}"), Color::WHITE),
+                )
+                .with_mono(),
+                RichTextBlock::from_color(level_text, color).with_mono(),
+                RichTextBlock::from_color(format!(" {s}"), Color::WHITE).with_mono(),
             ])),
         }
     }

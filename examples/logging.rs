@@ -9,7 +9,7 @@ fn main() -> anyhow::Result<()> {
 
     init_custom(opts)?;
     let mut controller = PanningCameraController::new();
-    set_max_drawn_log_lines(20);
+    set_max_drawn_log_lines(50);
 
     trace!("Hello");
     debug!("Hello!");

@@ -1,14 +1,15 @@
 use sge_color::Color;
+use sge_math::transform::Transform2D;
 use sge_types::Area;
 use sge_vectors::Vec2;
 use sge_window::dpi_scaling;
 
-use crate::{FontRef, Glyph, MONO, SgeFont, TextDrawParams, draw_text_custom, measure_text_ex};
+use crate::{Font, FontRef, Glyph, MONO, TextDrawParams, draw_text_custom, measure_text_ex};
 
 pub fn wrap_text_to_width(
     text: &str,
     mut max_width: f32,
-    font: &mut SgeFont,
+    font: &mut Font,
     font_size: usize,
     do_dpi_scaling: bool,
 ) -> Vec<String> {
@@ -107,7 +108,7 @@ pub fn wrap_text_to_width(
     lines
 }
 
-pub fn get_space_width(font: &mut SgeFont, font_size: usize) -> f32 {
+pub fn get_space_width(font: &mut Font, font_size: usize) -> f32 {
     let space_glyph = Glyph {
         character: ' ',
         size: font_size,
