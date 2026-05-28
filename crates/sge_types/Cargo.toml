@@ -1,6 +1,6 @@
 [package]
 name = "sge_types"
-version = "1.1.0"
+version = "1.1.1"
 authors = [ "Lily Lopes <joshrl@proton.me>" ]
 edition = "2024"
 description = "Core types for SGE"

@@ -492,6 +492,8 @@ pub fn cursor_movements() -> Vec<Vec2> {
         .collect()
 }
 
+/// Returns current cursor pos if cursor is inside the window.
+/// Otherwise returns the last cursor pos before the cursor left the window.
 pub fn last_cursor_pos() -> Vec2 {
     get_input().last_cursor_pos()
 }
@@ -505,6 +507,7 @@ pub fn gamepad_input() -> &'static Gilrs {
     &get_input().gamepad
 }
 
+/// Create a 2D movement vector from four input directions
 pub fn pressed_movement_vector(
     up: impl Into<Button>,
     down: impl Into<Button>,

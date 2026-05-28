@@ -1,4 +1,4 @@
-# SGE
+# Simple Game Engine
 
 A simple 2D/3D engine inspired by [macroquad](https://macroquad.rs/).
 

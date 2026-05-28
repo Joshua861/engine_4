@@ -1,6 +1,6 @@
 [package]
 name = "sge_shapes"
-version = "1.1.0"
+version = "1.1.1"
 authors = [ "Lily Lopes <joshrl@proton.me>" ]
 edition = "2024"
 description = "Shape types for SGE"
