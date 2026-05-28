@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-7aaa51dd.js";
+            window.path_to_searchindex_js = "searchindex-459739ef.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-584adcdc.js"></script>
@@ -282,6 +282,16 @@ color</a>, and <a href="https://tailwindcss.com/docs/colors">Tailwind color</a>.
 <p>Check the <a href="https://docs.rs/sge/latest/sge/prelude/struct.Color.html">reference documentation</a> for the color type for more detail.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="drawing-text"><a class="header" href="#drawing-text">Drawing text</a></h1>
+<p>There are 3 types of text drawing functions:</p>
+<ol>
+<li><code>draw_text_*</code>: for basic text drawing.</li>
+<li><code>draw_multiline_text_*</code>: for properly drawing text with newlines in it.</li>
+<li><code>draw_wrapped_text_*</code>: for drawing text with a max width, that wraps when it
+gets to the edge.</li>
+</ol>
+<p>There are also equivalent functions for measuring the area text will take up
+when drawn.</p>
+<p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/text.rs"><code>/examples/text.rs</code></a></p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="advanced-shapes"><a class="header" href="#advanced-shapes">Advanced Shapes</a></h1>
 <p>Shapes that cannot be represented by vertices (i.e.: have smooth edges, like
