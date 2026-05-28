@@ -64,7 +64,7 @@ sge_include_assets = { version = "1.1.0", path = "crates/sge_include_assets" }
 sge_input = { path = "./crates/sge_input", version = "1.1.1" }
 sge_logging = { version = "1.1.1", path = "crates/sge_logging" }
 sge_macros = { path = "./crates/sge_macros", version = "1.1.0" }
-sge_math = { path = "./crates/sge_math", version = "1.1.2" }
+sge_math = { path = "./crates/sge_math", version = "1.1.4" }
 sge_particles = { version = "1.1.1", path = "crates/sge_particles" }
 sge_persistence = { version = "1.1.0", path = "crates/sge_persistence" }
 sge_physics = { version = "1.1.0", path = "crates/sge_physics" }
@@ -77,7 +77,7 @@ sge_textures = { version = "1.1.0", path = "crates/sge_textures" }
 sge_text = { version = "1.1.1", path = "crates/sge_text" }
 sge_time = { version = "1.1.0", path = "crates/sge_time" }
 sge_types = { version = "1.1.1", path = "crates/sge_types" }
-sge_ui = { version = "1.1.1", path = "crates/sge_ui" }
+sge_ui = { version = "1.1.4", path = "crates/sge_ui" }
 sge_utils = { version = "1.1.0", path = "crates/sge_utils" }
 sge_vectors = { path = "./crates/sge_vectors", version = "1.1.0" }
 sge_window = { version = "1.1.0", path = "crates/sge_window" }
