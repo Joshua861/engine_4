@@ -1,5 +1,4 @@
 use sge_color::Color;
-use sge_math::transform::Transform2D;
 use sge_types::Area;
 use sge_vectors::Vec2;
 use sge_window::dpi_scaling;

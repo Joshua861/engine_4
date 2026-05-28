@@ -1,4 +1,4 @@
-cargo-features = ["codegen-backend"]
+# cargo-features = ["codegen-backend"]
 
 [package]
 name = "sge"
@@ -151,8 +151,8 @@ rustflags = [
   "-Zshare-generics=y",
 ]
 
-[unstable]
-codegen-backend = true
+# [unstable]
+# codegen-backend = true
 
 [features]
 default = [

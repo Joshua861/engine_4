@@ -1,4 +1,3 @@
-use sge_math::transform::Transform2D;
 use sge_vectors::Vec2;
 
 use crate::{TextDrawParams, get_space_width, measure_text_ex};

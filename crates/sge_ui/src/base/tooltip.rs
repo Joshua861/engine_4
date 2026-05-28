@@ -1,4 +1,4 @@
-use std::cell::UnsafeCell;
+use std::cell::Cell;
 
 use sge_input::last_cursor_pos;
 use sge_vectors::vec2;
@@ -11,7 +11,7 @@ pub struct Tooltip {
     overlay: Child,
     positioning: TooltipPosition,
     offset: f32,
-    overlay_area: UnsafeCell<Area>,
+    overlay_area: Cell<Area>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -39,9 +39,7 @@ impl Tooltip {
     }
 
     pub(crate) fn actually_draw(&self) {
-        draw_ui_in_area(self.overlay, *unsafe {
-            self.overlay_area.as_ref_unchecked()
-        });
+        draw_ui_in_area(self.overlay, self.overlay_area.get());
     }
 }
 
@@ -75,7 +73,7 @@ impl UiNode for Tooltip {
                 TooltipPosition::BelowCursorLeft => last_cursor_pos() - vec2(size.x, 0.0),
             };
 
-            *unsafe { self.overlay_area.as_mut_unchecked() } = Area::new(pos, size);
+            self.overlay_area.set(Area::new(pos, size));
             get_ui_storage().tooltips.push(self as *const Self);
         }
 

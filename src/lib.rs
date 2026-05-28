@@ -1,8 +1,6 @@
 #![allow(static_mut_refs)]
-#![allow(unused)]
-#![feature(duration_millis_float)]
+use std::pin::Pin;
 use std::time::Instant;
-use std::{collections::HashMap, pin::Pin};
 
 use glium::winit::{
     event::{Event, WindowEvent},
@@ -40,7 +38,10 @@ pub enum InitError {
     Program(glium::ProgramCreationError),
     #[cfg(feature = "audio")]
     Audio(sge_audio::AudioInitError),
+    #[cfg(feature = "input")]
     Input(sge_input::InputError),
+    #[cfg(feature = "text")]
+    LoadFont(sge_text::LoadFontError),
 }
 
 #[allow(unused_mut)]
@@ -82,7 +83,7 @@ pub fn init_custom(mut opts: Opts) -> Result<(), InitError> {
     sge_textures::init();
     sge_rendering::init();
     #[cfg(feature = "text")]
-    sge_text::init();
+    sge_text::init()?;
     #[cfg(feature = "ui")]
     sge_ui::init_ui();
     user_storage::init();
@@ -160,6 +161,7 @@ fn handle_window_event(event: &WindowEvent, event_loop_window_target: &ActiveEve
     let egui = egui();
     #[cfg(feature = "input")]
     let input = get_input();
+    #[allow(unused)]
     let window = &get_window_state().window;
     #[cfg(feature = "egui")]
     let gui_response = egui.on_event(window, event);
@@ -230,6 +232,6 @@ fn record_frame_time(engine_start_time: Instant) {
         let debug_info = get_debug_info();
         debug_info.next_frame();
         let engine_time = engine_start_time.elapsed();
-        debug_info.current_frame_mut().engine_time = engine_time.as_millis_f64();
+        debug_info.current_frame_mut().engine_time = engine_time.as_micros() as f64 / 1000.0;
     }
 }

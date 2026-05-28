@@ -19,7 +19,7 @@
 - [X] rich text outline and bg fill
 - [ ] docs
 - [ ] move rich text to UI and change syntax to be like markdown. probably need to change to a different method of adding colours like with |red| instead
-- [ ] move to stable rust
+- [X] move to stable rust
 - [X] support underline colour and style (wavy?)
 - [ ] shiny metallic fill effect like the image
 

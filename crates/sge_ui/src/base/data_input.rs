@@ -22,7 +22,14 @@ pub struct DataInput<T: DataInputValue + 'static> {
     padding: f32,
 }
 
-pub trait DataInputValue = FromStr + Debug + 'static where <Self as FromStr>::Err: Debug;
+pub trait DataInputValue: FromStr<Err: Debug> + Debug + 'static {}
+
+impl<T> DataInputValue for T
+where
+    T: FromStr + Debug + 'static,
+    <T as FromStr>::Err: Debug,
+{
+}
 
 #[derive(Debug)]
 pub struct DataInputState<T: DataInputValue> {

@@ -1,6 +1,4 @@
 #![allow(clippy::new_ret_no_self)]
-#![feature(trait_alias)]
-#![feature(unsafe_cell_access)]
 
 use std::{
     collections::HashMap,
@@ -328,7 +326,8 @@ pub fn all_elements_interacted_this_frame() -> &'static [usize] {
     &get_ui_storage().elements_interacted_this_frame
 }
 
-pub trait NumberValue = Add<Self, Output = Self>
+pub trait NumberValue:
+    Add<Self, Output = Self>
     + Sub<Self, Output = Self>
     + Div<Self, Output = Self>
     + Mul<Self, Output = Self>
@@ -340,4 +339,23 @@ pub trait NumberValue = Add<Self, Output = Self>
     + ToF32
     + FromF32
     + Zero
-    + PartialClamp;
+    + PartialClamp
+{
+}
+
+impl<T> NumberValue for T where
+    T: Add<Self, Output = Self>
+        + Sub<Self, Output = Self>
+        + Div<Self, Output = Self>
+        + Mul<Self, Output = Self>
+        + 'static
+        + Sized
+        + Debug
+        + PartialOrd
+        + Copy
+        + ToF32
+        + FromF32
+        + Zero
+        + PartialClamp
+{
+}
