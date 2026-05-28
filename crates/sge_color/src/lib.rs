@@ -51,7 +51,7 @@ impl Color {
         Self { r, g, b, a: 1.0 }
     }
 
-    pub const fn new_u8(r: u8, g: u8, b: u8) -> Self {
+    pub const fn from_rgb_u8(r: u8, g: u8, b: u8) -> Self {
         const fn convert(n: u8) -> f32 {
             (n * 255) as f32
         }
@@ -70,7 +70,7 @@ impl Color {
         str_to_color(s)
     }
 
-    pub fn to_rgba_u8(&self) -> (u8, u8, u8, u8) {
+    pub const fn to_rgba_u8(&self) -> (u8, u8, u8, u8) {
         (
             convert(self.r),
             convert(self.g),
@@ -170,7 +170,7 @@ impl Color {
         Self::from_rgba_u8(red as u8, green as u8, blue as u8, 255)
     }
 
-    pub fn hex_alpha(hex: u32) -> Self {
+    pub const fn hex_alpha(hex: u32) -> Self {
         let red = (hex & 0xFF000000) >> 24;
         let green = (hex & 0x00FF0000) >> 16;
         let blue = (hex & 0x0000FF00) >> 8;
@@ -179,7 +179,7 @@ impl Color {
         Self::from_rgba_u8(red as u8, green as u8, blue as u8, alpha as u8)
     }
 
-    pub fn to_hex(&self) -> u32 {
+    pub const fn to_hex(&self) -> u32 {
         let (r, g, b, a) = self.to_rgba_u8();
         ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8) | (a as u32)
     }
