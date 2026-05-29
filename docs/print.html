@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-6f7b9601.js";
+            window.path_to_searchindex_js = "searchindex-3ba8ee9c.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-041f1d14.js"></script>
+        <script src="toc-130a2ce0.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -1422,6 +1422,38 @@ fn show_score(pos: Vec2) {
 <p>There are some other functions you may want to do with storage listed <a href="https://docs.rs/sge/latest/sge/prelude/storage/index.html">here</a>.</p>
 <hr>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/storage/index.html">storage module</a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="ui"><a class="header" href="#ui">UI</a></h1>
+<p>Finally… I’ve been waiting a long time to write this chapter. This is the #1
+best part of the engine, no contest. THE USER INTERFACE LIBRARY!!!</p>
+<p>The UI library is split into 2 sections. There is a library of <code>base</code> unstyled
+elements that you can use to create more complex user interfaces of any style,
+and a set of styles widgets from a few categories, at the moment there is <code>flat</code>
+(the most comprehensive), <code>material</code> (meant to mimic Google Material UI 3;
+supports theming), and <code>w95</code> (meant to mimic Windows 95, not really updated).</p>
+<p>Complex layouts can be created by combining the basic <code>base</code>
+components in a nested arrangement. The base components are designed to be as
+simple as possible so as to be very flexible and be able to be used for many
+different things by combining them with other elements. For example, instead of
+a single <code>div</code> element like in HTML, there are smaller simpler elements for
+adding a fill, adding a border, centering an element, adding padding, etc.</p>
+<p>Base elements are designed to be as flexible as possible. For example, the
+slider element allows you to create the bar and handle from other UI elements,
+meaning you can have it look however you want. For an example of how this works,
+check the <a href="https://docs.rs/sge_ui/1.1.4/src/sge_ui/library/flat/slider.rs.html#8">source code for the flat slider</a></p>
+<blockquote>
+<p>“The best way to learn about something is to see and use it for yourself”</p>
+<p>-Sun Tzu</p>
+</blockquote>
+<p>Thanks Sun, for this reason, I will point you to the <code>ui_showcase</code> example. If
+you dont remember how to run examples, check the introduction chapter. This
+example has a list of every UI element, and shows them in action. I would
+reccomend you look through this with the code for the example open in another
+window to see how everything is used.</p>
+<p>Here’s an awful looking screenshot from the <code>ui</code> example.</p>
+<p><img src="ui.jpg" alt="Showcase of ui elements"></p>
+<hr>
+<p>See: <a href="https://docs.rs/sge/latest/sge/prelude/ui/index.html">ui module</a></p>
 
                     </main>
 

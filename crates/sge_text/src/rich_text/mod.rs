@@ -1,5 +1,5 @@
 use crate::{FontRef, FontType, MONO_TYPEFACE, Typeface};
-use parse::{RichTextParseError, RichTextParser};
+use parse::RichTextParser;
 use sge_color::Color;
 use sge_rendering::{d2::Renderer2D, dq2d, wdq2d};
 use sge_types::Area;
