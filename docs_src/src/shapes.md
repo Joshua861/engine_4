@@ -2,8 +2,8 @@
 
 There are two main spaces that shapes can be drawn to.
 
-1. **Screen space**: coordinates are relative to the top left of the screen, and one unit always corresponds to one pixel. Positive y is down, positive x is right.
-2. **World space**: coordinates are relative to the position and scale of the `Camera2D`. Moving the camera changes what is shown on screen, and one world unit does not always correspond to one pixel. By default, world coordinate `(0, 0)` is in the center of the screen.
+1. Screen space: coordinates are relative to the top left of the screen, and one unit always corresponds to one pixel. Positive y is down, positive x is right.
+2. World space: coordinates are relative to the position and scale of the `Camera2D`. Moving the camera changes what is shown on screen, and one world unit does not always correspond to one pixel. By default, world coordinate `(0, 0)` is in the center of the screen.
 
 Every shape drawing function comes in three variants:
 

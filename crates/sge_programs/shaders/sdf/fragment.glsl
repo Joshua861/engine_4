@@ -503,7 +503,7 @@ float bayer_dither(vec2 pos) {
     return table[index] - 0.5;
 }
 
-vec4 eval_fill(vec2 p, vec2 frag_coord) {
+vec4 eval_fill(vec2 p, vec2 frag_coord, float dist) {
     vec2 uv = p / max(v_dimensions, vec2(0.001));
     float aspect = v_dimensions.x / v_dimensions.y;
     vec2 uv_square = vec2(uv.x * aspect, uv.y);
@@ -780,6 +780,11 @@ vec4 eval_fill(vec2 p, vec2 frag_coord) {
         bool inside = dist < scale * 0.2 || dist > scale * 0.4;
         return inside ? v_fill_color_a : v_fill_color_b;
     }
+    else if (v_fill_type == 26) {
+        // stripes
+        float t = step(0.5, fract(dist / v_fill_scale));
+        return mix(v_fill_color_a, v_fill_color_b, t);
+    }
 
     return v_fill_color_a;
 }
@@ -806,7 +811,7 @@ void main() {
     }
 
     float fill_mask = smoothstep(aa, -aa, dist);
-    vec4 fill_color = eval_fill(p, gl_FragCoord.xy);
+    vec4 fill_color = eval_fill(p, gl_FragCoord.xy, dist);
     fill_color.a *= fill_mask;
 
     vec4 stroke_layer = vec4(0.0);

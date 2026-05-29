@@ -725,6 +725,7 @@ pub enum SdfFill {
     Moire = 23,
     LeopardSpots = 24,
     Rings = 25,
+    Stripes = 26,
 }
 
 #[repr(i32)]
