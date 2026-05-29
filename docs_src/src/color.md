@@ -10,3 +10,5 @@ In addition, the `Color` type has associated constants for every [CSS
 color](https://www.w3schools.com/cssref/css_colors.php), and [Tailwind color](https://tailwindcss.com/docs/colors).
 
 Check the [reference documentation](https://docs.rs/sge/latest/sge/prelude/struct.Color.html) for the color type for more detail.
+
+See also: [color related documentation](https://docs.rs/sge/latest/sge/prelude/color/index.html)

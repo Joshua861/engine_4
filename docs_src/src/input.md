@@ -1,6 +1,6 @@
 # Input API
 
-The input API is very simple, SGE provides functions for querying the current
+The input API is simple, SGE provides functions for querying the current
 state of keyboard and mouse buttons.
 
 If you want to run some code whenever the space bar is pressed, you could use
@@ -71,5 +71,8 @@ This makes it easier for you to allow the player to change their preferred
 controls for your game, by binding them to different keys, without you needing
 to change the rest of your codebase.
 
-See: [`/examples/action_mapping.rs`](https://github.com/LilyRL/sge/blob/master/examples/action_mapping.rs)
 See: [input module documentation](https://docs.rs/sge/latest/sge/prelude/input/index.html) for more detail.
+
+See also: [`/examples/action_mapping.rs`](https://github.com/LilyRL/sge/blob/master/examples/action_mapping.rs)
+
+See also: [clipboard module documentation](https://docs.rs/sge/latest/sge/prelude/clipboard/index.html)

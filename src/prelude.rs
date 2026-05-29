@@ -76,9 +76,10 @@ pub mod programs {
 pub use camera::*;
 pub mod camera {
     pub use sge_camera::{
-        camera2d_zoom_at, cameras_for_resolution, get_camera_2d, get_camera_2d_mut, get_camera_3d,
-        get_camera_3d_mut, get_flat_projection, screen_distance_to_world, screen_to_world,
-        world_distance_to_screen, world_to_screen, world_to_screen_3d,
+        camera2d_zoom_at, cameras_for_resolution, d2::Camera2D, d3::Camera3D, get_camera_2d,
+        get_camera_2d_mut, get_camera_3d, get_camera_3d_mut, get_flat_projection,
+        screen_distance_to_world, screen_to_world, world_distance_to_screen, world_to_screen,
+        world_to_screen_3d,
     };
     pub use sge_camera_controllers::first_person::FirstPersonCameraController;
     pub use sge_camera_controllers::orbit::OrbitCameraController;

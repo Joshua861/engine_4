@@ -502,7 +502,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 - [ ] cubic_bezier
 - [ ] custom_init
 - [ ] debug_textures
-- [ ] default_material
+- [X] default_material
 - [ ] demo
 - [ ] ellipse
 - [ ] first_person

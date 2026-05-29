@@ -2,3 +2,10 @@
 title = "SGE Documentation"
 authors = ["Lily"]
 language = "en"
+
+[output.html]
+preferred-dark-theme = "ayu"
+git-repository-url = "https://github.com/LilyRL/sge"
+git-repository-icon = "fab-github"
+edit-url-template = "https://github.com/LilyRL/sge/edit/master/docs_src/{path}"
+site-url = "/sge/"

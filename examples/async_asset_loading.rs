@@ -3,8 +3,6 @@ use sge::{
     *,
 };
 
-type LoadingTexture = Option<Result<TextureRef, LoadTextureError>>;
-
 #[derive(Default)]
 struct State {
     guy: LoadingTexture,

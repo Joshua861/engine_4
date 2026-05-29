@@ -54,3 +54,5 @@ draw_square_outline_world(vec2(20.0, 30.0), 40.0, Color::RED_500, 2.0, Color::RE
 ```
 
 See: [`/examples/simple.rs`](https://github.com/LilyRL/sge/blob/master/examples/simple.rs)
+
+See: [all shape drawing functions](https://docs.rs/sge/latest/sge/prelude/shapes/index.html)
