@@ -11,6 +11,8 @@ mod draw;
 mod layout;
 mod parse;
 
+pub use parse::{RichTextParseError, RichTextParseErrorKind};
+
 #[derive(Debug, Clone)]
 pub struct RichText {
     pub blocks: Vec<RichTextBlock>,

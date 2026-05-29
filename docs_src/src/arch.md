@@ -14,9 +14,17 @@ async fn main() {
     // do initialization here
 
     loop {
+        // if you don't include this, it will be cleared to black by default.
+        // if you don't want to clear the screen, use `dont_clear_screen()` instead
+        clear_screen(Color::BLACK)
+    
         // frame loop here
+        // do anything you want to run once per frame, like drawing some shapes
         
         if should_quit() {
+            // you can do whatever you want here
+            // i just find it makes more sense to break out of the loop
+            // and do the cleanup at the bottom of the function
             break;
         }
         

@@ -35,10 +35,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-96eaa717.js";
+            window.path_to_searchindex_js = "searchindex-6f7b9601.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-99acb6e2.js"></script>
+        <script src="toc-041f1d14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -181,14 +181,89 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="color-type"><a class="header" href="#color-type">Color type</a></h1>
-<p>SGE comes with a featureful <code>Color</code> type. You can create a <code>Color</code> using
-<code>Color::from_rgb(r: f32, g: f32, b: f32)</code>, where rgb range from 0.0 to 1.0, or
-<code>Color::from_rgb_u8(r: u8, g: u8, b: u8)</code>, where rgb range from 0 to 255. Both
-of these functions have corresponding <code>from_rgba</code> variants that allow you to
-also specify an opacity/alpha value.</p>
-<p>In addition, the <code>Color</code> type has associated constants for every <a href="https://www.w3schools.com/cssref/css_colors.php">CSS
-color</a>, and <a href="https://tailwindcss.com/docs/colors">Tailwind color</a>.</p>
-<p>Check the <a href="https://docs.rs/sge/latest/sge/prelude/struct.Color.html">reference documentation</a> for the color type for more detail.</p>
+<p>SGE comes with a <code>Color</code> type, with rgba as <code>f32</code> values from 0.0 to 1.0.</p>
+<h2 id="creating-colors"><a class="header" href="#creating-colors">Creating colors</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// float (0.0–1.0)
+Color::from_rgb(1.0, 0.5, 0.0)
+Color::from_rgba(1.0, 0.5, 0.0, 0.8)
+
+// u8 (0–255)
+Color::from_rgb_u8(255, 128, 0)
+Color::from_rgba_u8(255, 128, 0, 200)
+
+// hsl
+Color::from_hsl(30.0, 1.0, 0.5)
+Color::from_hsla(30.0, 1.0, 0.5, 0.8)
+
+// oklch
+Color::from_oklch(0.7, 0.15, 142.0)
+Color::from_oklch_with_alpha(0.7, 0.15, 142.0, 0.8)
+
+// From hex constant (compile-time)
+Color::hex(0xFF8800)
+Color::hex_alpha(0xFF8800FF)
+
+// from a string at runtime (rgb, hsl, oklch, hex, and named colors)
+Color::from_string("oklch 0.7 0.15 142")
+Color::from_string("#FF8800")
+Color::from_string("rgb 1.0 0.5 0.0")
+Color::from_string("rebecca purple")
+
+// every CSS and Tailwind color is available as a constant
+Color::RED_500
+Color::NEUTRAL_900
+Color::CYAN_400
+<span class="boring">}</span></code></pre>
+<h2 id="modifying-colors"><a class="header" href="#modifying-colors">Modifying colors</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>color.with_alpha(0.5)
+color.with_red(1.0)
+color.with_alpha8(128) // u8 
+
+color.lighten(0.2)
+color.darken(0.3)
+// or oklch
+color.lighten_oklch(0.2)
+color.darken_oklch(0.1)
+
+color.saturate(0.5)
+color.desaturate(0.3)
+color.hue_rotate(90.0)         // degrees, HSL
+color.hue_rotate_oklch(45.0)  // degrees, oklch
+
+color.inverted()
+
+Color::blend_two(Color::RED_500, Color::BLUE_500, 0.5)
+color.blend(other, 0.3)
+color.blend_halfway(other)
+
+Color::grey(0.5) // brightness
+<span class="boring">}</span></code></pre>
+<h2 id="palettes"><a class="header" href="#palettes">Palettes</a></h2>
+<p>Tailwind color palettes are availible from 50 to 950.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let shades = Color::RED.shades();           //  light to dark
+let shades = Color::BLUE.reversed_shades(); // dark to light
+<span class="boring">}</span></code></pre>
+<h2 id="converting-colors"><a class="header" href="#converting-colors">Converting colors</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>color.to_oklch()        // (lightness, chroma, hue)
+color.to_hex_string()   // "#RRGGBBAA"
+color.to_hex()          // u32
+color.to_color_u8()     // ColorU8 (for images)
+color.to_linear()       // sRGB to linear RGB
+<span class="boring">}</span></code></pre>
+<h2 id="color-schemes"><a class="header" href="#color-schemes">Color schemes</a></h2>
+<p>There are some built in
+<a href="https://docs.rs/sge/latest/sge/prelude/color/struct.ColorScheme.html#impl-ColorScheme-1">colorschemes</a>
+you can use if you like.</p>
+<hr>
+<p>Check the <a href="https://docs.rs/sge/latest/sge/prelude/struct.Color.html">reference documentation</a> for the full list of methods.</p>
 <p>See also: <a href="https://docs.rs/sge/latest/sge/prelude/color/index.html">color related documentation</a></p>
 
                     </main>

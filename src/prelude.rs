@@ -64,6 +64,7 @@ pub mod config {
 pub use color::*;
 pub mod color {
     pub use sge_color::schemes::ColorScheme;
+    pub use sge_color::u8::ColorU8;
     pub use sge_color::{self as color, Color, Palette};
 }
 

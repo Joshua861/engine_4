@@ -25,4 +25,9 @@ There are also some built-in debug visualisations such as drawing a window,
 using the engine's built-in UI library, that shows graphs of the number of
 vertices/indices drawn and lots of other information.
 
+Use `draw_debug_info` for graphs, or `draw_simple_debug_info` for just numbers
+(better performance).
+
+---
+   
 See: [debug visualisations module](https://docs.rs/sge/latest/sge/prelude/debug_visualisations/index.html)

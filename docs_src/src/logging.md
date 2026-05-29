@@ -32,4 +32,6 @@ using [`set_logger_verbosity`](https://docs.rs/sge/latest/sge/prelude/logging/fn
 
 Logs will be printed to the terminal by default.
 
+---
+   
 See: [logging module](https://docs.rs/sge/latest/sge/prelude/logging/index.html)

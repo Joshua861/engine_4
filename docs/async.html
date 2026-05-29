@@ -35,10 +35,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-96eaa717.js";
+            window.path_to_searchindex_js = "searchindex-6f7b9601.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-99acb6e2.js"></script>
+        <script src="toc-041f1d14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -181,21 +181,15 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="async"><a class="header" href="#async">Async</a></h1>
-<p>You may have been wondering why it is necessary to mark your main function as
-<code>async</code> and use <code>next_frame().await</code>, but this allows us to use coroutines.</p>
+<p>Using an <code>async</code> main function and <code>next_frame().await</code> allows SGE to run coroutines.</p>
 <h2 id="coroutines"><a class="header" href="#coroutines">Coroutines</a></h2>
-<p>A coroutine is, in this context, a function that can be paused and resumed
-later. It is a type of async function, but coroutines never return a value.
-They run alongside the rest of your program, on the same thread, and are updated
-every frame. If a coroutine calls <code>.await</code> on a future, it’s execution will be
-paused. At the end of the next frame, SGE will check if the future it is waiting
-on is ready, and if it is, execution of that function will continue.</p>
-<p>This may sound very confusing, but here’s an example.</p>
+<p>A coroutine is a function that can pause execution and resume later. Coroutines do not return a value. They run alongside the main loop on the same thread and update every frame.</p>
+<p>When a coroutine calls <code>.await</code> on a future, it pauses. At the end of the frame, SGE updates all active coroutines. If the future is ready, the coroutine continues executing.</p>
 <pre class="playground"><code class="language-rust">use sge::*;
 
 #[main("Title")]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    // here we create a coroutine from a normal `async` function and start it
+    // Start a coroutine from an async function
     let coroutine = start_coroutine(count());
 
     loop {
@@ -207,34 +201,36 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
             break;
         }
 
-        // when we get to this point in the program, the engine runs everything
-        // it needs to do once per frame, like drawing things to the screen, but
-        // before that, it loops through all the running coroutines and updates them
+        // next_frame().await updates engine systems and advances running coroutines
         next_frame().await;
     }
 
     Ok(())
 }
 
-// this just draws the number 1 to 100, increasing by 1 every frame, until it finishes
+// Draws numbers from 0 to 99, incrementing each frame
 async fn count() {
     for i in 0..100 {
         draw_text(i, Vec2::ZERO);
 
-        // this next_frame future just makes the function wait until the next frame to
-        // keep executing. you'll notice it acts exactly the same as in the main function.
-        // you can treat these two functions as though they are running in parallel
+        // Pauses this function until the next frame
         next_frame().await;
     }
 }</code></pre>
-<p>This can be used for all sorts of things, for example a cutscene, that you want
-to run just until it’s done, and then move onto something else. You can check
-the status of the spawned coroutine with <code>coroutine.is_done()</code>.</p>
+<p>You can use coroutines for tasks that span multiple frames, like cutscenes or timed events. Track the status of a coroutine using coroutine.is_done().</p>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/coroutines.rs"><code>/examples/coroutines.rs</code></a></p>
 <h2 id="other-async-functions"><a class="header" href="#other-async-functions">Other async functions</a></h2>
 <p>SGE also has some other async functions worth knowing about, such as ones to wait
 a certain amount of time, and for <a href="https://lilyrl.github.io/sge/fs.html">loading resources</a> from disk/bytes in the
 background so it doesn’t interrupt the user by freezing the program while it’s loading.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Pause for 2.5 seconds
+wait_for(2.5).await;
+
+// Pause for 10 frames
+wait_for_frames(10).await;
+<span class="boring">}</span></code></pre>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/exec/index.html">Exec module</a></p>
 <h2 id="the-main-macro"><a class="header" href="#the-main-macro">The main macro</a></h2>
 <p>The <code>#[main()]</code> macro is just a helper that makes it more simple to initialize
@@ -251,14 +247,14 @@ async fn main() {
         // do stuff
     });
 }</code></pre>
-<p><code>init</code>, obviously, initializes SGE. <code>run_async</code> sets up an asynchronous
+<p><code>init</code> creates the window and sets everything up. <code>run_async</code> sets up an asynchronous
 environment for your code to run in, and makes sure it is updated once per frame.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="3d.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="rendering.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
@@ -272,7 +268,7 @@ environment for your code to run in, and makes sure it is updated once per frame
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="3d.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="rendering.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 

@@ -265,7 +265,7 @@ impl Color {
         Self::from_oklch_with_alpha(l, c, new_h, self.a)
     }
 
-    pub fn to_pixel(self) -> ColorU8 {
+    pub fn to_color_u8(self) -> ColorU8 {
         ColorU8::from_rgba_f32(self.r, self.g, self.b, self.a)
     }
 
@@ -481,7 +481,7 @@ pub fn str_to_color(s: impl AsRef<str>) -> Option<Color> {
 
 impl From<Color> for Color32 {
     fn from(value: Color) -> Self {
-        let raw = value.to_pixel().raw();
+        let raw = value.to_color_u8().raw();
         Color32::from_rgba_unmultiplied(raw[0], raw[1], raw[2], raw[3])
     }
 }

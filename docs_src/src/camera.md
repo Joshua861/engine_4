@@ -58,5 +58,7 @@ The 3D camera supports the following camera controllers:
   many configuration options.
 - [`FirstPersonCameraController`](https://docs.rs/sge/latest/sge/prelude/camera/struct.FirstPersonCameraController.html):
   Allows the user to look around in the first person, using the mouse.
+  
+---
 
 See: [camera module documentation](https://docs.rs/sge/latest/sge/prelude/camera/index.html)

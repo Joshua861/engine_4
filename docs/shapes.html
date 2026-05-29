@@ -35,10 +35,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-96eaa717.js";
+            window.path_to_searchindex_js = "searchindex-6f7b9601.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-99acb6e2.js"></script>
+        <script src="toc-041f1d14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -183,67 +183,55 @@
                         <h1 id="drawing-shapes"><a class="header" href="#drawing-shapes">Drawing Shapes</a></h1>
 <p>There are two main spaces that shapes can be drawn to.</p>
 <ol>
-<li>The screen: coordinates are relative to the top left of the screen, and one
-unit always corresponds to one pixel. Positive y is down. Positive x is
-right.</li>
-<li>The world: coordinates are relative to the position and scale of the
-Camera2D. This means that you can move the camera around to change what is
-shown on screen, and one world unit does not always correspond to one pixel.
-By default, the world coordinate (0, 0) is in the center of the screen.</li>
+<li><strong>Screen space</strong>: coordinates are relative to the top left of the screen, and one unit always corresponds to one pixel. Positive y is down, positive x is right.</li>
+<li><strong>World space</strong>: coordinates are relative to the position and scale of the <code>Camera2D</code>. Moving the camera changes what is shown on screen, and one world unit does not always correspond to one pixel. By default, world coordinate <code>(0, 0)</code> is in the center of the screen.</li>
 </ol>
-<p>There are built in functions for drawing different shapes to each of these
-spaces. There are functions provided for the following shapes:</p>
+<p>Every shape drawing function comes in three variants:</p>
 <ul>
-<li>Circles
+<li><code>draw_&lt;shape&gt;(...)</code> — draws in screen space</li>
+<li><code>draw_&lt;shape&gt;_world(...)</code> — draws in world space</li>
+<li><code>draw_&lt;shape&gt;_to(..., renderer)</code> — draws to a specific renderer</li>
+</ul>
+<h2 id="shapes"><a class="header" href="#shapes">Shapes</a></h2>
+<p>The following shapes are available:</p>
 <ul>
-<li>Ellipses</li>
-<li>Arcs</li>
-<li>Segments</li>
-<li>Rings</li>
-<li>Radial gradients</li>
+<li>Circles and ellipses: <code>draw_circle</code>, <code>draw_ellipse</code>, <code>draw_circle_outline</code>, <code>draw_ellipse_outline</code>, <code>draw_circle_with_outline</code>, <code>draw_ellipse_with_outline</code></li>
+<li>Sectors and arcs: <code>draw_sector</code>, <code>draw_sector_outline</code>, <code>draw_sector_with_outline</code>, and ellipse variants of each. Angles are in radians.</li>
+<li>Rings: <code>draw_ring</code>, <code>draw_full_ring</code>, <code>draw_arc</code></li>
+<li>Rectangles and squares: <code>draw_rect</code>, <code>draw_square</code>, with optional rotation and outline variants. Rounded corners are supported via <code>draw_rounded_rect</code> and <code>draw_rounded_square</code>.</li>
+<li>Polygons: <code>draw_poly</code> for arbitrary n-sided regular polygons, <code>draw_hexagon</code>, <code>draw_hexagon_pointy</code> for flat and pointy-top hexagons.</li>
+<li>Lines: <code>draw_line</code>, <code>draw_capped_line</code> (with rounded ends), <code>draw_dashed_line</code>, <code>draw_zig_zag</code>, <code>draw_rounded_line</code></li>
+<li>Arrows: <code>draw_arrow</code>, <code>draw_solid_arrow</code>, <code>draw_sharp_arrow</code>, and right-angled variants of each</li>
+<li>Paths: <code>draw_path</code> (connected line segments), <code>draw_connected_path</code> (with caps at each join), <code>draw_circle_path</code> (with circular dots at each point)</li>
+<li>Curves: <code>draw_quadratic_bezier</code>, <code>draw_cubic_bezier</code></li>
+<li>Triangles and quads: <code>draw_tri</code>, <code>draw_quad</code></li>
+<li>Custom shapes: <code>draw_custom_shape</code> builds a mesh from an arbitrary slice of points</li>
+<li>Niche shapes: <code>draw_pentagon</code>, <code>draw_octogon</code>, <code>draw_hexagram</code>, <code>draw_pentagram</code>, <code>draw_star</code>, <code>draw_moon</code>, <code>draw_heart</code>, <code>draw_quadratic_circle</code></li>
+<li>Pixels: <code>draw_pixel</code>, <code>draw_pixel_line</code></li>
+<li>Metaballs: <code>draw_metaballs</code></li>
+<li>SDFs: <code>draw_sdf</code> for drawing an <code>Sdf</code> object directly (see <a href="./sdf.html">Advanced Shapes</a>)</li>
 </ul>
-</li>
-<li>Rectangles and squares
+<h2 id="outlines"><a class="header" href="#outlines">Outlines</a></h2>
+<p>Most shapes have outline and with-outline variants:</p>
 <ul>
-<li>With rounded corners</li>
+<li><code>draw_&lt;shape&gt;_outline(...)</code> — draws just the outline, no fill</li>
+<li><code>draw_&lt;shape&gt;_with_outline(...)</code> — draws the shape with both fill and outline</li>
 </ul>
-</li>
-<li>N-sided polygons</li>
-<li>Custom shapes from a series of points</li>
-<li>Lines
-<ul>
-<li>With caps</li>
-<li>Dotted</li>
-<li>Zig zags</li>
-<li>Arrows</li>
-<li>Paths</li>
-</ul>
-</li>
-<li>Curves
-<ul>
-<li>Quadratic bezier</li>
-<li>Cubic bezier</li>
-</ul>
-</li>
-<li>Single pixels/pixel lines</li>
-<li>Arbritrary triangles/quads</li>
-<li>Other more niche shapes like hearts, moons, and n-sided stars.</li>
-</ul>
-<p>All shapes can be additionally drawn with an outline.</p>
-<p>For example to draw a square, in world space, with an outline, you would use
-this code:</p>
+<p>For example, to draw a square in world space with an outline:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// pub fn draw_square_with_outline_world(
-//     top_left: Vec2,
-//     size: f32,
-//     color: Color,
-//     thickness: f32,
-//     outline_color: Color,
-// )
-
-draw_square_outline_world(vec2(20.0, 30.0), 40.0, Color::RED_500, 2.0, Color::RED_300);
+</span>draw_square_with_outline_world(
+    vec2(20.0, 30.0), // top_left
+    40.0,             // size
+    Color::RED_500,   // fill
+    2.0,              // outline thickness
+    Color::RED_300,   // outline color
+);
 <span class="boring">}</span></code></pre>
+<h2 id="gradients"><a class="header" href="#gradients">Gradients</a></h2>
+<p>Multipoint linear gradients can be drawn with <code>draw_multipoint_gradient</code>, which takes a list of <code>GradientPoint</code>s each with a color and relative width, and an <code>Orientation</code> (horizontal or vertical).</p>
+<p>For radial gradients and more advanced fill effects, use the <code>Sdf</code> type directly (see <a href="./sdf.html">Advanced Shapes</a>).</p>
+<hr>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/simple.rs"><code>/examples/simple.rs</code></a></p>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/shapes/index.html">all shape drawing functions</a></p>
 

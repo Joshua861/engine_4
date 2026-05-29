@@ -71,6 +71,8 @@ This makes it easier for you to allow the player to change their preferred
 controls for your game, by binding them to different keys, without you needing
 to change the rest of your codebase.
 
+---
+   
 See: [input module documentation](https://docs.rs/sge/latest/sge/prelude/input/index.html) for more detail.
 
 See also: [`/examples/action_mapping.rs`](https://github.com/LilyRL/sge/blob/master/examples/action_mapping.rs)

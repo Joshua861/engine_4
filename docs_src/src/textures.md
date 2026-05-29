@@ -2,26 +2,32 @@
 
 Textures can be loaded using one of the following:
 
-- `include_texture!`: Bake bytes of image file into binary, and load them from
-  that. This comes with the benefit of working without using any outside files
-  from the executable, meaning you only need to give someone one file to play
-  your game.
+- `include_texture!`: Bake bytes of image file into binary, and load them from that. This comes with the benefit of working without using any outside files from the executable, meaning you only need to give someone one file to play your game.
 - `load_texture_sync`: synchronously load texture from file path.
 - `load_texture_from_bytes_sync`: synchronously load texture from bytes.
 - `load_texture`: asynchronously load texture from file path.
 - `load_texture_from_bytes`: asynchronously load texture from bytes.
 
-All of these functions return a `TextureRef`, which is just a wrapper around an
-integer, and can be passed around/copied at almost 0 cost. This reference is
-also guaranteed to always be valid, so long as you don't use any of the `unsafe`
-functions associated with `Ref` types.
+All of these functions return a `TextureRef`, which is just a wrapper around an integer, and can be passed around/copied at almost 0 cost. This reference is also guaranteed to always be valid, so long as you don't use any of the `unsafe` functions associated with `Ref` types.
+
+You can inspect the total number of currently tracked textures in the engine by calling `num_registered_textures()`.
 
 Textures can be drawn by using one of the following:
 
 - `draw_texture(_world)`: simply draws a texture at some position at some scale.
-- `draw_texture_scaled(_world)`: allows you to draw the texture at any scale,
-  without respecting the original aspect ratio.
-- `draw_texture_ex`: contains additional options like an arbitrary transform,
-  tint, and the option to only draw a region of the whole texture.
+- `draw_texture_scaled(_world)`: allows you to draw the texture at any scale, without respecting the original aspect ratio.
+- `draw_texture_ex`: contains additional options like an arbitrary transform, tint, and the option to only draw a region of the whole texture.
+
+Apart from loading raw files, you can manage textures using the following methods:
+
+- `SgeTexture::empty(width, height)`: Allocates a blank, uninitialized texture container on the GPU with the specified pixel dimensions.
+- `SgeTexture::from_engine_image(image)`: Converts an in-memory `Image` struct directly into an uploadable texture layout.
+- `download_to_image(&self)`: Downloads pixel data from the GPU back into an accessible CPU-side `Image`. This supports both float and unsigned byte formats with three or four color components, and automatically maps raw byte streams back into standard pixel collections.
+
+Example of advanced texture drawing from [`demo.rs`](https://github.com/LilyRL/sge/blob/master/examples/demo.rs#L127):
+
+![two textures, one with custom transform and a blue tint](./textures.jpg)
   
+---
+   
 See: [texture module documentation](https://docs.rs/sge/latest/sge/prelude/textures/index.html)

@@ -35,10 +35,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-96eaa717.js";
+            window.path_to_searchindex_js = "searchindex-6f7b9601.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-99acb6e2.js"></script>
+        <script src="toc-041f1d14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -181,24 +181,78 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="rich-text"><a class="header" href="#rich-text">Rich Text</a></h1>
-<p>There is support for drawing text of multiple sizes/colors/formats/fonts in one
-block of text through rich text.</p>
-<p>Blocks of rich text can be created manually, or parsed from a HTML like
-language using <code>rich_text(str)</code>. Note that this parsing is expensive, and you should make sure that it
-is not being run every frame. Store the parsed result and use that every frame.</p>
+<p>Rich text supports rendering multiple styles, colors, sizes, and formatting modes inside a single text object.</p>
+<p>You can construct rich text manually from <code>RichTextBlocks</code>, or parse it from a lightweight HTML-like syntax using <code>rich_text(str)</code>.</p>
+<p>Parsing performs tokenization + style tree construction, so avoid reparsing every frame. Parse once and reuse the resulting <code>RichText</code>.</p>
 <p>Quotes around argument values are optional as long as the value does not
 contain spaces (e.g. #abc).</p>
-<pre><code class="language-html">&lt;font size=50&gt;This text is &lt;font color=red3&gt;red&lt;/font&gt;, and this text is &lt;font color=blue3&gt;blue&lt;/font&gt;
-&lt;font color=#abc&gt;You &lt;font size=30&gt;may make your&lt;/font&gt; text any&lt;/font&gt; &lt;font color="rgb 1.0 1.0 1.0"&gt;color &lt;hl color=slate9&gt;you want&lt;/hl&gt;&lt;/font&gt;
-&lt;font bold color="oklch 0.7 0.1184 119"&gt;Check the docume&lt;/font&gt;&lt;font italic color=blue2&gt;ntation for&lt;/font&gt; &lt;b&gt;rich_text()&lt;/b&gt; for more.
-&lt;i&gt;Lorem &lt;ol color=green5&gt;ipsum dolor&lt;/ol&gt; &lt;ul&gt;sit amet consectetur&lt;/ul&gt; adipiscing elit.&lt;/i&gt;
-&lt;ul color="red5"&gt;You &lt;st&gt;can&lt;/st&gt; nest &lt;font color=red5 size=70 bold&gt;styles&lt;/font&gt;&lt;noul&gt; inside &lt;/noul&gt;of    eachother&lt;/ul&gt;&lt;/font&gt;
+<pre><code class="language-html">&lt;font size=50&gt;
+    This text is &lt;font color=red3&gt;red&lt;/font&gt;,
+    and this text is &lt;font color=blue3&gt;blue&lt;/font&gt;
+
+    &lt;font color=#abc&gt;
+        You &lt;font size=30&gt;may make your&lt;/font&gt; text any
+    &lt;/font&gt;
+
+    &lt;font color="rgb 1.0 1.0 1.0"&gt;
+        color &lt;hl color=slate9&gt;you want&lt;/hl&gt;
+    &lt;/font&gt;
+
+    &lt;font bold color="oklch 0.7 0.1184 119"&gt;
+        Check the docume
+    &lt;/font&gt;
+    &lt;font italic color=blue2&gt;
+        ntation for
+    &lt;/font&gt;
+    &lt;b&gt;rich_text()&lt;/b&gt; for more.
+
+    &lt;i&gt;
+        Lorem &lt;ol color=green5&gt;ipsum dolor&lt;/ol&gt;
+        &lt;ul&gt;sit amet consectetur&lt;/ul&gt;
+        adipiscing elit.
+    &lt;/i&gt;
+
+    &lt;ul color=red5&gt;
+        You &lt;st&gt;can&lt;/st&gt; nest
+        &lt;font color=red5 size=70 bold&gt;styles&lt;/font&gt;
+        &lt;noul&gt;inside&lt;/noul&gt;
+        of eachother
+    &lt;/ul&gt;
+&lt;/font&gt;
 </code></pre>
 <p><img src="./rich_text.jpg" alt="How this rich text looks when rendered"></p>
 <p>Rich text can be drawn with <code>.draw</code> or <code>.draw_world</code>, and the text will be
 wrapped within the area provided, and printed to stdout (the terminal), with
 most of the formatting applied.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Tag</th><th>Information</th><th>Supported arguements</th></tr>
+</thead>
+<tbody>
+<tr><td>&lt;b&gt; &lt;bold&gt; &lt;strong&gt;</td><td>Makes the text inside of it</td><td>None</td></tr>
+<tr><td>&lt;i&gt; &lt;italic&gt; &lt;em&gt;</td><td>Makes the text inside italic</td><td>None</td></tr>
+<tr><td>&lt;font&gt;</td><td>More complex styling like font size</td><td>size, color, bold, italic, underline, strikethrough, outline highlight</td></tr>
+<tr><td>&lt;ul&gt; &lt;underline&gt;</td><td>Specifies an underline for text inside</td><td>color</td></tr>
+<tr><td>&lt;st&gt; &lt;strikethrough&gt;</td><td>Specifies strikethrough for text inside</td><td>color</td></tr>
+<tr><td>&lt;nost&gt; &lt;no-strikethrough&gt;</td><td>Removes strikethrough for text inside</td><td>None</td></tr>
+<tr><td>&lt;hl&gt; &lt;highlight&gt; &lt;bg&gt;</td><td>Specifies a background fill for the text inside</td><td>color</td></tr>
+<tr><td>&lt;nohl&gt; &lt;nobg&gt; &lt;no-highlight&gt;</td><td>Removes highlight for text inside</td><td>None</td></tr>
+<tr><td>&lt;ol&gt; &lt;outline&gt;</td><td>Specifies an outline around the text inside</td><td>color</td></tr>
+<tr><td>&lt;noul&gt; &lt;no-underline&gt;</td><td>Removes underline for text inside</td><td>None</td></tr>
+</tbody>
+</table>
+</div>
+<p>Argument values can unquoted when the argument has no spaces.</p>
+<pre><code class="language-html">&lt;font color=red5&gt;
+&lt;font color="#abc"&gt;
+&lt;font color="rgb 1.0 1.0 1.0"&gt;
+</code></pre>
+<p>Rich text can also be printed to stdout with <code>.print_to_stdout()</code>, and will
+retain most of the formatting in the terminal. If it looks weird, check if your
+terminal supports true color.</p>
 <p>Rich text is used by the logging system.</p>
+<hr>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/rich_text.rs"><code>/examples/rich_text.rs</code></a></p>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/text/fn.rich_text.html"><code>rich_text</code></a>.</p>
 

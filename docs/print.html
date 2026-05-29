@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-96eaa717.js";
+            window.path_to_searchindex_js = "searchindex-6f7b9601.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-99acb6e2.js"></script>
+        <script src="toc-041f1d14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -178,7 +178,29 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="architecture"><a class="header" href="#architecture">Architecture</a></h1>
+                        <h1 id="simple-game-engine"><a class="header" href="#simple-game-engine">Simple Game Engine</a></h1>
+<p>SGE requires that you have the Rust toolchain installed, and some familiarity
+with rust.</p>
+<p>To create a new Rust project, you can run <code>cargo new my_project</code>, and replace
+my_project with whatever you want to call your game/app. To add SGE to your project run <code>cargo add sge</code>.</p>
+<pre><code class="language-sh">cargo new my_project
+cd my_project
+cargo add sge
+</code></pre>
+<p>Throughout this guide there will be links to examples that you can read and use
+to find out more about how SGE works and how to use it. To run these, clone the
+repository and use <code>cargo run --example</code> like so:</p>
+<pre><code class="language-sh">git clone https://github.com/lilyRL/sge
+cd sge
+cargo run --example name_of_example
+</code></pre>
+<p>Do not include the <code>.rs</code> in the name of the example.</p>
+<h2 id="nix"><a class="header" href="#nix">Nix</a></h2>
+<p>If you use Nix/NixOS, there is a <a href="https://github.com/LilyRL/sge/blob/master/shell.nix"><code>shell.nix</code></a> included in the repository that you
+can use to build and use the engine, though it was written with Wayland in mind.
+If you don’t know what Nix is you can safely ignore this entirely.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="architecture"><a class="header" href="#architecture">Architecture</a></h1>
 <p>SGE was designed to be flexible and easy to use, even for someone
 unfamiliar with Rust, for this reason it does not impose any set structure on
 how you must organize your code.</p>
@@ -190,9 +212,17 @@ async fn main() {
     // do initialization here
 
     loop {
+        // if you don't include this, it will be cleared to black by default.
+        // if you don't want to clear the screen, use `dont_clear_screen()` instead
+        clear_screen(Color::BLACK)
+    
         // frame loop here
+        // do anything you want to run once per frame, like drawing some shapes
         
         if should_quit() {
+            // you can do whatever you want here
+            // i just find it makes more sense to break out of the loop
+            // and do the cleanup at the bottom of the function
             break;
         }
         
@@ -215,79 +245,142 @@ and how to initialize the engine with custom parameters later.</p>
 <h1 id="drawing-shapes"><a class="header" href="#drawing-shapes">Drawing Shapes</a></h1>
 <p>There are two main spaces that shapes can be drawn to.</p>
 <ol>
-<li>The screen: coordinates are relative to the top left of the screen, and one
-unit always corresponds to one pixel. Positive y is down. Positive x is
-right.</li>
-<li>The world: coordinates are relative to the position and scale of the
-Camera2D. This means that you can move the camera around to change what is
-shown on screen, and one world unit does not always correspond to one pixel.
-By default, the world coordinate (0, 0) is in the center of the screen.</li>
+<li><strong>Screen space</strong>: coordinates are relative to the top left of the screen, and one unit always corresponds to one pixel. Positive y is down, positive x is right.</li>
+<li><strong>World space</strong>: coordinates are relative to the position and scale of the <code>Camera2D</code>. Moving the camera changes what is shown on screen, and one world unit does not always correspond to one pixel. By default, world coordinate <code>(0, 0)</code> is in the center of the screen.</li>
 </ol>
-<p>There are built in functions for drawing different shapes to each of these
-spaces. There are functions provided for the following shapes:</p>
+<p>Every shape drawing function comes in three variants:</p>
 <ul>
-<li>Circles
+<li><code>draw_&lt;shape&gt;(...)</code> — draws in screen space</li>
+<li><code>draw_&lt;shape&gt;_world(...)</code> — draws in world space</li>
+<li><code>draw_&lt;shape&gt;_to(..., renderer)</code> — draws to a specific renderer</li>
+</ul>
+<h2 id="shapes"><a class="header" href="#shapes">Shapes</a></h2>
+<p>The following shapes are available:</p>
 <ul>
-<li>Ellipses</li>
-<li>Arcs</li>
-<li>Segments</li>
-<li>Rings</li>
-<li>Radial gradients</li>
+<li>Circles and ellipses: <code>draw_circle</code>, <code>draw_ellipse</code>, <code>draw_circle_outline</code>, <code>draw_ellipse_outline</code>, <code>draw_circle_with_outline</code>, <code>draw_ellipse_with_outline</code></li>
+<li>Sectors and arcs: <code>draw_sector</code>, <code>draw_sector_outline</code>, <code>draw_sector_with_outline</code>, and ellipse variants of each. Angles are in radians.</li>
+<li>Rings: <code>draw_ring</code>, <code>draw_full_ring</code>, <code>draw_arc</code></li>
+<li>Rectangles and squares: <code>draw_rect</code>, <code>draw_square</code>, with optional rotation and outline variants. Rounded corners are supported via <code>draw_rounded_rect</code> and <code>draw_rounded_square</code>.</li>
+<li>Polygons: <code>draw_poly</code> for arbitrary n-sided regular polygons, <code>draw_hexagon</code>, <code>draw_hexagon_pointy</code> for flat and pointy-top hexagons.</li>
+<li>Lines: <code>draw_line</code>, <code>draw_capped_line</code> (with rounded ends), <code>draw_dashed_line</code>, <code>draw_zig_zag</code>, <code>draw_rounded_line</code></li>
+<li>Arrows: <code>draw_arrow</code>, <code>draw_solid_arrow</code>, <code>draw_sharp_arrow</code>, and right-angled variants of each</li>
+<li>Paths: <code>draw_path</code> (connected line segments), <code>draw_connected_path</code> (with caps at each join), <code>draw_circle_path</code> (with circular dots at each point)</li>
+<li>Curves: <code>draw_quadratic_bezier</code>, <code>draw_cubic_bezier</code></li>
+<li>Triangles and quads: <code>draw_tri</code>, <code>draw_quad</code></li>
+<li>Custom shapes: <code>draw_custom_shape</code> builds a mesh from an arbitrary slice of points</li>
+<li>Niche shapes: <code>draw_pentagon</code>, <code>draw_octogon</code>, <code>draw_hexagram</code>, <code>draw_pentagram</code>, <code>draw_star</code>, <code>draw_moon</code>, <code>draw_heart</code>, <code>draw_quadratic_circle</code></li>
+<li>Pixels: <code>draw_pixel</code>, <code>draw_pixel_line</code></li>
+<li>Metaballs: <code>draw_metaballs</code></li>
+<li>SDFs: <code>draw_sdf</code> for drawing an <code>Sdf</code> object directly (see <a href="#advanced-shapes">Advanced Shapes</a>)</li>
 </ul>
-</li>
-<li>Rectangles and squares
+<h2 id="outlines"><a class="header" href="#outlines">Outlines</a></h2>
+<p>Most shapes have outline and with-outline variants:</p>
 <ul>
-<li>With rounded corners</li>
+<li><code>draw_&lt;shape&gt;_outline(...)</code> — draws just the outline, no fill</li>
+<li><code>draw_&lt;shape&gt;_with_outline(...)</code> — draws the shape with both fill and outline</li>
 </ul>
-</li>
-<li>N-sided polygons</li>
-<li>Custom shapes from a series of points</li>
-<li>Lines
-<ul>
-<li>With caps</li>
-<li>Dotted</li>
-<li>Zig zags</li>
-<li>Arrows</li>
-<li>Paths</li>
-</ul>
-</li>
-<li>Curves
-<ul>
-<li>Quadratic bezier</li>
-<li>Cubic bezier</li>
-</ul>
-</li>
-<li>Single pixels/pixel lines</li>
-<li>Arbritrary triangles/quads</li>
-<li>Other more niche shapes like hearts, moons, and n-sided stars.</li>
-</ul>
-<p>All shapes can be additionally drawn with an outline.</p>
-<p>For example to draw a square, in world space, with an outline, you would use
-this code:</p>
+<p>For example, to draw a square in world space with an outline:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// pub fn draw_square_with_outline_world(
-//     top_left: Vec2,
-//     size: f32,
-//     color: Color,
-//     thickness: f32,
-//     outline_color: Color,
-// )
-
-draw_square_outline_world(vec2(20.0, 30.0), 40.0, Color::RED_500, 2.0, Color::RED_300);
+</span>draw_square_with_outline_world(
+    vec2(20.0, 30.0), // top_left
+    40.0,             // size
+    Color::RED_500,   // fill
+    2.0,              // outline thickness
+    Color::RED_300,   // outline color
+);
 <span class="boring">}</span></code></pre>
+<h2 id="gradients"><a class="header" href="#gradients">Gradients</a></h2>
+<p>Multipoint linear gradients can be drawn with <code>draw_multipoint_gradient</code>, which takes a list of <code>GradientPoint</code>s each with a color and relative width, and an <code>Orientation</code> (horizontal or vertical).</p>
+<p>For radial gradients and more advanced fill effects, use the <code>Sdf</code> type directly (see <a href="#advanced-shapes">Advanced Shapes</a>).</p>
+<hr>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/simple.rs"><code>/examples/simple.rs</code></a></p>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/shapes/index.html">all shape drawing functions</a></p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="color-type"><a class="header" href="#color-type">Color type</a></h1>
-<p>SGE comes with a featureful <code>Color</code> type. You can create a <code>Color</code> using
-<code>Color::from_rgb(r: f32, g: f32, b: f32)</code>, where rgb range from 0.0 to 1.0, or
-<code>Color::from_rgb_u8(r: u8, g: u8, b: u8)</code>, where rgb range from 0 to 255. Both
-of these functions have corresponding <code>from_rgba</code> variants that allow you to
-also specify an opacity/alpha value.</p>
-<p>In addition, the <code>Color</code> type has associated constants for every <a href="https://www.w3schools.com/cssref/css_colors.php">CSS
-color</a>, and <a href="https://tailwindcss.com/docs/colors">Tailwind color</a>.</p>
-<p>Check the <a href="https://docs.rs/sge/latest/sge/prelude/struct.Color.html">reference documentation</a> for the color type for more detail.</p>
+<p>SGE comes with a <code>Color</code> type, with rgba as <code>f32</code> values from 0.0 to 1.0.</p>
+<h2 id="creating-colors"><a class="header" href="#creating-colors">Creating colors</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// float (0.0–1.0)
+Color::from_rgb(1.0, 0.5, 0.0)
+Color::from_rgba(1.0, 0.5, 0.0, 0.8)
+
+// u8 (0–255)
+Color::from_rgb_u8(255, 128, 0)
+Color::from_rgba_u8(255, 128, 0, 200)
+
+// hsl
+Color::from_hsl(30.0, 1.0, 0.5)
+Color::from_hsla(30.0, 1.0, 0.5, 0.8)
+
+// oklch
+Color::from_oklch(0.7, 0.15, 142.0)
+Color::from_oklch_with_alpha(0.7, 0.15, 142.0, 0.8)
+
+// From hex constant (compile-time)
+Color::hex(0xFF8800)
+Color::hex_alpha(0xFF8800FF)
+
+// from a string at runtime (rgb, hsl, oklch, hex, and named colors)
+Color::from_string("oklch 0.7 0.15 142")
+Color::from_string("#FF8800")
+Color::from_string("rgb 1.0 0.5 0.0")
+Color::from_string("rebecca purple")
+
+// every CSS and Tailwind color is available as a constant
+Color::RED_500
+Color::NEUTRAL_900
+Color::CYAN_400
+<span class="boring">}</span></code></pre>
+<h2 id="modifying-colors"><a class="header" href="#modifying-colors">Modifying colors</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>color.with_alpha(0.5)
+color.with_red(1.0)
+color.with_alpha8(128) // u8 
+
+color.lighten(0.2)
+color.darken(0.3)
+// or oklch
+color.lighten_oklch(0.2)
+color.darken_oklch(0.1)
+
+color.saturate(0.5)
+color.desaturate(0.3)
+color.hue_rotate(90.0)         // degrees, HSL
+color.hue_rotate_oklch(45.0)  // degrees, oklch
+
+color.inverted()
+
+Color::blend_two(Color::RED_500, Color::BLUE_500, 0.5)
+color.blend(other, 0.3)
+color.blend_halfway(other)
+
+Color::grey(0.5) // brightness
+<span class="boring">}</span></code></pre>
+<h2 id="palettes"><a class="header" href="#palettes">Palettes</a></h2>
+<p>Tailwind color palettes are availible from 50 to 950.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let shades = Color::RED.shades();           //  light to dark
+let shades = Color::BLUE.reversed_shades(); // dark to light
+<span class="boring">}</span></code></pre>
+<h2 id="converting-colors"><a class="header" href="#converting-colors">Converting colors</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>color.to_oklch()        // (lightness, chroma, hue)
+color.to_hex_string()   // "#RRGGBBAA"
+color.to_hex()          // u32
+color.to_color_u8()     // ColorU8 (for images)
+color.to_linear()       // sRGB to linear RGB
+<span class="boring">}</span></code></pre>
+<h2 id="color-schemes"><a class="header" href="#color-schemes">Color schemes</a></h2>
+<p>There are some built in
+<a href="https://docs.rs/sge/latest/sge/prelude/color/struct.ColorScheme.html#impl-ColorScheme-1">colorschemes</a>
+you can use if you like.</p>
+<hr>
+<p>Check the <a href="https://docs.rs/sge/latest/sge/prelude/struct.Color.html">reference documentation</a> for the full list of methods.</p>
 <p>See also: <a href="https://docs.rs/sge/latest/sge/prelude/color/index.html">color related documentation</a></p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="input-api"><a class="header" href="#input-api">Input API</a></h1>
@@ -351,20 +444,57 @@ bind(JUMP, KeyCode::Space);
 <p>This makes it easier for you to allow the player to change their preferred
 controls for your game, by binding them to different keys, without you needing
 to change the rest of your codebase.</p>
+<hr>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/input/index.html">input module documentation</a> for more detail.</p>
 <p>See also: <a href="https://github.com/LilyRL/sge/blob/master/examples/action_mapping.rs"><code>/examples/action_mapping.rs</code></a></p>
 <p>See also: <a href="https://docs.rs/sge/latest/sge/prelude/clipboard/index.html">clipboard module documentation</a></p>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="gamepad"><a class="header" href="#gamepad">Gamepad</a></h1>
+<p>You can get a handle to the gamepad input state with <a href="https://docs.rs/sge/latest/sge/prelude/gamepad/fn.input.html"><code>gamepad::input()</code></a>. With
+this, you can get an iterator of the connected gamepads and their <a href="https://docs.rs/sge/latest/sge/prelude/gamepad/struct.GamepadId.html">IDs</a> with <a href="https://docs.rs/sge/latest/sge/prelude/gamepad/struct.Gilrs.html#method.gamepads"><code>gamepad::input().gamepads()</code></a>.</p>
+<p>Using a <a href="https://docs.rs/sge/latest/sge/prelude/gamepad/struct.Gamepad.html"><code>Gamepad</code></a>, which can also be obtained from
+<a href="https://docs.rs/sge/latest/sge/prelude/gamepad/struct.Gilrs.html#method.gamepad"><code>gamepad::input().gamepad(id)</code></a>, you can query the state of the buttons and
+sticks using the methods on the <a href="https://docs.rs/sge/latest/sge/prelude/gamepad/struct.Gamepad.html"><code>Gamepad</code></a> struct.</p>
+<p>Importantly:</p>
+<ul>
+<li><code>.right_stick</code>, <code>.left_stick</code>, and <code>.d_pad</code> for getting the input of
+sticks/dpad as a vector.</li>
+<li><code>.is_pressed</code> for checking if a
+<a href="https://docs.rs/sge/latest/sge/prelude/gamepad/enum.Button.html"><code>gamepad::Button</code></a>
+is pressed</li>
+</ul>
+<hr>
+<p>See: <a href="https://docs.rs/sge/latest/sge/prelude/gamepad/index.html">gamepad module</a></p>
+<p>See also:
+<a href="https://github.com/LilyRL/sge/blob/master/examples/gamepad.rs"><code>/examples/gamepad.rs</code></a>
+for an example on how to use the API, and to test if your controller is being
+recognised properly.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="time"><a class="header" href="#time">Time</a></h1>
+<p>You can use <code>time()</code> to get the time the program has been running in seconds,
+and <code>delta_time()</code> to get the time since last frame in seconds.</p>
+<p>There is also <code>physics_time()</code> and <code>physics_delta_time()</code> which uses the
+‘physics timer’. The physics timer can be sped up, slowed down, and paused using
+<code>set_physics_speed</code>, <code>pause_physics_timer</code> and <code>play_physics_timer</code>. This
+isn’t related to the physics system, and wont speed it up.</p>
+<p>There are also some convenience methods you can use, like <code>once_per_second</code> or
+<code>once_per_n_seconds</code> which only returns true once every some timeframe, and
+<code>oscillate</code> which moves between two values once per second, <code>oscillate_t</code> lets
+you provide your own time value, so you can speed it up or whatever.</p>
+<hr>
+<p>See: <a href="https://docs.rs/sge/latest/sge/prelude/time/index.html">time module</a> for
+full list of functions</p>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="drawing-text"><a class="header" href="#drawing-text">Drawing text</a></h1>
 <p>There are 3 types of text drawing functions:</p>
-<ol>
+<ul>
 <li><code>draw_text_*</code>: for basic text drawing.</li>
 <li><code>draw_multiline_text_*</code>: for properly drawing text with newlines in it.</li>
 <li><code>draw_wrapped_text_*</code>: for drawing text with a max width, that wraps when it
 gets to the edge.</li>
-</ol>
+</ul>
 <p>There are also equivalent functions for measuring the area text will take up
-when drawn.</p>
+when drawn. These shouldn’t be too slow as a cache is maintained internally.</p>
 <p>There are functions for drawing text quickly, which only take the text and
 position, and draw with the default monospaced font. You can use <code>draw_text_ex</code>
 and <code>draw_text_custom</code> to specify the font used, text color, and more.</p>
@@ -374,7 +504,25 @@ and <code>draw_text_custom</code> to specify the font used, text color, and more
 <p>SGE comes with <a href="https://www.jetbrains.com/lp/mono/">JetBrains Mono</a> as it’s
 default font, and when the <code>extra_fonts</code> feature is enabled (by default), also 5
 variants of the <a href="https://rsms.me/inter/">Inter</a> typeface, for regular, bold,
-italic, bold italic, and display.</p>
+italic, bold italic, and display. These are availible as the constants <code>MONO</code>,
+<code>SANS</code>, <code>SANS_BOLD</code>, <code>SANS_ITALIC</code>, <code>SANS_BOLD_ITALIC</code>, and <code>SANS_DISPLAY</code>.</p>
+<p>If you experience stuttering when drawing text, you can pre-populate the cache
+of letters.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>font_ref.populate_font_cache(&amp;Font::latin_character_list(), 24);
+<span class="boring">}</span></code></pre>
+<p>You can also specify the filtering methods of the font texture.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>font.use_linear_filtering(); 
+font.use_nearest_filtering();
+<span class="boring">}</span></code></pre>
+<h2 id="typeface"><a class="header" href="#typeface">Typeface</a></h2>
+<p>The <code>Typeface</code> struct groups fonts of the same typeface together so that they
+can be used for things like rich text.</p>
+<p><img src="text.jpg" alt="Text in action"></p>
+<hr>
 <p>See:
 <a href="https://github.com/LilyRL/sge/blob/master/examples/text.rs"><code>/examples/text.rs</code></a>
 for an example</p>
@@ -384,27 +532,29 @@ documentation</a> for more detail.</p>
 <h1 id="textures"><a class="header" href="#textures">Textures</a></h1>
 <p>Textures can be loaded using one of the following:</p>
 <ul>
-<li><code>include_texture!</code>: Bake bytes of image file into binary, and load them from
-that. This comes with the benefit of working without using any outside files
-from the executable, meaning you only need to give someone one file to play
-your game.</li>
+<li><code>include_texture!</code>: Bake bytes of image file into binary, and load them from that. This comes with the benefit of working without using any outside files from the executable, meaning you only need to give someone one file to play your game.</li>
 <li><code>load_texture_sync</code>: synchronously load texture from file path.</li>
 <li><code>load_texture_from_bytes_sync</code>: synchronously load texture from bytes.</li>
 <li><code>load_texture</code>: asynchronously load texture from file path.</li>
 <li><code>load_texture_from_bytes</code>: asynchronously load texture from bytes.</li>
 </ul>
-<p>All of these functions return a <code>TextureRef</code>, which is just a wrapper around an
-integer, and can be passed around/copied at almost 0 cost. This reference is
-also guaranteed to always be valid, so long as you don’t use any of the <code>unsafe</code>
-functions associated with <code>Ref</code> types.</p>
+<p>All of these functions return a <code>TextureRef</code>, which is just a wrapper around an integer, and can be passed around/copied at almost 0 cost. This reference is also guaranteed to always be valid, so long as you don’t use any of the <code>unsafe</code> functions associated with <code>Ref</code> types.</p>
+<p>You can inspect the total number of currently tracked textures in the engine by calling <code>num_registered_textures()</code>.</p>
 <p>Textures can be drawn by using one of the following:</p>
 <ul>
 <li><code>draw_texture(_world)</code>: simply draws a texture at some position at some scale.</li>
-<li><code>draw_texture_scaled(_world)</code>: allows you to draw the texture at any scale,
-without respecting the original aspect ratio.</li>
-<li><code>draw_texture_ex</code>: contains additional options like an arbitrary transform,
-tint, and the option to only draw a region of the whole texture.</li>
+<li><code>draw_texture_scaled(_world)</code>: allows you to draw the texture at any scale, without respecting the original aspect ratio.</li>
+<li><code>draw_texture_ex</code>: contains additional options like an arbitrary transform, tint, and the option to only draw a region of the whole texture.</li>
 </ul>
+<p>Apart from loading raw files, you can manage textures using the following methods:</p>
+<ul>
+<li><code>SgeTexture::empty(width, height)</code>: Allocates a blank, uninitialized texture container on the GPU with the specified pixel dimensions.</li>
+<li><code>SgeTexture::from_engine_image(image)</code>: Converts an in-memory <code>Image</code> struct directly into an uploadable texture layout.</li>
+<li><code>download_to_image(&amp;self)</code>: Downloads pixel data from the GPU back into an accessible CPU-side <code>Image</code>. This supports both float and unsigned byte formats with three or four color components, and automatically maps raw byte streams back into standard pixel collections.</li>
+</ul>
+<p>Example of advanced texture drawing from <a href="https://github.com/LilyRL/sge/blob/master/examples/demo.rs#L127"><code>demo.rs</code></a>:</p>
+<p><img src="textures.jpg" alt="two textures, one with custom transform and a blue tint"></p>
+<hr>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/textures/index.html">texture module documentation</a></p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="audio"><a class="header" href="#audio">Audio</a></h1>
@@ -442,8 +592,12 @@ you to add effects to the sound before playing with <code>.start()</code>.</p>
 <p>You can find a list of effects in the <a href="https://docs.rs/sge/latest/sge/prelude/audio/struct.SoundBuilder.html"><code>SoundBuilder</code> documentation</a>.</p>
 </li>
 </ol>
+<hr>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/simple_sound.rs"><code>/examples/simple_sound.rs</code></a></p>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/audio/index.html">sound module documentation</a></p>
+<p>See also:
+<a href="https://github.com/LilyRL/sge/blob/master/examples/space_game.rs"><code>/examples/space_game.rs</code></a>
+for a game with sound effects.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="camera"><a class="header" href="#camera">Camera</a></h1>
 <h2 id="2d"><a class="header" href="#2d">2D</a></h2>
@@ -491,6 +645,7 @@ many configuration options.</li>
 <li><a href="https://docs.rs/sge/latest/sge/prelude/camera/struct.FirstPersonCameraController.html"><code>FirstPersonCameraController</code></a>:
 Allows the user to look around in the first person, using the mouse.</li>
 </ul>
+<hr>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/camera/index.html">camera module documentation</a></p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="3d-2"><a class="header" href="#3d-2">3D</a></h1>
@@ -519,6 +674,8 @@ let object = Object3D::from_obj_bytes_with_material(
     material,
 )?;
 <span class="boring">}</span></code></pre>
+<p>Objects then need to be drawn every frame with <code>object.draw()</code>.</p>
+<p><img src="material.jpg" alt="Outline material suzanne showcase"></p>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/d3/index.html">3D module documentation</a></p>
 <h2 id="materials"><a class="header" href="#materials">Materials</a></h2>
 <p>A material is just a collection of a vertex shader, fragment shader, and named
@@ -557,7 +714,7 @@ availible in all material shaders:</p>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/material.rs"><code>/examples/material.rs</code></a></p>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/material_shader/vertex.glsl"><code>/examples/material_shader/vertex.glsl</code></a></p>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/material_shader/fragment.glsl"><code>/examples/material_shader/fragment.glsl</code></a></p>
-<h2 id="shapes"><a class="header" href="#shapes">Shapes</a></h2>
+<h2 id="shapes-1"><a class="header" href="#shapes-1">Shapes</a></h2>
 <p>In addition to loading shapes from an object, there are also functions for
 creating simple shapes from some parameters. So far there are only:</p>
 <ul>
@@ -565,24 +722,48 @@ creating simple shapes from some parameters. So far there are only:</p>
 <li><code>line_3d</code> and <code>line_3d_flat</code></li>
 <li><code>cube_wireframe</code> and <code>cube_wireframe_flat</code></li>
 </ul>
+<p>Example from <a href="https://github.com/LilyRL/sge/blob/master/examples/shapes_3d.rs"><code>shapes_3d.rs</code></a>:</p>
+<p><img src="shapes_3d.jpg" alt="cube within cube wireframe"></p>
+<hr>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/d3/index.html"><code>3D module documentation</code></a></p>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="some-rendering-details"><a class="header" href="#some-rendering-details">Some rendering details</a></h1>
+<p>2D rendering works in layers. When you use <code>new_draw_queues()</code> or use a
+post-processing effect, a new set of draw queues will be created, meaning that anything new that is drawn will be
+drawn over everything drawn previously, no matter what.</p>
+<p>In the case of a
+post-processing effect this is almost always what you want, but if it isn’t you
+may need to be careful of what order your drawing functions run. If this is a
+problem for you, decouple your update functions from drawing functions that
+don’t mutate state, so that drawing functions can run in any order.</p>
+<p>Within a single draw queue, objects drawn in screen-space will always be drawn
+above objects drawn in world space. You can overwrite this using a new set of
+draw queues.</p>
+<h2 id="scissors"><a class="header" href="#scissors">Scissors</a></h2>
+<p>A scissor is basically a filter to a rectangle of the screen, it will prevent
+rendering of any pixels outside of that rectangle for the duration of that
+scissor being active. You can add and remove them with <code>push_scissor</code> and
+<code>pop_scissor</code>. Pushing a scissor when another scissor is already active will set
+the scissor to the intersection of both of them, so things will only be drawn
+if they are inside both rectangles.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// this will draw a semi-circle
+push_scissor(Area::new(vec2(window_center().x, 0.0), window_size()).to_rect());
+draw_circle(window_center(), 500.0, Color::WHITE);
+pop_scissor();
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="async"><a class="header" href="#async">Async</a></h1>
-<p>You may have been wondering why it is necessary to mark your main function as
-<code>async</code> and use <code>next_frame().await</code>, but this allows us to use coroutines.</p>
+<p>Using an <code>async</code> main function and <code>next_frame().await</code> allows SGE to run coroutines.</p>
 <h2 id="coroutines"><a class="header" href="#coroutines">Coroutines</a></h2>
-<p>A coroutine is, in this context, a function that can be paused and resumed
-later. It is a type of async function, but coroutines never return a value.
-They run alongside the rest of your program, on the same thread, and are updated
-every frame. If a coroutine calls <code>.await</code> on a future, it’s execution will be
-paused. At the end of the next frame, SGE will check if the future it is waiting
-on is ready, and if it is, execution of that function will continue.</p>
-<p>This may sound very confusing, but here’s an example.</p>
+<p>A coroutine is a function that can pause execution and resume later. Coroutines do not return a value. They run alongside the main loop on the same thread and update every frame.</p>
+<p>When a coroutine calls <code>.await</code> on a future, it pauses. At the end of the frame, SGE updates all active coroutines. If the future is ready, the coroutine continues executing.</p>
 <pre class="playground"><code class="language-rust">use sge::*;
 
 #[main("Title")]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    // here we create a coroutine from a normal `async` function and start it
+    // Start a coroutine from an async function
     let coroutine = start_coroutine(count());
 
     loop {
@@ -594,34 +775,36 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
             break;
         }
 
-        // when we get to this point in the program, the engine runs everything
-        // it needs to do once per frame, like drawing things to the screen, but
-        // before that, it loops through all the running coroutines and updates them
+        // next_frame().await updates engine systems and advances running coroutines
         next_frame().await;
     }
 
     Ok(())
 }
 
-// this just draws the number 1 to 100, increasing by 1 every frame, until it finishes
+// Draws numbers from 0 to 99, incrementing each frame
 async fn count() {
     for i in 0..100 {
         draw_text(i, Vec2::ZERO);
 
-        // this next_frame future just makes the function wait until the next frame to
-        // keep executing. you'll notice it acts exactly the same as in the main function.
-        // you can treat these two functions as though they are running in parallel
+        // Pauses this function until the next frame
         next_frame().await;
     }
 }</code></pre>
-<p>This can be used for all sorts of things, for example a cutscene, that you want
-to run just until it’s done, and then move onto something else. You can check
-the status of the spawned coroutine with <code>coroutine.is_done()</code>.</p>
+<p>You can use coroutines for tasks that span multiple frames, like cutscenes or timed events. Track the status of a coroutine using coroutine.is_done().</p>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/coroutines.rs"><code>/examples/coroutines.rs</code></a></p>
 <h2 id="other-async-functions"><a class="header" href="#other-async-functions">Other async functions</a></h2>
 <p>SGE also has some other async functions worth knowing about, such as ones to wait
 a certain amount of time, and for <a href="https://lilyrl.github.io/sge/fs.html">loading resources</a> from disk/bytes in the
 background so it doesn’t interrupt the user by freezing the program while it’s loading.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Pause for 2.5 seconds
+wait_for(2.5).await;
+
+// Pause for 10 frames
+wait_for_frames(10).await;
+<span class="boring">}</span></code></pre>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/exec/index.html">Exec module</a></p>
 <h2 id="the-main-macro"><a class="header" href="#the-main-macro">The main macro</a></h2>
 <p>The <code>#[main()]</code> macro is just a helper that makes it more simple to initialize
@@ -638,7 +821,7 @@ async fn main() {
         // do stuff
     });
 }</code></pre>
-<p><code>init</code>, obviously, initializes SGE. <code>run_async</code> sets up an asynchronous
+<p><code>init</code> creates the window and sets everything up. <code>run_async</code> sets up an asynchronous
 environment for your code to run in, and makes sure it is updated once per frame.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="window"><a class="header" href="#window">Window</a></h1>
@@ -682,27 +865,84 @@ useful for checking for any inefficiencies or memory leaks.</p>
 <p>There are also some built-in debug visualisations such as drawing a window,
 using the engine’s built-in UI library, that shows graphs of the number of
 vertices/indices drawn and lots of other information.</p>
+<p>Use <code>draw_debug_info</code> for graphs, or <code>draw_simple_debug_info</code> for just numbers
+(better performance).</p>
+<hr>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/debug_visualisations/index.html">debug visualisations module</a></p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="rich-text"><a class="header" href="#rich-text">Rich Text</a></h1>
-<p>There is support for drawing text of multiple sizes/colors/formats/fonts in one
-block of text through rich text.</p>
-<p>Blocks of rich text can be created manually, or parsed from a HTML like
-language using <code>rich_text(str)</code>. Note that this parsing is expensive, and you should make sure that it
-is not being run every frame. Store the parsed result and use that every frame.</p>
+<p>Rich text supports rendering multiple styles, colors, sizes, and formatting modes inside a single text object.</p>
+<p>You can construct rich text manually from <code>RichTextBlocks</code>, or parse it from a lightweight HTML-like syntax using <code>rich_text(str)</code>.</p>
+<p>Parsing performs tokenization + style tree construction, so avoid reparsing every frame. Parse once and reuse the resulting <code>RichText</code>.</p>
 <p>Quotes around argument values are optional as long as the value does not
 contain spaces (e.g. #abc).</p>
-<pre><code class="language-html">&lt;font size=50&gt;This text is &lt;font color=red3&gt;red&lt;/font&gt;, and this text is &lt;font color=blue3&gt;blue&lt;/font&gt;
-&lt;font color=#abc&gt;You &lt;font size=30&gt;may make your&lt;/font&gt; text any&lt;/font&gt; &lt;font color="rgb 1.0 1.0 1.0"&gt;color &lt;hl color=slate9&gt;you want&lt;/hl&gt;&lt;/font&gt;
-&lt;font bold color="oklch 0.7 0.1184 119"&gt;Check the docume&lt;/font&gt;&lt;font italic color=blue2&gt;ntation for&lt;/font&gt; &lt;b&gt;rich_text()&lt;/b&gt; for more.
-&lt;i&gt;Lorem &lt;ol color=green5&gt;ipsum dolor&lt;/ol&gt; &lt;ul&gt;sit amet consectetur&lt;/ul&gt; adipiscing elit.&lt;/i&gt;
-&lt;ul color="red5"&gt;You &lt;st&gt;can&lt;/st&gt; nest &lt;font color=red5 size=70 bold&gt;styles&lt;/font&gt;&lt;noul&gt; inside &lt;/noul&gt;of    eachother&lt;/ul&gt;&lt;/font&gt;
+<pre><code class="language-html">&lt;font size=50&gt;
+    This text is &lt;font color=red3&gt;red&lt;/font&gt;,
+    and this text is &lt;font color=blue3&gt;blue&lt;/font&gt;
+
+    &lt;font color=#abc&gt;
+        You &lt;font size=30&gt;may make your&lt;/font&gt; text any
+    &lt;/font&gt;
+
+    &lt;font color="rgb 1.0 1.0 1.0"&gt;
+        color &lt;hl color=slate9&gt;you want&lt;/hl&gt;
+    &lt;/font&gt;
+
+    &lt;font bold color="oklch 0.7 0.1184 119"&gt;
+        Check the docume
+    &lt;/font&gt;
+    &lt;font italic color=blue2&gt;
+        ntation for
+    &lt;/font&gt;
+    &lt;b&gt;rich_text()&lt;/b&gt; for more.
+
+    &lt;i&gt;
+        Lorem &lt;ol color=green5&gt;ipsum dolor&lt;/ol&gt;
+        &lt;ul&gt;sit amet consectetur&lt;/ul&gt;
+        adipiscing elit.
+    &lt;/i&gt;
+
+    &lt;ul color=red5&gt;
+        You &lt;st&gt;can&lt;/st&gt; nest
+        &lt;font color=red5 size=70 bold&gt;styles&lt;/font&gt;
+        &lt;noul&gt;inside&lt;/noul&gt;
+        of eachother
+    &lt;/ul&gt;
+&lt;/font&gt;
 </code></pre>
 <p><img src="rich_text.jpg" alt="How this rich text looks when rendered"></p>
 <p>Rich text can be drawn with <code>.draw</code> or <code>.draw_world</code>, and the text will be
 wrapped within the area provided, and printed to stdout (the terminal), with
 most of the formatting applied.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Tag</th><th>Information</th><th>Supported arguements</th></tr>
+</thead>
+<tbody>
+<tr><td>&lt;b&gt; &lt;bold&gt; &lt;strong&gt;</td><td>Makes the text inside of it</td><td>None</td></tr>
+<tr><td>&lt;i&gt; &lt;italic&gt; &lt;em&gt;</td><td>Makes the text inside italic</td><td>None</td></tr>
+<tr><td>&lt;font&gt;</td><td>More complex styling like font size</td><td>size, color, bold, italic, underline, strikethrough, outline highlight</td></tr>
+<tr><td>&lt;ul&gt; &lt;underline&gt;</td><td>Specifies an underline for text inside</td><td>color</td></tr>
+<tr><td>&lt;st&gt; &lt;strikethrough&gt;</td><td>Specifies strikethrough for text inside</td><td>color</td></tr>
+<tr><td>&lt;nost&gt; &lt;no-strikethrough&gt;</td><td>Removes strikethrough for text inside</td><td>None</td></tr>
+<tr><td>&lt;hl&gt; &lt;highlight&gt; &lt;bg&gt;</td><td>Specifies a background fill for the text inside</td><td>color</td></tr>
+<tr><td>&lt;nohl&gt; &lt;nobg&gt; &lt;no-highlight&gt;</td><td>Removes highlight for text inside</td><td>None</td></tr>
+<tr><td>&lt;ol&gt; &lt;outline&gt;</td><td>Specifies an outline around the text inside</td><td>color</td></tr>
+<tr><td>&lt;noul&gt; &lt;no-underline&gt;</td><td>Removes underline for text inside</td><td>None</td></tr>
+</tbody>
+</table>
+</div>
+<p>Argument values can unquoted when the argument has no spaces.</p>
+<pre><code class="language-html">&lt;font color=red5&gt;
+&lt;font color="#abc"&gt;
+&lt;font color="rgb 1.0 1.0 1.0"&gt;
+</code></pre>
+<p>Rich text can also be printed to stdout with <code>.print_to_stdout()</code>, and will
+retain most of the formatting in the terminal. If it looks weird, check if your
+terminal supports true color.</p>
 <p>Rich text is used by the logging system.</p>
+<hr>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/rich_text.rs"><code>/examples/rich_text.rs</code></a></p>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/text/fn.rich_text.html"><code>rich_text</code></a>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
@@ -733,6 +973,7 @@ to show only logs equal to or more important than some log level, or disabled en
 <p>The logger has multiple verbosity levels that can be configured
 using <a href="https://docs.rs/sge/latest/sge/prelude/logging/fn.set_logger_verbosity.html"><code>set_logger_verbosity</code></a>.</p>
 <p>Logs will be printed to the terminal by default.</p>
+<hr>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/logging/index.html">logging module</a></p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="file-system-api"><a class="header" href="#file-system-api">File System API</a></h1>
@@ -740,8 +981,391 @@ using <a href="https://docs.rs/sge/latest/sge/prelude/logging/fn.set_logger_verb
 engine’s <code>async</code> system, so that you can read/write to files in the background,
 while showing a loading screen for the user. This includes functions for loading
 resources like textures, where the image decoding will be done on another thread.</p>
+<hr>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/fs/index.html">FS module</a></p>
 <p>See also: <a href="https://github.com/LilyRL/sge/blob/master/examples/async_asset_loading.rs"><code>/examples/async_asset_loading.rs</code></a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rng"><a class="header" href="#rng">RNG</a></h1>
+<p>Most games need random numbers. You can generate them with these functions:</p>
+<ul>
+<li>
+<p><code>get_next_counter</code>: returns 0 the first time you call it, returns the number
+one more than the last time you called it on all following times</p>
+</li>
+<li>
+<p><code>rand</code>: generic function that returns a random value of the type you pass it, as
+long as that type supports random generation.</p>
+</li>
+<li>
+<p><code>rand_bool</code>: Return a bool with a probability p of being true.</p>
+</li>
+<li>
+<p><code>rand_choice</code>: returns a random element from an array, if the array is empty it panics.</p>
+</li>
+<li>
+<p><code>maybe_rand_choice</code>: returns none if choices are empty, returns random choice otherwise</p>
+</li>
+<li>
+<p><code>rand_color</code>: returns a random color</p>
+</li>
+<li>
+<p><code>rand_f32</code>: generates f32 between -1 and 1</p>
+</li>
+<li>
+<p><code>rand_range</code>: generates a random number between two values</p>
+</li>
+<li>
+<p><code>rand_ratio</code>: return a bool with a probability of numerator/denominator of being true.</p>
+</li>
+<li>
+<p><code>rand_usize</code>: returns a random usize</p>
+</li>
+<li>
+<p><code>rand_vec2</code>: returns a random vec2</p>
+</li>
+<li>
+<p><code>rand_vec3</code>: returns a random vec3</p>
+</li>
+<li>
+<p><code>rand_vec4</code>: returns a random vec4</p>
+</li>
+<li>
+<p><code>id!()</code>: returns a constant random number. baked at compile time, won’t change
+each time it is run, but will change if it is used in multiple places. This
+will make more sense if you know how macros work in Rust.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>id!() != id!();
+
+let mut numbers = vec![];
+for _ in 0..5 {
+    numbers.push(id!());
+}
+
+// every number in numbers is equal
+<span class="boring">}</span></code></pre>
+</li>
+</ul>
+<hr>
+<p>See: <a href="https://docs.rs/sge/latest/sge/prelude/rng/index.html">rng module</a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="image-api"><a class="header" href="#image-api">Image API</a></h1>
+<p><a href="https://docs.rs/sge/latest/sge/prelude/image/struct.Image.html"><code>Image</code></a>s are
+like textures, but stored on the CPU. Images can be loaded and parsed
+from image files like <code>.png</code> and <code>.jpg</code>, and their contents can be manipulated
+by indexing into the buffer directly or using the many methods on the
+<a href="https://docs.rs/sge/latest/sge/prelude/image/struct.Image.html"><code>Image</code></a> struct
+to draw shapes.</p>
+<p>Unlike when GPU rendering, working with an <code>Image</code> requires you to use the
+<a href="https://docs.rs/sge_color/latest/sge_color/u8/union.ColorU8.html"><code>ColorU8</code></a>
+type, which uses u8 values for (r,g,b,a), that range from 0 to 255,
+where white is (255,255,255,255). <code>ColorU8</code> can be converted to <code>Color</code> and vice
+versa with <code>.to_color</code> and <code>.to_color_u8</code>.</p>
+<p>An image can be uploaded to a GPU texture with
+<a href="https://docs.rs/sge/latest/sge/prelude/textures/struct.SgeTexture.html#method.from_engine_image"><code>SgeTexture::from_enginen_image</code></a>
+and a GPU texture can be downloaded to an image with <code>texture.download_to_image()</code>.</p>
+<hr>
+<p>See: <a href="https://docs.rs/sge/latest/sge/prelude/image/index.html">image module</a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="math-api"><a class="header" href="#math-api">Math API</a></h1>
+<p>SGE exposes a fork of <a href="https://docs.rs/bevy_math/latest/bevy_math/"><code>bevy_math</code></a>
+with lots of useful types and functions for math/linear algebra.</p>
+<p>You can see a list of the included items
+<a href="https://docs.rs/sge/latest/sge/prelude/math/index.html">here</a>. I would
+recommend looking through the documentation for
+<a href="https://docs.rs/sge/latest/sge/prelude/math/struct.Vec2.html">Vec2</a> at least as
+it is used everywhere.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="particle-system"><a class="header" href="#particle-system">Particle System</a></h1>
+<p>Create a particle system with <code>ParticleSystem::new()</code>, and spawn emitters or one
+shot particle spawners when needed, then run <code>.update()</code> and <code>.draw()</code> or
+<code>.draw_world()</code> once per frame to see the particles onscreen. You can customize
+lots of parameters to change how the particles act.</p>
+<pre class="playground"><code class="language-rust">#[main("Particles")]
+fn main() {
+    let mut particles = ParticleSystem::new();
+    let batch = ParticleOneshot::builder()
+        .shape(&amp;Rect::new_square(Vec2::ZERO, 20.0, Color::YELLOW_500))
+        .size_randomness(5.0)
+        .color_randomness(Color::new(0.3, 0.1, 0.1))
+        .direction_randomness(0.5)
+        .speed(40.0)
+        .speed_randomness(3.0)
+        .rotation_speed_randomness(0.2)
+        .end_color(Color::RED_700)
+        .acceleration(vec2(0.0, 1.0))
+        .acceleration_randomness(vec2(0.0, 0.2))
+        .lifetime(2.0)
+        .quantity(100)
+        .build();
+
+    loop {
+        if should_spawn_particles {
+            particles.spawn_oneshot(&amp;batch, position)
+        }
+    
+        particles.update();
+        particles.draw();
+
+        if should_quit() {
+            break;
+        }
+
+        next_frame().await;
+    }
+}</code></pre>
+<hr>
+<p>See: <a href="https://docs.rs/sge/latest/sge/prelude/particles/index.html">particles module</a></p>
+<p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/particles.rs"><code>/examples/particles.rs</code></a></p>
+<p>See also:
+<a href="https://github.com/LilyRL/sge/blob/master/examples/space_game.rs"><code>/examples/space_game.rs</code></a>
+for a more complex example of how particles can be used.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="persistence-api"><a class="header" href="#persistence-api">Persistence API</a></h1>
+<p>When making a game or application you will inevitably want to store some kind of
+state between launches, so that you aren’t starting from scratch each time you
+run the program. SGE provides a simple high-performance interface to make this easier.</p>
+<p>To use the persistence API, create a state struct, and annotate it with the
+<code>#[persistent]</code> attribute macro.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[persistent]
+struct State {
+    score: u64,
+    player_color: Color,
+    enemy_state: EnemyState,
+}
+
+#[persistent]
+struct EnemyState {
+    health: f32,
+    position: Vec2,
+}
+<span class="boring">}</span></code></pre>
+<p>The persistent macro will generate the functions <code>state.save(path)</code>,
+<code>State::load(path)</code>, <code>state.to_bytes()</code>, and <code>State::from_bytes(bytes)</code>, for any
+struct that has fields that are all also serializable.</p>
+<p>Serializable types include:</p>
+<ul>
+<li>Most builtin Rust types, numbers, strings, etc.</li>
+<li>Anything supported by <code>rkyv</code> out of the box.</li>
+<li>Most of the SGE types you would want to use this with
+<ul>
+<li>Vectors</li>
+<li>Both colour types</li>
+</ul>
+</li>
+<li>Any other custom struct you write, as long as it is also decorated with <code>#[persistent]</code></li>
+</ul>
+<h2 id="performance"><a class="header" href="#performance">Performance</a></h2>
+<p>This uses <a href="https://docs.rs/rkyv/latest/rkyv/"><code>rkyv</code></a> under the hood, which
+performs zero-copy serialization, meaning that it is very fast, so you can save
+often if you want. Do not save/load every frame.</p>
+<hr>
+<p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/persistence.rs"><code>/examples/persistence</code></a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="physics-api"><a class="header" href="#physics-api">Physics API</a></h1>
+<p>The physics API is based on <a href="https://docs.rs/rapier2d/latest/rapier2d/"><code>rapier2d</code></a>.</p>
+<p>Create a <a href="https://docs.rs/sge/latest/sge/prelude/physics/struct.PhysicsWorld.html"><code>PhysicsWorld</code></a> with <code>PhysicsWorld::new()</code>. This returns a <code>WorldRef</code> that you call <code>.update()</code> on each frame to step the simulation.</p>
+<p>Rapier2D uses positive y up, but SGE uses positive y down, so coordinates
+converted before being returned, so that the position in the world can be the
+same as the position onscreen. A conversion rate of 100 pixels per Rapier2D
+meter is used.</p>
+<pre class="playground"><code class="language-rust">#[main("Physics")]
+fn main() {
+    let mut world = PhysicsWorld::new();
+
+    loop {
+        world.update();
+
+        if should_quit() {
+            break;
+        }
+
+        next_frame().await;
+    }
+}</code></pre>
+<h2 id="creating-objects"><a class="header" href="#creating-objects">Creating Objects</a></h2>
+<p>There are three types of physics objects:</p>
+<ul>
+<li><strong>Dynamic</strong>: affected by gravity and forces, collides with everything.</li>
+<li><strong>Fixed</strong>: immovable, used for walls, floors, and static geometry.</li>
+<li><strong>Kinematic</strong>: moved manually (e.g. via <code>set_position</code>), but participates in collision detection.</li>
+</ul>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let dynamic_obj = world.create_dynamic(Bounds::Circle(20.0));
+let wall = world.create_fixed(Bounds::Rect(Vec2::new(1000.0, 50.0)));
+let platform = world.create_kinematic(Bounds::Rect(Vec2::new(200.0, 20.0)));
+<span class="boring">}</span></code></pre>
+<p>Each of these also has a <code>_with</code> variant that accepts a <code>ColliderConfig</code> for customizing physical material properties:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let bouncy = world.create_dynamic_with(
+    Bounds::Circle(15.0),
+    ColliderConfig::default()
+        .restitution(0.9)
+        .friction(0.1)
+        .density(2.0),
+);
+<span class="boring">}</span></code></pre>
+<p>Objects can be removed with <code>.remove()</code>.</p>
+<p>Once created, objects can be manipulated using the methods on the <code>ObjectRef</code> struct.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let obj = world
+    .create_dynamic(Bounds::Circle(15.0))
+    .with_position(Vec2::new(200.0, 100.0))
+    .with_velocity(Vec2::new(150.0, 0.0))
+    .with_ccd(); // continuous collision detection
+
+// Reading state
+let pos = obj.get_position();
+let vel = obj.get_velocity();
+let rot = obj.get_rotation(); // all rotations are in radians
+let mass = obj.get_mass();
+
+obj.set_position(Vec2::new(300.0, 200.0));
+obj.set_velocity(Vec2::new(0.0, -100.0));
+obj.set_rotation(std::f32::consts::PI * 0.25);
+
+obj.add_velocity(Vec2::new(50.0, 0.0));
+obj.add_force(Vec2::new(0.0, -500.0));
+obj.move_by(Vec2::new(5.0, 0.0));
+
+obj.set_angvel(2.0); // rad/s
+obj.add_angvel(0.5);
+<span class="boring">}</span></code></pre>
+<h2 id="bounds"><a class="header" href="#bounds">Bounds</a></h2>
+<p><code>Bounds</code> describes the shape of a collider. The available variants are:</p>
+<ul>
+<li><code>Bounds::Circle(radius)</code></li>
+<li><code>Bounds::Rect(Vec2)</code>: full size from center</li>
+<li><code>Bounds::Capsule { half_height, radius }</code>: vertical capsule</li>
+<li><code>Bounds::CapsuleX { half_width, radius }</code>: horizontal capsule</li>
+<li><code>Bounds::Triangle(a, b, c)</code>: relative to the object’s position</li>
+<li><code>Bounds::ConvexHull(points)</code>: computed from a point cloud</li>
+<li><code>Bounds::Polyline(points)</code>: a series of connected line segments, useful for terrain</li>
+<li><code>Bounds::Line { a, b }</code></li>
+<li><code>Bounds::Compound(children)</code>: multiple shapes combined, each with an offset</li>
+</ul>
+<h2 id="sensors"><a class="header" href="#sensors">Sensors</a></h2>
+<p>Sensors are not physical objects, other objects will pass right through them,
+but they still check if something is colliding with them.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let sensor = world
+    .create_fixed_with(Bounds::Circle(80.0), ColliderConfig::default().sensor(true))
+    .with_position(Vec2::new(400.0, 300.0));
+
+if sensor.is_colliding() {
+    // something is inside the sensor
+}
+<span class="boring">}</span></code></pre>
+<h2 id="collisions"><a class="header" href="#collisions">Collisions</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>if obj.is_colliding() { ... }
+
+if obj.is_colliding_with(other) { ... }
+
+if let Some(points) = obj.check_collision_with(other) {
+    let normal = points.normal; 
+    let depth = points.depth; 
+}
+
+for info in obj.collisions() {
+    let other: ObjectRef = info.other;
+    let normal: Vec2 = info.points.normal;
+    match info.event {
+        CollisionType::Started =&gt; { /* wasn't colliding last frame, colliding now */  }
+        CollisionType::Ongoing =&gt; { /* colliding last frame, still colliding now */  }
+        CollisionType::Stopped =&gt; { /* was colliding last frame, not anymore */ }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="world-settings"><a class="header" href="#world-settings">World Settings</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>world.set_gravity(980.0);  // in pixels/world units, so 9.8 will be very slow
+let g = world.get_gravity();
+<span class="boring">}</span></code></pre>
+<h2 id="debug-visualization"><a class="header" href="#debug-visualization">Debug Visualization</a></h2>
+<p>You can draw outlines of all colliders and collision normals for debugging:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>world.draw_colliders();
+// or
+world.draw_colliders_world();
+<span class="boring">}</span></code></pre>
+<p>Colliders are drawn in red, objects currently in collision are highlighted in yellow with arrows showing the collision normals.</p>
+<hr>
+<p>See: <a href="https://docs.rs/sge/latest/sge/prelude/physics/index.html">physics module</a></p>
+<p>See also: <a href="https://github.com/LilyRL/sge/blob/master/examples/physics.rs"><code>/examples/physics.rs</code></a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="post-processing-effects"><a class="header" href="#post-processing-effects">Post-processing effects</a></h1>
+<p>You can apply post processsing effects onto the screen with one of the following functions:</p>
+<ul>
+<li><a href="https://docs.rs/sge/latest/sge/prelude/post_processing/fn.bloom_screen.html"><code>bloom_screen</code></a></li>
+<li><a href="https://docs.rs/sge/latest/sge/prelude/post_processing/fn.blur_screen.html"><code>blur_screen</code></a></li>
+<li><a href="https://docs.rs/sge/latest/sge/prelude/post_processing/fn.brighten_screen.html"><code>brighten_screen</code></a></li>
+<li><a href="https://docs.rs/sge/latest/sge/prelude/post_processing/fn.chromatic_abberation_screen.html"><code>chromatic_abberation_screen</code></a></li>
+<li><a href="https://docs.rs/sge/latest/sge/prelude/post_processing/fn.contrast_screen.html"><code>contrast_screen</code></a></li>
+<li><a href="https://docs.rs/sge/latest/sge/prelude/post_processing/fn.film_grain_screen.html"><code>film_grain_screen</code></a></li>
+<li><a href="https://docs.rs/sge/latest/sge/prelude/post_processing/fn.greyscale_screen.html"><code>greyscale_screen</code></a></li>
+<li><a href="https://docs.rs/sge/latest/sge/prelude/post_processing/fn.hue_rotate_screen.html"><code>hue_rotate_screen</code></a></li>
+<li><a href="https://docs.rs/sge/latest/sge/prelude/post_processing/fn.invert_screen.html"><code>invert_screen</code></a></li>
+<li><a href="https://docs.rs/sge/latest/sge/prelude/post_processing/fn.pixelate_screen.html"><code>pixelate_screen</code></a></li>
+<li><a href="https://docs.rs/sge/latest/sge/prelude/post_processing/fn.saturate_screen.html"><code>saturate_screen</code></a></li>
+<li><a href="https://docs.rs/sge/latest/sge/prelude/post_processing/fn.sharpen_screen.html"><code>sharpen_screen</code></a></li>
+<li><a href="https://docs.rs/sge/latest/sge/prelude/post_processing/fn.vignette_screen.html"><code>vignette_screen</code></a></li>
+</ul>
+<p>These effects will be applied to everything that has already been rendered out
+on the screen, but not anything that was rendered afterwards. This will also
+create new draw queues.</p>
+<hr>
+<p>See: <a href="https://docs.rs/sge/latest/sge/prelude/post_processing/index.html">post processing module</a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="render-textures"><a class="header" href="#render-textures">Render Textures</a></h1>
+<p>You may for whatever reason want to render to a texture instead of the screen,
+you can do this with render textures, which are just a collection of a normal color texture and depth
+texture.</p>
+<p>You can create a texture with <code>create_empty_render_texture()</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let size = UVec2::new(50, 50);
+let render_texture = create_empty_render_texture(size.x, size.y)?;
+
+loop {
+    clear_screen(Color::BLACK);
+    
+    // any drawing functions run after this function will draw to the texture
+    // instead of the screen. you don't need to pass anything extra into them.
+    // be careful to always call end_rendering_to_texture().
+    // i would recommend to reduce the chance of bugs that you never call end_rendering
+    // in a different part of the code as start.
+    start_rendering_to_texture(render_texture);
+    
+    // actually clearing texture
+    clear_screen(Color::WHITE);
+    draw_square(vec2(10.0, 10.0), 50.0, Color::SKY_500);
+    
+    end_rendering_to_texture();
+    
+    if should_quit() {
+        break;
+    }
+
+    next_frame().await;
+}
+<span class="boring">}</span></code></pre>
+<p>Some use cases to consider:</p>
+<ul>
+<li>Using a lower resolution for a retro-effect, but with better performance than
+drawing at full resolution and then using <code>pixelate_screen()</code>.</li>
+<li>Splitscreen multiplayer, draw once for each player to textures, and then
+position them on the screen.</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="advanced-shapes"><a class="header" href="#advanced-shapes">Advanced Shapes</a></h1>
 <p>Shapes that cannot be represented by vertices (i.e.: have smooth edges, like
@@ -761,8 +1385,43 @@ additional effects like a drop shadow, corner radius, or a patterned fill.</p>
 
 draw_sdf(object);
 <span class="boring">}</span></code></pre>
+<p>Here is a sample of the shapes, patterns and effects possible (from the SDF example).</p>
+<hr>
+<p><img src="sdf.jpg" alt="SDF showcase"></p>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/sdf/index.html">SDF module</a></p>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/sdf.rs"><code>/exampes/sdf.rs</code></a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="storage-api"><a class="header" href="#storage-api">Storage API</a></h1>
+<p>Games often have a lot of unrelated systems running in parallel. This can lead
+to lots of confusing code to manage the state of all the different parts of your
+code, and extra effort to make state availible to the functions that need to
+read/mutate it.</p>
+<p>In complex projects, you may choose to use the storage API to mitigate this
+complexity, at the cost of it being less clear what parts of the code could be
+mutating state.</p>
+<p>The storage API lets you store and retrieve custom state structs from a global
+store. Just create a unique state type, and use <code>storage_init_state</code> to store
+it, and <code>storage_get_state</code> and <code>storage_get_state_mut</code> to retrieve it.</p>
+<pre class="playground"><code class="language-rust">struct MyState {
+    score: usize,
+}
+
+fn main() {
+    // ...
+    
+    let state = MyState { score: 0 };
+    storage_store_state(state);
+    
+    // ...
+}
+
+fn show_score(pos: Vec2) {
+    let state = storage_get_state::&lt;MyState&gt;();
+    draw_text(state.score.to_string(), pos);
+}</code></pre>
+<p>There are some other functions you may want to do with storage listed <a href="https://docs.rs/sge/latest/sge/prelude/storage/index.html">here</a>.</p>
+<hr>
+<p>See: <a href="https://docs.rs/sge/latest/sge/prelude/storage/index.html">storage module</a></p>
 
                     </main>
 

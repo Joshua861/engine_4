@@ -63,6 +63,7 @@ pub fn rand_ratio(numerator: u32, denominator: u32) -> bool {
     get_random().rng.random_ratio(numerator, denominator)
 }
 
+/// returns the number one more than what it returned last time you called it
 pub fn get_next_counter() -> usize {
     let state = get_random();
     let n = state.counter;

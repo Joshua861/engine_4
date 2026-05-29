@@ -20,6 +20,12 @@ let object = Sdf::pentagram(c, 50.0)
 draw_sdf(object);
 ```
 
+Here is a sample of the shapes, patterns and effects possible (from the SDF example).
+
+---
+   
+![SDF showcase](./sdf.jpg)
+
 See: [SDF module](https://docs.rs/sge/latest/sge/prelude/sdf/index.html)
 
 See: [`/exampes/sdf.rs`](https://github.com/LilyRL/sge/blob/master/examples/sdf.rs)

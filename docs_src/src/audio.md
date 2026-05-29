@@ -32,7 +32,13 @@ Sounds can be played in one of two ways:
    ```
    
    You can find a list of effects in the [`SoundBuilder` documentation](https://docs.rs/sge/latest/sge/prelude/audio/struct.SoundBuilder.html).
+  
+---
    
 See: [`/examples/simple_sound.rs`](https://github.com/LilyRL/sge/blob/master/examples/simple_sound.rs)
 
 See: [sound module documentation](https://docs.rs/sge/latest/sge/prelude/audio/index.html)
+
+See also:
+[`/examples/space_game.rs`](https://github.com/LilyRL/sge/blob/master/examples/space_game.rs)
+for a game with sound effects.

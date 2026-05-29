@@ -35,10 +35,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-96eaa717.js";
+            window.path_to_searchindex_js = "searchindex-6f7b9601.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-99acb6e2.js"></script>
+        <script src="toc-041f1d14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -183,27 +183,29 @@
                         <h1 id="textures"><a class="header" href="#textures">Textures</a></h1>
 <p>Textures can be loaded using one of the following:</p>
 <ul>
-<li><code>include_texture!</code>: Bake bytes of image file into binary, and load them from
-that. This comes with the benefit of working without using any outside files
-from the executable, meaning you only need to give someone one file to play
-your game.</li>
+<li><code>include_texture!</code>: Bake bytes of image file into binary, and load them from that. This comes with the benefit of working without using any outside files from the executable, meaning you only need to give someone one file to play your game.</li>
 <li><code>load_texture_sync</code>: synchronously load texture from file path.</li>
 <li><code>load_texture_from_bytes_sync</code>: synchronously load texture from bytes.</li>
 <li><code>load_texture</code>: asynchronously load texture from file path.</li>
 <li><code>load_texture_from_bytes</code>: asynchronously load texture from bytes.</li>
 </ul>
-<p>All of these functions return a <code>TextureRef</code>, which is just a wrapper around an
-integer, and can be passed around/copied at almost 0 cost. This reference is
-also guaranteed to always be valid, so long as you don’t use any of the <code>unsafe</code>
-functions associated with <code>Ref</code> types.</p>
+<p>All of these functions return a <code>TextureRef</code>, which is just a wrapper around an integer, and can be passed around/copied at almost 0 cost. This reference is also guaranteed to always be valid, so long as you don’t use any of the <code>unsafe</code> functions associated with <code>Ref</code> types.</p>
+<p>You can inspect the total number of currently tracked textures in the engine by calling <code>num_registered_textures()</code>.</p>
 <p>Textures can be drawn by using one of the following:</p>
 <ul>
 <li><code>draw_texture(_world)</code>: simply draws a texture at some position at some scale.</li>
-<li><code>draw_texture_scaled(_world)</code>: allows you to draw the texture at any scale,
-without respecting the original aspect ratio.</li>
-<li><code>draw_texture_ex</code>: contains additional options like an arbitrary transform,
-tint, and the option to only draw a region of the whole texture.</li>
+<li><code>draw_texture_scaled(_world)</code>: allows you to draw the texture at any scale, without respecting the original aspect ratio.</li>
+<li><code>draw_texture_ex</code>: contains additional options like an arbitrary transform, tint, and the option to only draw a region of the whole texture.</li>
 </ul>
+<p>Apart from loading raw files, you can manage textures using the following methods:</p>
+<ul>
+<li><code>SgeTexture::empty(width, height)</code>: Allocates a blank, uninitialized texture container on the GPU with the specified pixel dimensions.</li>
+<li><code>SgeTexture::from_engine_image(image)</code>: Converts an in-memory <code>Image</code> struct directly into an uploadable texture layout.</li>
+<li><code>download_to_image(&amp;self)</code>: Downloads pixel data from the GPU back into an accessible CPU-side <code>Image</code>. This supports both float and unsigned byte formats with three or four color components, and automatically maps raw byte streams back into standard pixel collections.</li>
+</ul>
+<p>Example of advanced texture drawing from <a href="https://github.com/LilyRL/sge/blob/master/examples/demo.rs#L127"><code>demo.rs</code></a>:</p>
+<p><img src="./textures.jpg" alt="two textures, one with custom transform and a blue tint"></p>
+<hr>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/textures/index.html">texture module documentation</a></p>
 
                     </main>
