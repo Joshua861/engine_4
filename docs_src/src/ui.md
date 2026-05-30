@@ -21,6 +21,18 @@ slider element allows you to create the bar and handle from other UI elements,
 meaning you can have it look however you want. For an example of how this works,
 check the [source code for the flat slider](https://docs.rs/sge_ui/1.1.4/src/sge_ui/library/flat/slider.rs.html#8)
 
+The UI is immediate mode, which makes it much simpler to use, as you don't have
+to tell the UI that some value has changed, you just pass in the true value
+every frame and it updates instantly. Since the UI is rebuilt every frame, you
+need some way of retaining state from one frame to the next, like the position
+of a floating window, this is done by using unique IDs for UI elements. The
+easiest way to do this is by using the `id!()` macro, which will give you a
+unique but constant random number. You can see this being used around the UI
+examples. If you need to create a derivative ID from an existing ID, for example
+when creating a complex component that needs multiple stateful widgets, use
+`original_id ^ id!()` (that's an XOR), to create a new unique ID that is based
+on the original one.
+
 > "The best way to learn about something is to see and use it for yourself" 
 >
 > -Sun Tzu
@@ -29,7 +41,7 @@ Thanks Sun, for this reason, I will point you to the `ui_showcase` example. If
 you dont remember how to run examples, check the introduction chapter. This
 example has a list of every UI element, and shows them in action. I would
 reccomend you look through this with the code for the example open in another
-window to see how everything is used.
+window to see how everything is used. The source code is [here](https://github.com/LilyRL/sge/blob/master/examples/ui_showcase.rs).
 
 Here's an awful looking screenshot from the `ui` example.
 

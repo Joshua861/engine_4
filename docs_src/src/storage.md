@@ -11,7 +11,9 @@ mutating state.
 
 The storage API lets you store and retrieve custom state structs from a global
 store. Just create a unique state type, and use `storage_init_state` to store
-it, and `storage_get_state` and `storage_get_state_mut` to retrieve it. 
+it, and `storage_get_state` and `storage_get_state_mut` to retrieve it. You can
+have a max of one store per type, so if you need to store a single `bool`, for
+example, create a struct wrapper around the boolean value before storing it.
 
 ```rust
 struct MyState {

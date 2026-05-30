@@ -64,6 +64,10 @@ color.blend_halfway(other)
 Color::grey(0.5) // brightness
 ```
 
+See: [`/examples/tailwind_colors.rs`](https://github.com/LilyRL/sge/blob/master/examples/tailwind_colors.rs)
+
+See: [`/examples/css_colors.rs`](https://github.com/LilyRL/sge/blob/master/examples/css_colors.rs)
+
 ## Palettes
 
 Tailwind color palettes are availible from 50 to 950.

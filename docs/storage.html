@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-3ba8ee9c.js";
+            window.path_to_searchindex_js = "searchindex-0a38da9d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-130a2ce0.js"></script>
@@ -190,7 +190,9 @@ complexity, at the cost of it being less clear what parts of the code could be
 mutating state.</p>
 <p>The storage API lets you store and retrieve custom state structs from a global
 store. Just create a unique state type, and use <code>storage_init_state</code> to store
-it, and <code>storage_get_state</code> and <code>storage_get_state_mut</code> to retrieve it.</p>
+it, and <code>storage_get_state</code> and <code>storage_get_state_mut</code> to retrieve it. You can
+have a max of one store per type, so if you need to store a single <code>bool</code>, for
+example, create a struct wrapper around the boolean value before storing it.</p>
 <pre class="playground"><code class="language-rust">struct MyState {
     score: usize,
 }

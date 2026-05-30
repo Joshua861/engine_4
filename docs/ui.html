@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-3ba8ee9c.js";
+            window.path_to_searchindex_js = "searchindex-0a38da9d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-130a2ce0.js"></script>
@@ -198,6 +198,17 @@ adding a fill, adding a border, centering an element, adding padding, etc.</p>
 slider element allows you to create the bar and handle from other UI elements,
 meaning you can have it look however you want. For an example of how this works,
 check the <a href="https://docs.rs/sge_ui/1.1.4/src/sge_ui/library/flat/slider.rs.html#8">source code for the flat slider</a></p>
+<p>The UI is immediate mode, which makes it much simpler to use, as you don’t have
+to tell the UI that some value has changed, you just pass in the true value
+every frame and it updates instantly. Since the UI is rebuilt every frame, you
+need some way of retaining state from one frame to the next, like the position
+of a floating window, this is done by using unique IDs for UI elements. The
+easiest way to do this is by using the <code>id!()</code> macro, which will give you a
+unique but constant random number. You can see this being used around the UI
+examples. If you need to create a derivative ID from an existing ID, for example
+when creating a complex component that needs multiple stateful widgets, use
+<code>original_id ^ id!()</code> (that’s an XOR), to create a new unique ID that is based
+on the original one.</p>
 <blockquote>
 <p>“The best way to learn about something is to see and use it for yourself”</p>
 <p>-Sun Tzu</p>
@@ -206,7 +217,7 @@ check the <a href="https://docs.rs/sge_ui/1.1.4/src/sge_ui/library/flat/slider.r
 you dont remember how to run examples, check the introduction chapter. This
 example has a list of every UI element, and shows them in action. I would
 reccomend you look through this with the code for the example open in another
-window to see how everything is used.</p>
+window to see how everything is used. The source code is <a href="https://github.com/LilyRL/sge/blob/master/examples/ui_showcase.rs">here</a>.</p>
 <p>Here’s an awful looking screenshot from the <code>ui</code> example.</p>
 <p><img src="./ui.jpg" alt="Showcase of ui elements"></p>
 <hr>
