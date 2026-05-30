@@ -37,7 +37,6 @@ pub struct Input {
 
 global!(Input, input);
 
-#[cfg(feature = "gamepad")]
 pub fn init() -> Result<(), InputError> {
     set_input(Input::new()?);
     info!("Initialized input");
