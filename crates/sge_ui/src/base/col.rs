@@ -45,7 +45,8 @@ pub(crate) fn col_calc_preferred_dimensions(children: &[Child], gap: f32) -> Vec
         })
         .unwrap_or(0.0);
 
-    let y = dimensions.clone().map(|d| d.y).sum::<f32>() + gap * (children.len() - 1) as f32;
+    let y = dimensions.clone().map(|d| d.y).sum::<f32>()
+        + gap * (children.len().saturating_sub(1)) as f32;
 
     Vec2::new(x, y)
 }

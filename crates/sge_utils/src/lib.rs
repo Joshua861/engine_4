@@ -439,3 +439,77 @@ impl<T: PartialOrd, const N: usize> PartialOrd for ConstantArray<T, N> {
         self.as_slice().partial_cmp(other.as_slice())
     }
 }
+
+pub trait OptionLoggingUtils {
+    fn info_if_none(self, msg: &'static str) -> Self;
+    fn debug_if_none(self, msg: &'static str) -> Self;
+    fn warn_if_none(self, msg: &'static str) -> Self;
+    fn error_if_none(self, msg: &'static str) -> Self;
+}
+
+impl<T> OptionLoggingUtils for Option<T> {
+    fn debug_if_none(self, msg: &'static str) -> Self {
+        if self.is_none() {
+            log::debug!("{}", msg);
+        }
+        self
+    }
+
+    fn info_if_none(self, msg: &'static str) -> Self {
+        if self.is_none() {
+            log::info!("{}", msg);
+        }
+        self
+    }
+
+    fn warn_if_none(self, msg: &'static str) -> Self {
+        if self.is_none() {
+            log::warn!("{}", msg);
+        }
+        self
+    }
+
+    fn error_if_none(self, msg: &'static str) -> Self {
+        if self.is_none() {
+            log::error!("{}", msg);
+        }
+        self
+    }
+}
+
+pub trait ResultLoggingUtils {
+    fn info_if_err(self, msg: &'static str) -> Self;
+    fn debug_if_err(self, msg: &'static str) -> Self;
+    fn warn_if_err(self, msg: &'static str) -> Self;
+    fn error_if_err(self, msg: &'static str) -> Self;
+}
+
+impl<T, E> ResultLoggingUtils for Result<T, E> {
+    fn debug_if_err(self, msg: &'static str) -> Self {
+        if self.is_err() {
+            log::debug!("{}", msg);
+        }
+        self
+    }
+
+    fn info_if_err(self, msg: &'static str) -> Self {
+        if self.is_err() {
+            log::info!("{}", msg);
+        }
+        self
+    }
+
+    fn warn_if_err(self, msg: &'static str) -> Self {
+        if self.is_err() {
+            log::warn!("{}", msg);
+        }
+        self
+    }
+
+    fn error_if_err(self, msg: &'static str) -> Self {
+        if self.is_err() {
+            log::error!("{}", msg);
+        }
+        self
+    }
+}

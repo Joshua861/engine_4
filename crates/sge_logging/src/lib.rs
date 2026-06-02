@@ -118,26 +118,25 @@ impl Logger {
     }
 
     fn log(&mut self, record: &log::Record) {
-        if let Some(line) = self.format_log(record) {
+        if !record.file().is_some_and(|f| f.contains("winit")) || record.level() > Level::Debug {
+            let line = self.format_log(record);
             line.print_to_stdout();
             self.lines.push(line);
         }
     }
 
-    fn format_log(&self, record: &log::Record) -> Option<RichText> {
-        let s = record.args().as_str()?;
+    fn format_log(&self, record: &log::Record) -> RichText {
+        let s = record.args().to_string();
         let color = Self::color(record.level());
         let level_text = Self::text(record.level());
 
         match self.verbosity {
-            Verbosity::Low => Some(RichText::new(vec![
-                RichTextBlock::from_color(s, color).with_mono(),
-            ])),
-            Verbosity::Medium => Some(RichText::new(vec![
+            Verbosity::Low => RichText::new(vec![RichTextBlock::from_color(s, color).with_mono()]),
+            Verbosity::Medium => RichText::new(vec![
                 RichTextBlock::from_color(level_text, color).with_mono(),
                 RichTextBlock::from_color(format!(" {s}"), Color::WHITE).with_mono(),
-            ])),
-            Verbosity::High => Some(RichText::new(vec![
+            ]),
+            Verbosity::High => RichText::new(vec![
                 RichTextBlock::from_color(
                     format!(
                         "[{}::{}:{}]",
@@ -150,7 +149,7 @@ impl Logger {
                 .with_mono(),
                 RichTextBlock::from_color(level_text, color).with_mono(),
                 RichTextBlock::from_color(format!(" {s}"), Color::WHITE).with_mono(),
-            ])),
+            ]),
         }
     }
 }

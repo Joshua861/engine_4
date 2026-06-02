@@ -1,7 +1,7 @@
 use sge::prelude::*;
 use ui::*;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 #[persistent(diff, lerp)]
 pub struct State {
     position: Vec2,
@@ -13,6 +13,9 @@ const INTERPOLATION_DELAY: f32 = UPDATE_RATE * 4.0;
 
 #[main("Multiplayer")]
 fn main() {
+    set_min_log_level(LevelFilter::Debug);
+    set_max_drawn_log_lines(50);
+
     let mut state = MultiplayerState::new(
         State {
             position: Vec2::ZERO,
@@ -28,14 +31,12 @@ fn main() {
         let now = time();
 
         if once_per_n_seconds(UPDATE_RATE) {
-            state.update(now).unwrap();
+            state.update().unwrap();
         }
 
         let movement =
             pressed_movement_vector(KeyCode::KeyW, KeyCode::KeyS, KeyCode::KeyA, KeyCode::KeyD);
         state.your_state_mut().position += movement * delta_time() * 300.0;
-
-        draw_fps();
 
         draw_user(
             state.your_username().to_string(),
@@ -51,6 +52,8 @@ fn main() {
 
         chat(&mut state);
 
+        draw_logs();
+
         if should_quit() {
             break;
         }
@@ -58,6 +61,8 @@ fn main() {
     }
 
     state.disconnect();
+    // so it has time to send the disconnect message before being killed
+    std::thread::sleep(Duration::from_millis(50));
 }
 
 struct ChatState {
@@ -92,33 +97,41 @@ fn chat(state: &mut MultiplayerState<State>) {
         input_state.value = "".to_string();
     }
 
-    let ui = BoxFill::new(
-        flat::BG0,
-        Padding::all(
-            20.0,
-            Col::new([
-                FlexRow::with_gap(
-                    10.0,
-                    [
-                        FlexBox::Flex(flat::TextInput::new(flat::BG1, input_id)),
-                        FlexBox::Fixed(flat::Button::text(flat::BG1, flat::BG2, button_id, "Send")),
-                    ],
-                ),
-                Scroll::new(
-                    id!(),
-                    Col::with_gap(
+    let ui = Align::bottom_left(
+        BoxFill::new(
+            flat::BG0,
+            Padding::all(
+                20.0,
+                Col::new([
+                    FlexRow::with_gap(
                         10.0,
-                        messages
-                            .iter()
-                            .map(|r| RichTextNode::new(r.clone()))
-                            .collect::<Vec<_>>(),
+                        [
+                            FlexBox::Flex(flat::TextInput::new(flat::BG1, input_id)),
+                            FlexBox::Fixed(flat::Button::text(
+                                flat::BG1,
+                                flat::BG2,
+                                button_id,
+                                "Send",
+                            )),
+                        ],
                     ),
-                )
-                .padding_vertical(20.0),
-            ]),
-        ),
+                    Scroll::new(
+                        id!(),
+                        Col::with_gap(
+                            10.0,
+                            messages
+                                .iter()
+                                .map(|r| RichTextNode::new(r.clone()))
+                                .collect::<Vec<_>>(),
+                        ),
+                    )
+                    .padding_vertical(20.0),
+                ]),
+            ),
+        )
+        .sized_wh(600.0, 400.0),
     )
-    .sized_wh(600.0, 400.0);
+    .sized(window_size());
 
     draw_ui(ui, Vec2::ZERO);
 }

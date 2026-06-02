@@ -43,6 +43,8 @@ const ANNOUNCE_SELF: &str = "announce-self";
 const REQUEST_DATA: &str = "request-data";
 const DISCONNECT: &str = "disconnect";
 const NOTIFICATION: &str = "notification";
+const PING: &str = "ping";
+const PONG: &str = "pong";
 
 #[derive(Serialize, Deserialize)]
 pub struct IttyMessage {
@@ -77,6 +79,12 @@ impl MultiplayerBackend for IttyBackend {
             Message::Notification { user_id, data } => {
                 self.send_payload(user_id, base64::encode(data), NOTIFICATION)
             }
+            Message::Ping { user_id, user } => {
+                self.send_payload(user_id, user.to_string(), PING);
+            }
+            Message::Pong { user_id } => {
+                self.send_payload(user_id, String::new(), PONG);
+            }
         }
     }
 
@@ -85,11 +93,11 @@ impl MultiplayerBackend for IttyBackend {
             .drain()
             .into_iter()
             .filter_map(|raw| {
-                fn inner(raw: Value) -> Option<Message> {
+                fn inner(raw: &Value) -> Option<Message> {
                     let target_value = if raw.get("message").is_some() {
                         raw.get("message")?.clone()
                     } else {
-                        raw
+                        raw.clone()
                     };
 
                     let msg: IttyMessage = serde_json::from_value(target_value).ok()?;
@@ -122,20 +130,38 @@ impl MultiplayerBackend for IttyBackend {
                             user_id: msg.user_id,
                             data: base64::decode(&msg.data).ok()?,
                         }),
+                        PING => Some(Message::Ping {
+                            user_id: msg.user_id,
+                            user: msg.data.parse().ok()?,
+                        }),
+                        PONG => Some(Message::Pong {
+                            user_id: msg.user_id,
+                        }),
                         _ => None,
                     }
                 }
 
-                match inner(raw) {
+                match inner(&raw) {
                     Some(v) => Some(v),
                     None => {
-                        warn!(
-                            "Received malformed message or unhandled server frame. Will be ignored."
-                        );
-                        None
+                        dbg!(raw);
+
+                        match raw {
+                            _  => {
+                                warn!(
+                                    "Received malformed message or unhandled server frame. Will be ignored."
+                                );
+                                None
+                            }
+                        }
+
                     }
                 }
             })
             .collect()
+    }
+
+    fn init(&mut self) {
+        self.socket.open();
     }
 }

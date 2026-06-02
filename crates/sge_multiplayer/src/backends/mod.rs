@@ -3,6 +3,7 @@ pub mod itty;
 pub trait MultiplayerBackend {
     fn send_message(&mut self, message: Message);
     fn recieve_messages(&mut self) -> Vec<Message>;
+    fn init(&mut self);
 }
 
 #[derive(Debug)]
@@ -14,4 +15,6 @@ pub enum Message {
     RequestData { user_id: u32, user: u32 },
     Disconnect { user_id: u32 },
     Notification { user_id: u32, data: Vec<u8> },
+    Ping { user_id: u32, user: u32 },
+    Pong { user_id: u32 },
 }

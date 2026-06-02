@@ -52,7 +52,7 @@ impl IttySocket {
             options.insert("as".into(), alias);
         }
         if opts.echo {
-            options.insert("echo".into(), "true".into());
+            options.insert("echo".into(), "false".into());
         }
         if opts.announce {
             options.insert("announce".into(), "true".into());

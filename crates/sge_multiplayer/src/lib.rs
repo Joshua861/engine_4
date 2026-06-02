@@ -2,14 +2,16 @@ use std::collections::HashMap;
 
 use backends::{Message, MultiplayerBackend, itty::IttyBackend};
 use flate2::{Compress, CompressError, Compression, DecompressError, FlushCompress};
-use log::warn;
+use log::{debug, info, warn};
 use sge_error_union::ErrorUnion;
 use sge_persistence::{Diffable, PartialLerp, Persistent};
-use sge_rng::rand;
+use sge_rng::{rand, rand_f32};
+use sge_time::time;
+use sge_utils::ResultLoggingUtils;
 
 pub mod backends;
 
-pub struct MultiplayerState<T: Diffable + Persistent + Clone>
+pub struct MultiplayerState<T: Diffable + Persistent + Clone + PartialEq>
 where
     T::Diff: Persistent,
 {
@@ -21,6 +23,7 @@ where
     users: HashMap<u32, UserData<T>>,
     backend: Box<dyn MultiplayerBackend>,
     notifications: Vec<Notification>,
+    ping_time: f32,
 }
 
 pub struct Notification {
@@ -35,6 +38,8 @@ where
     pub username: String,
     pub current: Option<T>,
     pub history: Vec<(f32, T)>,
+    pub last_heard_from: f32,
+    pub last_ping: f32,
 }
 
 impl<T: Diffable + PartialLerp + Clone> UserData<T>
@@ -80,7 +85,7 @@ pub enum MultiplayerError {
     Persistence(sge_persistence::Error),
 }
 
-impl<T: Diffable + Persistent + Clone> MultiplayerState<T>
+impl<T: Diffable + Persistent + Clone + PartialEq> MultiplayerState<T>
 where
     T::Diff: Persistent,
 {
@@ -106,34 +111,90 @@ where
         username: String,
         backend: impl MultiplayerBackend + 'static,
     ) -> Self {
-        Self {
+        let mut s = Self {
             current,
             old,
             username,
             user_id: rand(),
-            buffer: vec![],
+            buffer: vec![0; 512],
             users: HashMap::new(),
             backend: Box::new(backend),
             notifications: vec![],
-        }
-    }
+            ping_time: 10.0 + rand_f32() * 5.0, // randomness so not all clients ping at the same time, probably more efficient
+        };
 
-    pub fn update(&mut self, current_time: f32) -> Result<(), MultiplayerError> {
-        let messages = self.backend.recieve_messages();
-
-        for message in messages {
-            self.handle_message(message, current_time)?;
-        }
-
-        let data = self.diff_compressed()?.to_vec();
-        self.backend.send_message(Message::Diff {
-            user_id: self.user_id,
-            data,
+        s.backend.init();
+        s.backend.send_message(Message::Join {
+            user_id: s.user_id,
+            username: s.username.clone(),
         });
 
-        self.old = self.current.clone();
+        s
+    }
+
+    pub fn update(&mut self) -> Result<(), MultiplayerError> {
+        let messages = self.backend.recieve_messages();
+        let current_time = time();
+
+        for message in messages {
+            self.handle_message(message, current_time)
+                .warn_if_err("failed to handle message in `update`")?;
+        }
+
+        if self.old != self.current {
+            let data = self
+                .diff_compressed()
+                .warn_if_err("failed to compress diff")?
+                .to_vec();
+            self.backend.send_message(Message::Diff {
+                user_id: self.user_id,
+                data,
+            });
+
+            self.old = self.current.clone();
+        }
+
+        self.check_for_stale_users();
 
         Ok(())
+    }
+
+    pub fn check_for_stale_users(&mut self) {
+        let now = time();
+
+        let mut to_disconnect = vec![];
+
+        for (&id, user) in &mut self.users {
+            // rand_f32 is to offset when each client sends out pings
+            if now - user.last_heard_from > self.ping_time {
+                // needs to be pinged
+
+                if user.last_ping > user.last_heard_from {
+                    // has been pinged
+                    if now - user.last_ping > 5.0 {
+                        // has been a long time with no response, probably not still connected
+                        debug!("{} didnt respond to ping request", user.username);
+                        to_disconnect.push(id);
+                    } else {
+                        // keep waiting
+                    }
+                } else {
+                    // has not been pinged, need to ping them
+                    debug!("{} is stale, pinging", user.username);
+                    user.last_ping = now;
+                    self.backend.send_message(Message::Ping {
+                        user_id: self.user_id,
+                        user: id,
+                    });
+                }
+            } else {
+                // no need to ping
+            }
+        }
+
+        for user_id in to_disconnect {
+            self.disconnect_user(user_id);
+        }
     }
 
     pub fn get_user(&self, user_id: u32) -> Option<&UserData<T>> {
@@ -142,24 +203,6 @@ where
 
     pub fn get_user_mut(&mut self, user_id: u32) -> Option<&mut UserData<T>> {
         self.users.get_mut(&user_id)
-    }
-
-    pub fn receive_updates(&mut self, current_time: f32) -> Result<(), MultiplayerError> {
-        let messages = self.backend.recieve_messages();
-        for message in messages {
-            self.handle_message(message, current_time)?;
-        }
-        Ok(())
-    }
-
-    pub fn send_update(&mut self) -> Result<(), MultiplayerError> {
-        let data = self.diff_compressed()?.to_vec();
-        self.backend.send_message(Message::Diff {
-            user_id: self.user_id,
-            data,
-        });
-        self.old = self.current.clone();
-        Ok(())
     }
 
     pub fn send_notification(&mut self, data: Vec<u8>) {
@@ -176,66 +219,111 @@ where
     ) -> Result<(), MultiplayerError> {
         match message {
             Message::Notification { user_id, data } => {
+                let len = data.len();
                 self.notifications.push(Notification { user_id, data });
+
+                if let Some(user) = self.users.get_mut(&user_id) {
+                    user.last_heard_from = current_time;
+
+                    debug!(
+                        "recieved {} byte notification from user {}, username {}",
+                        len, user_id, self.users[&user_id].username
+                    );
+                } else {
+                    debug!(
+                        "recieved {} byte notification from unknown user {}",
+                        len, user_id
+                    );
+                    warn!(
+                        "Multiplayer: recieved notification message from unregistered user, requesting data"
+                    );
+
+                    self.request_data(user_id);
+                }
             }
             Message::AnnounceSelf { user_id, username } => {
-                if self.users.contains_key(&user_id) {
-                    self.users.get_mut(&user_id).unwrap().username = username;
+                debug!("Recieved AnnounceSelf from {}", username);
+                if let Some(user) = self.users.get_mut(&user_id) {
+                    debug!("    user already registered, updating their username");
+                    user.username = username;
+                    user.last_heard_from = current_time;
                 } else {
+                    debug!("    user not registered, creating user data");
                     self.users.insert(
                         user_id,
                         UserData {
                             username,
                             current: None,
                             history: vec![],
+                            last_heard_from: current_time,
+                            last_ping: 0.0,
                         },
                     );
                 }
             }
             Message::Join { user_id, username } => {
-                if self.users.contains_key(&user_id) {
+                if let Some(user) = self.users.get_mut(&user_id) {
                     warn!(
                         "Multiplayer: recieved join message for user already registered: {user_id} {username}"
                     );
-                    self.users.get_mut(&user_id).unwrap().username = username;
+
+                    user.username = username;
+                    user.last_heard_from = current_time;
                 } else {
+                    info!("{username} joined");
+
                     self.users.insert(
                         user_id,
                         UserData {
                             username,
                             current: None,
                             history: vec![],
+                            last_heard_from: current_time,
+                            last_ping: 0.0,
                         },
                     );
 
-                    self.announce_self()?;
+                    self.announce_self()
+                        .warn_if_err("failed to announce self")?;
                 }
             }
             Message::Diff { user_id, data } => {
-                let diff = self.uncompress_diff(&data)?;
+                debug!("recieved {} byte diff from {user_id}", data.len());
+                let diff = self
+                    .uncompress_diff(&data)
+                    .warn_if_err("failed to uncompress recieved diff")?;
                 if let Some(user) = self.users.get_mut(&user_id) {
                     if let Some(user_data) = &mut user.current {
                         user_data.apply_diff(diff);
 
                         user.history.push((current_time, user_data.clone()));
+                        user.last_heard_from = current_time;
 
                         if user.history.len() > 15 {
                             user.history.remove(0);
                         }
                     } else {
-                        warn!("requesting missing data for {} {}", user_id, user.username);
+                        warn!(
+                            "Multiplayer: requesting missing data for {} {}",
+                            user_id, user.username
+                        );
                         self.request_data(user_id);
                     }
                 } else {
-                    warn!("recieved diff message from unregistered user, requesting data");
+                    warn!(
+                        "Multiplayer: recieved diff message from unregistered user, requesting data"
+                    );
                     self.request_data(user_id);
                 }
             }
             Message::InitialState { user_id, data } => {
-                let parsed_state = T::from_bytes(data)?;
+                let parsed_state = T::from_bytes(data).warn_if_err(
+                    "failed to parse state from bytes recieved in inital state message",
+                )?;
                 if let Some(user) = self.users.get_mut(&user_id) {
                     user.current = Some(parsed_state.clone());
                     user.history = vec![(current_time, parsed_state)];
+                    user.last_heard_from = current_time;
                 } else {
                     self.users.insert(
                         user_id,
@@ -243,20 +331,53 @@ where
                             username: String::new(),
                             current: Some(parsed_state.clone()),
                             history: vec![(current_time, parsed_state)],
+                            last_heard_from: current_time,
+                            last_ping: 0.0,
                         },
                     );
                 }
             }
-            Message::RequestData { user, .. } => {
+            Message::RequestData { user, user_id } => {
                 if user == self.user_id {
-                    self.announce_self()?;
+                    self.announce_self().warn_if_err(
+                        "failed to announce self in response to data request message",
+                    )?;
+                }
+
+                if let Some(user) = self.users.get_mut(&user_id) {
+                    user.last_heard_from = current_time;
                 }
             }
             Message::Disconnect { user_id } => {
-                self.users.remove(&user_id);
+                self.disconnect_user(user_id);
+            }
+            Message::Ping { user_id, user } => {
+                if let Some(user) = self.users.get_mut(&user_id) {
+                    user.last_heard_from = current_time;
+                }
+
+                if user == self.user_id {
+                    self.backend.send_message(Message::Pong {
+                        user_id: self.user_id,
+                    });
+                }
+            }
+            Message::Pong { user_id } => {
+                if let Some(user) = self.users.get_mut(&user_id) {
+                    user.last_heard_from = current_time;
+                }
             }
         }
         Ok(())
+    }
+
+    fn disconnect_user(&mut self, user_id: u32) {
+        info!(
+            "user {:?} ({}) disconnected",
+            self.users.get(&user_id).map(|u| u.username.as_str()),
+            user_id
+        );
+        self.users.remove(&user_id);
     }
 
     fn request_data(&mut self, user: u32) {
@@ -278,7 +399,10 @@ where
 
         self.backend.send_message(Message::InitialState {
             user_id: self.user_id,
-            data: self.current.to_bytes()?,
+            data: self
+                .current
+                .to_bytes()
+                .warn_if_err("Could not convert state to bytes in announce_self")?,
         });
 
         Ok(())
@@ -295,6 +419,8 @@ where
             username: self.username.clone(),
             current: Some(self.current.clone()),
             history: vec![],
+            last_heard_from: time(),
+            last_ping: 0.0,
         }
     }
 
@@ -335,11 +461,15 @@ where
     }
 
     pub fn diff_compressed(&mut self) -> Result<&[u8], MultiplayerError> {
-        let bytes = self.diff_bytes()?;
+        let bytes = self
+            .diff_bytes()
+            .warn_if_err("could not convert diff to bytes in `diff_compressed`")?;
         let mut c = Compress::new(Compression::fast(), false);
 
         loop {
-            let status = c.compress(&bytes, &mut self.buffer, FlushCompress::Finish)?;
+            let status = c
+                .compress(&bytes, &mut self.buffer, FlushCompress::Finish)
+                .warn_if_err("error compressing in `diff_compressed`")?;
 
             if status == flate2::Status::StreamEnd {
                 break;
@@ -355,11 +485,13 @@ where
     pub fn uncompress_diff(&mut self, compressed: &[u8]) -> Result<T::Diff, MultiplayerError> {
         let mut d = flate2::Decompress::new(false);
         loop {
-            let status = d.decompress(
-                compressed,
-                &mut self.buffer,
-                flate2::FlushDecompress::Finish,
-            )?;
+            let status = d
+                .decompress(
+                    compressed,
+                    &mut self.buffer,
+                    flate2::FlushDecompress::Finish,
+                )
+                .warn_if_err("error decompressing in `uncompress_diff`")?;
             if status == flate2::Status::StreamEnd {
                 break;
             }
@@ -368,7 +500,21 @@ where
             self.buffer.resize(new_len, 0);
         }
         let n = d.total_out() as usize;
-        Ok(T::Diff::from_bytes(&self.buffer[..n])?)
+
+        // copy to u64s so it's properly aligned
+        let aligned: Vec<u64> = self.buffer[..n]
+            .chunks(8)
+            .map(|chunk| {
+                let mut arr = [0u8; 8];
+                arr[..chunk.len()].copy_from_slice(chunk);
+                u64::from_ne_bytes(arr)
+            })
+            .collect();
+
+        let aligned_bytes = unsafe { std::slice::from_raw_parts(aligned.as_ptr() as *const u8, n) };
+
+        Ok(T::Diff::from_bytes(aligned_bytes)
+            .warn_if_err("error converting diff to bytes in `uncompress_diff`")?)
     }
 }
 

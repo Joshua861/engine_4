@@ -15,4 +15,6 @@ serde_json.workspace = true
 base64 = "0.22.1"
 log.workspace = true
 sge_rng.workspace = true
+sge_utils.workspace = true
+sge_time.workspace = true
 
