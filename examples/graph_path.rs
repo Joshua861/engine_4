@@ -6,6 +6,7 @@ async fn main() -> AResult<()> {
     let mut pan = PanningCameraController::new();
 
     let mut network = Network::new();
+    network.use_expensive_algorithms = true;
     init_network(&mut network);
 
     let mut path = vec![];
@@ -15,6 +16,11 @@ async fn main() -> AResult<()> {
         network.update(true);
 
         network.calc_positions_by_force(100.0, 20);
+
+        if key_pressed(KeyCode::KeyR) {
+            network.clear();
+            init_network(&mut network);
+        }
 
         if let Some(hovered) = network.hovered() {
             path = network.find_path(hovered, network.nth_node(1).unwrap());

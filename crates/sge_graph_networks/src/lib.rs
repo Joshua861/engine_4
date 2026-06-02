@@ -14,6 +14,7 @@ pub struct Network {
     nodes: Vec<Node>,
     hovered: NodeId,
     node_radius: f32,
+    pub use_expensive_algorithms: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -57,6 +58,7 @@ impl Network {
             nodes: vec![],
             hovered: NodeId(usize::MAX),
             node_radius: 20.0,
+            use_expensive_algorithms: false,
         }
     }
 
@@ -120,7 +122,30 @@ impl Network {
             for i in 0..self.nodes.len() {
                 let delta = self.nodes[i].pos;
                 let dist = delta.length_squared().max(0.01);
-                displacements[i] -= (delta / dist) * (dist * 0.004);
+                displacements[i] -= (delta / dist) * (dist * 0.008);
+            }
+
+            // take 3 points along graph connection line and add repulsion to all nodes that arent part of the connection
+            if self.use_expensive_algorithms {
+                for (a, b) in self.iter_connections() {
+                    let a_pos = self.get(a).pos;
+                    let b_pos = self.get(b).pos;
+
+                    for t in [0.25, 0.5, 0.75] {
+                        let point = a_pos * (1.0 - t) + b_pos * t;
+
+                        #[allow(clippy::needless_range_loop)]
+                        for i in 0..self.nodes.len() {
+                            if self.nodes[i].id == a || self.nodes[i].id == b {
+                                continue;
+                            }
+
+                            let delta = self.nodes[i].pos - point;
+                            let dist = delta.length().max(0.01);
+                            displacements[i] += (delta / dist) * (l / dist) * 0.16;
+                        }
+                    }
+                }
             }
 
             let temp = l * 0.1;

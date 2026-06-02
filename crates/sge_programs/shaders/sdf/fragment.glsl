@@ -811,30 +811,46 @@ void main() {
     }
 
     float fill_mask = smoothstep(aa, -aa, dist);
+
     vec4 fill_color = eval_fill(p, gl_FragCoord.xy, dist);
-    fill_color.a *= fill_mask;
 
     vec4 stroke_layer = vec4(0.0);
+    float stroke_mask = 0.0;
+    float stroke_dist = 1e6;
+
     if (v_stroke_width > 0.0 && v_stroke_color.a > 0.0) {
-        float stroke_dist;
-        if (v_stroke_type == 0) {
-            // none
-        } else if (v_stroke_type == 1) {
+        if (v_stroke_type == 1) {
             // inside
             stroke_dist = abs(dist + v_stroke_width * 0.5) - v_stroke_width * 0.5;
         } else if (v_stroke_type == 2) {
             // outside
             stroke_dist = abs(dist - v_stroke_width * 0.5) - v_stroke_width * 0.5;
-        } else {
+        } else if (v_stroke_type == 3) {
             // centered
             stroke_dist = abs(dist) - v_stroke_width * 0.5;
         }
-        float stroke_mask = smoothstep(aa, -aa, stroke_dist);
-        stroke_layer = vec4(v_stroke_color.rgb, v_stroke_color.a * stroke_mask);
+
+        stroke_mask = smoothstep(aa, -aa, stroke_dist);
     }
 
-    vec4 fill_final = vec4(fill_color.rgb * fill_color.a, fill_color.a);
-    vec4 stroke_final = vec4(v_stroke_color.rgb * stroke_layer.a, stroke_layer.a);
+    vec3 base_rgb = fill_color.rgb;
+    float base_alpha = fill_color.a * fill_mask;
+
+    if (stroke_mask > 0.0) {
+        vec3 stroke_rgb = v_stroke_color.rgb;
+
+        float edge_mix = smoothstep(-aa, aa, stroke_dist);
+
+        base_rgb = mix(stroke_rgb, fill_color.rgb, edge_mix);
+
+        base_alpha = max(base_alpha, v_stroke_color.a * stroke_mask);
+    }
+
+    vec4 fill_final = vec4(base_rgb * base_alpha, base_alpha);
+
+    vec4 stroke_final =
+        vec4(v_stroke_color.rgb * v_stroke_color.a * stroke_mask,
+            v_stroke_color.a * stroke_mask);
     vec4 shadow_final = vec4(v_shadow_color.rgb * shadow_layer.a, shadow_layer.a);
 
     vec4 final_color = vec4(0.0);

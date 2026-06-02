@@ -522,6 +522,27 @@ draw_variants! {
 }
 
 draw_variants! {
+    fn solid_arrow_middle(
+        start: Vec2,
+        end: Vec2,
+        thickness: f32,
+        color: Color,
+    ) [renderer] {
+        let dir = (end - start).normalize();
+        let perp = Vec2::new(-dir.y, dir.x);
+        let h = thickness * 4.0;
+        let mid = (start + end) / 2.0;
+        let points = [
+            mid + dir * h / 2.0,
+            mid - dir * h / 2.0 + perp * h / 2.0,
+            mid - dir * h / 2.0 - perp * h / 2.0,
+        ];
+        draw_line_to(start, end, thickness, color, renderer);
+        draw_tri_to(points[0], points[1], points[2], color, renderer);
+    }
+}
+
+draw_variants! {
     fn sharp_arrow(
         start: Vec2,
         end: Vec2,
@@ -758,7 +779,7 @@ draw_variants! {
     fn cubic_bezier(a: Vec2, b: Vec2, c: Vec2, d: Vec2, color: Color, thickness: f32) [renderer] {
         let mut renderer = renderer;
         renderer.add_sdf(
-            Sdf::cubic_bezier(a, b, c, d).with_fill_solid(color).with_corner_radius(thickness / 2.0)
+            Sdf::cubic_bezier(a, b, c, d).with_fill_solid(color).with_corner_radius(thickness)
         );
     }
 }

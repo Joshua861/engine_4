@@ -3,7 +3,7 @@
 - [X] Fix quads
 - [ ] Check if bounding boxes are excessively big
   - [ ] they definately are. fix it now!!!
-- [ ] improve multiplayer documentation with links after docs.rs finishes building
+- [X] improve multiplayer documentation with links after docs.rs finishes building
 - [X] Fix gradients
 - [X] Fix radial gradients
 - [X] Move things using 4 point custom shapes to quad sdfs
