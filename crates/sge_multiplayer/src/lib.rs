@@ -130,7 +130,7 @@ where
             user_id: s.user_id,
             username: s.username.clone(),
         });
-        s.announce_self();
+        let _ = s.announce_self();
 
         s
     }
