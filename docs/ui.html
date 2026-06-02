@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-b6b2c3d7.js";
+            window.path_to_searchindex_js = "searchindex-d7d926d0.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-c49a7683.js"></script>
@@ -220,6 +220,103 @@ reccomend you look through this with the code for the example open in another
 window to see how everything is used. The source code is <a href="https://github.com/LilyRL/sge/blob/master/examples/ui_showcase.rs">here</a>.</p>
 <p>Here’s an awful looking screenshot from the <code>ui</code> example.</p>
 <p><img src="./ui.jpg" alt="Showcase of ui elements"></p>
+<h2 id="custom-ui-elements"><a class="header" href="#custom-ui-elements">Custom UI elements</a></h2>
+<p>You can create simple widgets from combinations of existing widgets, through a
+function. All <code>library</code> widgets are created this way.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn centered_black_text(text: impl ToString) -&gt; UiRef {
+    Center::new(Text::new_with_color(text, Color::BLACK))
+}
+
+
+fn card(bg: Color, child: Child) -&gt; UiRef {
+    Fit::new(BoxFill::new(bg, Padding::all(20.0, child)))
+}
+<span class="boring">}</span></code></pre>
+<p>More complicated widgets may require you to express something not possible with
+existing widgets. For more low level control, you can create a struct that
+implements the <code>UiNode</code> trait. For example, here is a simplified version of the
+<code>Center</code> node.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// note that all UI nodes must implement Debug
+#[derive(Debug)]
+pub struct Center {
+    child: Child
+}
+
+impl Center {
+    pub fn new(child: Child) -&gt; UiRef {
+        // to ref converts an implementer of UiNode to a generic reference
+        // that can be used inside of other nodes
+        Self { child }.to_ref()
+    }
+}
+
+impl UiNode for Center {
+    fn preferred_dimensions(&amp;self) -&gt; Vec2 {
+        // means it will take up the maximum space it can inside of a container
+        Vec2::INFINITY
+    }
+
+    fn size(&amp;self, area: Area) -&gt; Vec2 {
+        // uses up the entire area and puts the child in the center
+        area.size
+    }
+
+    fn draw(&amp;self, mut area: Area, ui: &amp;UiState) -&gt; Vec2 {
+        let inner = self.child.node.size(area);
+        let diff = (area.size - inner).max(Vec2::ZERO);
+        area.top_left += diff / 2.0;
+
+        // if it's a container make sure to actually draw the child/children
+        self.child.node.draw(area, ui);
+
+        // we return the amount of space we used up
+        // this should always be the same as self.size(),
+        // but saves computing it twice in the case of something with complex
+        // layout work to do
+        area.size
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>If you’re creating something more complex still, like some sort of input
+element, you may need to have some internal mutable state for that UI element.
+There is a builtin helper for this, the <code>State</code> struct, which stores state from
+a constant ID.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Debug)]
+pub struct TextInput {
+    state: State&lt;InputState&gt;,
+}
+
+#[derive(Default, Debug)]
+pub struct InputState {
+    value: String,
+}
+
+impl TextInput {
+    pub fn new(
+        id: usize,
+    ) -&gt; UiRef {
+        let state = State::from_id(id);
+        TextInput { state }.to_ref()
+    }
+}
+
+impl UiNode for TextInput {
+    // ...
+    
+    fn draw(&amp;self, area: Area, ui: &amp;UiState) -&gt; Vec2 {
+        let state = self.state.get_or_default();
+        // or: self.state.get_or_create_mut(|| InputState { value: String::new() });
+        
+        // now you have a mutable reference to a persistent state object for this ui element
+    }
+}
+<span class="boring">}</span></code></pre>
 <hr>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/ui/index.html">ui module</a></p>
 

@@ -47,6 +47,107 @@ Here's an awful looking screenshot from the `ui` example.
 
 ![Showcase of ui elements](./ui.jpg)
 
+## Custom UI elements
+
+You can create simple widgets from combinations of existing widgets, through a
+function. All `library` widgets are created this way.
+
+```rust
+fn centered_black_text(text: impl ToString) -> UiRef {
+    Center::new(Text::new_with_color(text, Color::BLACK))
+}
+
+
+fn card(bg: Color, child: Child) -> UiRef {
+    Fit::new(BoxFill::new(bg, Padding::all(20.0, child)))
+}
+```
+
+More complicated widgets may require you to express something not possible with
+existing widgets. For more low level control, you can create a struct that
+implements the `UiNode` trait. For example, here is a simplified version of the
+`Center` node.
+
+```rust
+// note that all UI nodes must implement Debug
+#[derive(Debug)]
+pub struct Center {
+    child: Child
+}
+
+impl Center {
+    pub fn new(child: Child) -> UiRef {
+        // to ref converts an implementer of UiNode to a generic reference
+        // that can be used inside of other nodes
+        Self { child }.to_ref()
+    }
+}
+
+impl UiNode for Center {
+    fn preferred_dimensions(&self) -> Vec2 {
+        // means it will take up the maximum space it can inside of a container
+        Vec2::INFINITY
+    }
+
+    fn size(&self, area: Area) -> Vec2 {
+        // uses up the entire area and puts the child in the center
+        area.size
+    }
+
+    fn draw(&self, mut area: Area, ui: &UiState) -> Vec2 {
+        let inner = self.child.node.size(area);
+        let diff = (area.size - inner).max(Vec2::ZERO);
+        area.top_left += diff / 2.0;
+
+        // if it's a container make sure to actually draw the child/children
+        self.child.node.draw(area, ui);
+
+        // we return the amount of space we used up
+        // this should always be the same as self.size(),
+        // but saves computing it twice in the case of something with complex
+        // layout work to do
+        area.size
+    }
+}
+```
+
+If you're creating something more complex still, like some sort of input
+element, you may need to have some internal mutable state for that UI element.
+There is a builtin helper for this, the `State` struct, which stores state from
+a constant ID.
+
+```rust
+#[derive(Debug)]
+pub struct TextInput {
+    state: State<InputState>,
+}
+
+#[derive(Default, Debug)]
+pub struct InputState {
+    value: String,
+}
+
+impl TextInput {
+    pub fn new(
+        id: usize,
+    ) -> UiRef {
+        let state = State::from_id(id);
+        TextInput { state }.to_ref()
+    }
+}
+
+impl UiNode for TextInput {
+    // ...
+    
+    fn draw(&self, area: Area, ui: &UiState) -> Vec2 {
+        let state = self.state.get_or_default();
+        // or: self.state.get_or_create_mut(|| InputState { value: String::new() });
+        
+        // now you have a mutable reference to a persistent state object for this ui element
+    }
+}
+```
+
 ---
 
 See: [ui module](https://docs.rs/sge/latest/sge/prelude/ui/index.html)
