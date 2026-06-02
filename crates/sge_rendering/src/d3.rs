@@ -1,4 +1,3 @@
-use sge_vectors::Mat4;
 use glium::{DrawParameters, Surface};
 use sge_camera::get_camera_3d;
 use sge_config::get_dithering;
@@ -7,6 +6,7 @@ use sge_math::transform::Transform3D;
 use sge_rng::rand;
 use sge_time::delta_time;
 use sge_time::time;
+use sge_vectors::Mat4;
 use sge_window::window_size;
 
 use crate::materials::Material;

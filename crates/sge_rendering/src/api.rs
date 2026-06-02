@@ -1,4 +1,3 @@
-use sge_vectors::{Vec2, Vec3};
 use glium::texture::TextureCreationError;
 use log::warn;
 use sge_camera::cameras_for_resolution;
@@ -8,6 +7,7 @@ use sge_programs::{
     BLINN_PHONG_3D_PROGRAM, FLAT_3D_PROGRAM, GOURAUD_3D_PROGRAM, TEXTURED_3D_PROGRAM,
 };
 use sge_textures::TextureRef;
+use sge_vectors::{Vec2, Vec3};
 use sge_window::window_size;
 
 use crate::{

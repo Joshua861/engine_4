@@ -1,5 +1,5 @@
-use sge_vectors::{BVec3, Mat3, Mat4, Quat, Vec3, Vec4Swizzles};
 use glium::BackfaceCullingMode;
+use sge_vectors::{BVec3, Mat3, Mat4, Quat, Vec3, Vec4Swizzles};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 #[derive(Clone, Copy, Debug)]

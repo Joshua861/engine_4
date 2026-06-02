@@ -40,14 +40,14 @@
 
 use core::f32::consts::{FRAC_PI_2, PI, TAU};
 
-use crate::{ops, primitives::*, NormedVectorSpace, ScalarField, Vec2, Vec3};
+use crate::{NormedVectorSpace, ScalarField, Vec2, Vec3, ops, primitives::*};
 use rand::{
+    RngExt,
     distr::{
+        Distribution,
         uniform::SampleUniform,
         weighted::{Weight, WeightedIndex},
-        Distribution,
     },
-    RngExt,
 };
 
 /// Exposes methods to uniformly sample a variety of primitive shapes.

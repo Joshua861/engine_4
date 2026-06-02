@@ -1,7 +1,7 @@
-use crate::{primitives::HalfSpace, Mat4, Vec3, Vec4};
+use crate::{Mat4, Vec3, Vec4, primitives::HalfSpace};
 
 #[cfg(feature = "bevy_reflect")]
-use bevy_reflect::{std_traits::ReflectDefault, Reflect};
+use bevy_reflect::{Reflect, std_traits::ReflectDefault};
 #[cfg(all(feature = "serialize", feature = "bevy_reflect"))]
 use bevy_reflect::{ReflectDeserialize, ReflectSerialize};
 
@@ -114,7 +114,7 @@ mod view_frustum_tests {
     use approx::assert_relative_eq;
 
     use super::ViewFrustum;
-    use crate::{primitives::HalfSpace, Vec3, Vec4};
+    use crate::{Vec3, Vec4, primitives::HalfSpace};
 
     #[test]
     fn cuboid_frustum_corners() {

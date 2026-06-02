@@ -3,15 +3,19 @@ use std::pin::Pin;
 use std::time::Instant;
 
 use glium::winit::{
+    dpi::PhysicalSize,
     event::{Event, WindowEvent},
     event_loop::ActiveEventLoop,
     platform::pump_events::EventLoopExtPumpEvents,
 };
+use log::{error, info};
+use sge_config::{Opts, get_config};
 #[cfg(feature = "debugging")]
 use sge_debugging::get_debug_info;
 #[cfg(feature = "egui")]
 use sge_egui::{egui, get_egui_state};
 use sge_error_union::ErrorUnion;
+use sge_exec::FrameFuture;
 #[cfg(feature = "input")]
 use sge_input::get_input;
 pub use sge_math::collision;
@@ -20,9 +24,12 @@ pub use sge_shapes::d2 as shapes_2d;
 
 const WAIT_FOR_EVENTS_EXTRA_FRAME_DRAWS: usize = 60 * 5; // stops rendering after 300 frames of no input, when config.wait_for_events is true
 
-pub use prelude::*;
+pub use modules::*;
+use sge_time::frames_since_input;
+use sge_window::{get_display, get_window_state, window_size_u32};
 
 pub mod api;
+mod modules;
 pub mod prelude;
 mod user_storage;
 
@@ -89,6 +96,8 @@ pub fn init_custom(mut opts: Opts) -> Result<(), InitError> {
     user_storage::init();
     sge_physics::init();
     sge_exec::init();
+    #[cfg(feature = "multiplayer")]
+    sge_multiplayer::init();
 
     info!("Finished initializing engine.");
 

@@ -1,10 +1,9 @@
 use crate::{
-    ops,
+    Vec2, ops,
     primitives::{
         Capsule2d, Circle, CircularSegment, Primitive2d, Rectangle, RegularPolygon, Rhombus,
         Triangle2d,
     },
-    Vec2,
 };
 
 /// A primitive that can be resized uniformly.

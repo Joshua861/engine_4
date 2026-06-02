@@ -1,4 +1,4 @@
-use sge::*;
+use sge::prelude::*;
 use sge_utils::ConstantArray;
 
 // cannot exceed 32

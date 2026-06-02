@@ -3,12 +3,12 @@ use std::{
     fmt::{Debug, Display},
 };
 
-use sge_vectors::Vec2;
 use nalgebra::{DMatrix, SymmetricEigen};
 use sge_camera::screen_to_world;
 use sge_color::Color;
 use sge_input::last_cursor_pos;
 use sge_rng::id;
+use sge_vectors::Vec2;
 
 pub struct Network {
     nodes: Vec<Node>,

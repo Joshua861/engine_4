@@ -1,4 +1,4 @@
-use sge::*;
+use sge::prelude::*;
 
 #[main("Sectors")]
 async fn main() {

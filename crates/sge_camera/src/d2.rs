@@ -1,5 +1,5 @@
-use sge_vectors::{Mat3, Mat4, Rect, Vec2, Vec4, vec2};
 use glium::winit::window::Window;
+use sge_vectors::{Mat3, Mat4, Rect, Vec2, Vec4, vec2};
 
 const BIG_NUMBER: f32 = 9999.9;
 

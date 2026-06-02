@@ -1,7 +1,7 @@
 use core::f32;
 use std::f32::consts::PI;
 
-use sge::{
+use sge::prelude::{
     icons::{ICON_BOMB, ICON_CARET_DOWN, ICON_CIRCLE_NOTCH, ICON_PLUS_CIRCLE},
     prelude::*,
 };

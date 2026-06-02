@@ -1,6 +1,6 @@
-use sge_vectors::Vec2;
 use sge_camera::{get_camera_2d, get_camera_2d_mut};
 use sge_time::{delta_time, time};
+use sge_vectors::Vec2;
 
 pub struct CameraShakeController {
     trauma: f32,

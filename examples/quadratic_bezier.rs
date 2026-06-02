@@ -1,4 +1,4 @@
-use sge::*;
+use sge::prelude::*;
 
 #[main("Quadratic Bezier")]
 async fn main() {

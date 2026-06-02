@@ -67,8 +67,8 @@
 //!
 
 use crate::{
-    curve::{Curve, CurveExt, FunctionCurve, Interval},
     Dir2, Dir3, Dir3A, Isometry2d, Isometry3d, Quat, Rot2, VectorSpace,
+    curve::{Curve, CurveExt, FunctionCurve, Interval},
 };
 
 #[cfg(feature = "bevy_reflect")]
@@ -1047,7 +1047,7 @@ impl Curve<f32> for ElasticCurve {
 mod easing_functions {
     use core::f32::consts::{FRAC_PI_2, FRAC_PI_3, PI};
 
-    use crate::{ops, FloatPow};
+    use crate::{FloatPow, ops};
 
     #[inline]
     pub(crate) fn linear(t: f32) -> f32 {

@@ -1,0 +1,18 @@
+[package]
+name = "sge_multiplayer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+flate2 = { version = "1.1.9", features = ["zlib-rs"] }
+rkyv.workspace = true
+sge_error_union.workspace = true
+sge_persistence.workspace = true
+tungstenite = { version = "0.24", features = ["rustls-tls-native-roots", "__rustls-tls"] }
+rustls = { version = "0.23", features = ["ring"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+base64 = "0.22.1"
+log.workspace = true
+sge_rng.workspace = true
+

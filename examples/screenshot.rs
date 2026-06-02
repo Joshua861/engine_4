@@ -1,6 +1,6 @@
 use std::f32::consts::FRAC_PI_2;
 
-use sge::*;
+use sge::prelude::*;
 
 #[main("Screenshot")]
 async fn main() -> anyhow::Result<()> {

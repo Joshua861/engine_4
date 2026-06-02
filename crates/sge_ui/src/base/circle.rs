@@ -1,6 +1,6 @@
-use sge_vectors::vec2;
 use sge_api::Drawable;
 use sge_shapes::d2::{Circle, CircleWithOutline};
+use sge_vectors::vec2;
 
 use super::*;
 

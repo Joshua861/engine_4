@@ -1,13 +1,13 @@
 //! Contains [`Bounded2d`] implementations for [geometric primitives](crate::primitives).
 
 use crate::{
+    Dir2, Isometry2d, Mat2, Rot2, Vec2,
     bounding::BoundingVolume,
     ops,
     primitives::{
         Annulus, Arc2d, Capsule2d, Circle, CircularSector, CircularSegment, Ellipse, Line2d,
         Plane2d, Primitive2d, Rectangle, RegularPolygon, Rhombus, Ring, Segment2d, Triangle2d,
     },
-    Dir2, Isometry2d, Mat2, Rot2, Vec2,
 };
 use core::f32::consts::{FRAC_PI_2, PI, TAU};
 
@@ -448,6 +448,7 @@ mod tests {
     use glam::Vec2;
 
     use crate::{
+        Dir2, Isometry2d, Rot2,
         bounding::Bounded2d,
         ops::{self, FloatPow},
         primitives::{
@@ -455,7 +456,6 @@ mod tests {
             Plane2d, Polygon, Polyline2d, Rectangle, RegularPolygon, Rhombus, Segment2d,
             Triangle2d,
         },
-        Dir2, Isometry2d, Rot2,
     };
 
     #[test]

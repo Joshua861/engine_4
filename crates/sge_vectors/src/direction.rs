@@ -1,6 +1,6 @@
 use crate::{
-    primitives::{Primitive2d, Primitive3d},
     Quat, Rot2, Vec2, Vec3, Vec3A, Vec4,
+    primitives::{Primitive2d, Primitive3d},
 };
 
 use core::f32::consts::FRAC_1_SQRT_2;
@@ -1490,8 +1490,9 @@ mod tests {
     #[test]
     fn dir4_renorm() {
         // Evil denormalized matrix
-        let mat4 = sge_vectors::Mat4::from_quat(Quat::from_euler(glam::EulerRot::XYZ, 1.0, 2.0, 3.0))
-            * (1.0 + 1e-5);
+        let mat4 =
+            sge_vectors::Mat4::from_quat(Quat::from_euler(glam::EulerRot::XYZ, 1.0, 2.0, 3.0))
+                * (1.0 + 1e-5);
         let mut dir_a = Dir4::from_xyzw(1., 1., 0., 0.).unwrap();
         let mut dir_b = Dir4::from_xyzw(1., 1., 0., 0.).unwrap();
         // We test that renormalizing an already normalized dir doesn't do anything

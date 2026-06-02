@@ -206,11 +206,7 @@ impl Color {
     pub const FUCHSIA_500: Self = Self::new(0.8836879f32, 0.1657466f32, 0.9845014f32);
     pub const FUCHSIA_600: Self = Self::new(0.78360623f32, 0f32, 0.87154114f32);
     pub const FUCHSIA_700: Self = Self::new(0.65847033f32, 0f32, 0.71795124f32);
-    pub const FUCHSIA_800: Self = Self::new(
-        0.54139715f32,
-        0.0051711677f32,
-        0.5817819f32,
-    );
+    pub const FUCHSIA_800: Self = Self::new(0.54139715f32, 0.0051711677f32, 0.5817819f32);
     pub const FUCHSIA_900: Self = Self::new(0.44791514f32, 0.07534375f32, 0.46959668f32);
     pub const FUCHSIA_950: Self = Self::new(0.2938792f32, 0.0014666162f32, 0.3106184f32);
     pub const GRAY_50: Self = Self::new(0.9763947f32, 0.9809919f32, 0.98558956f32);
@@ -267,11 +263,7 @@ impl Color {
     pub const NEUTRAL_700: Self = Self::new(0.2504709f32, 0.2504709f32, 0.2504709f32);
     pub const NEUTRAL_800: Self = Self::new(0.14938208f32, 0.14938208f32, 0.14938208f32);
     pub const NEUTRAL_900: Self = Self::new(0.09052741f32, 0.09052741f32, 0.09052741f32);
-    pub const NEUTRAL_950: Self = Self::new(
-        0.039388236f32,
-        0.039388232f32,
-        0.039388232f32,
-    );
+    pub const NEUTRAL_950: Self = Self::new(0.039388236f32, 0.039388232f32, 0.039388232f32);
     pub const ORANGE_50: Self = Self::new(1f32, 0.9690531f32, 0.9292628f32);
     pub const ORANGE_100: Self = Self::new(1f32, 0.9288763f32, 0.83258474f32);
     pub const ORANGE_200: Self = Self::new(1f32, 0.8411153f32, 0.6568332f32);
@@ -348,11 +340,7 @@ impl Color {
     pub const SLATE_700: Self = Self::new(0.19349995f32, 0.2552661f32, 0.34348714f32);
     pub const SLATE_800: Self = Self::new(0.112127654f32, 0.16004395f32, 0.2386725f32);
     pub const SLATE_900: Self = Self::new(0.057184257f32, 0.09004248f32, 0.16879597f32);
-    pub const SLATE_950: Self = Self::new(
-        0.0074293003f32,
-        0.023281762f32,
-        0.09250506f32,
-    );
+    pub const SLATE_950: Self = Self::new(0.0074293003f32, 0.023281762f32, 0.09250506f32);
     pub const STONE_50: Self = Self::new(0.9805333f32, 0.9805334f32, 0.97756034f32);
     pub const STONE_100: Self = Self::new(0.9608632f32, 0.9608634f32, 0.9579018f32);
     pub const STONE_200: Self = Self::new(0.90670997f32, 0.897532f32, 0.8929411f32);
@@ -363,11 +351,7 @@ impl Color {
     pub const STONE_700: Self = Self::new(0.268488f32, 0.2504235f32, 0.23233125f32);
     pub const STONE_800: Self = Self::new(0.16162395f32, 0.14419484f32, 0.13983768f32);
     pub const STONE_900: Self = Self::new(0.10951208f32, 0.097987704f32, 0.09030699f32);
-    pub const STONE_950: Self = Self::new(
-        0.046959206f32,
-        0.039356116f32,
-        0.035544474f32,
-    );
+    pub const STONE_950: Self = Self::new(0.046959206f32, 0.039356116f32, 0.035544474f32);
     pub const TEAL_50: Self = Self::new(0.94226456f32, 0.99251837f32, 0.9809168f32);
     pub const TEAL_100: Self = Self::new(0.7967793f32, 0.9858462f32, 0.94572645f32);
     pub const TEAL_200: Self = Self::new(0.5870296f32, 0.9674545f32, 0.8945854f32);

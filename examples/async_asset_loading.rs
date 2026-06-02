@@ -1,4 +1,4 @@
-use sge::{
+use sge::prelude::{
     ui::{Center, SizedBox, Text, draw_ui},
     *,
 };

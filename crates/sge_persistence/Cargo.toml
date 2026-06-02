@@ -11,3 +11,5 @@ repository = "https://github.com/LilyRL/sge"
 sge_error_union.workspace = true
 sge_persistence_macros = { path = "../sge_persistence_macros", version = "1.0.1" }
 rkyv.workspace = true
+sge_vectors.workspace = true
+sge_color.workspace = true

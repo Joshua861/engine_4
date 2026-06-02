@@ -1,5 +1,5 @@
-use sge_vectors::Vec2;
 use gilrs::{Axis, Button, Gamepad};
+use sge_vectors::Vec2;
 
 pub trait GamepadExt {
     fn left_stick(&self) -> Vec2;

@@ -9,3 +9,4 @@ si/si_macros/target
 documentation/book
 config.bin
 profile.json.gz
+rust-analyzer-target

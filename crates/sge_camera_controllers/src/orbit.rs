@@ -1,6 +1,6 @@
-use sge_vectors::{Vec2, Vec3};
 use glium::winit::event::MouseButton;
 use sge_input::get_input;
+use sge_vectors::{Vec2, Vec3};
 
 use sge_camera::get_camera_3d_mut;
 

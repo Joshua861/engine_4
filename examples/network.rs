@@ -1,4 +1,4 @@
-use sge::*;
+use sge::prelude::*;
 
 struct State {
     response: Option<Result<String, net::Error>>,

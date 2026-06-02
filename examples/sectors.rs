@@ -1,6 +1,6 @@
 use std::f32::consts::TAU;
 
-use sge::*;
+use sge::prelude::*;
 
 #[main("Sectors")]
 async fn main() {

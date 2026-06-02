@@ -1,6 +1,6 @@
-use sge_vectors::{Mat3, Vec3};
 use sge_color::Color;
 use sge_types::MaterialVertex3D;
+use sge_vectors::{Mat3, Vec3};
 
 use crate::{
     api::create_flat_material,

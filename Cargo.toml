@@ -136,6 +136,7 @@ sge_vectors = { workspace = true }
 sge_window = { workspace = true }
 trig-const = { workspace = true }
 sge_exec = { version = "1.0.0", path = "crates/sge_exec" }
+sge_multiplayer = { version = "0.1.0", path = "crates/sge_multiplayer", optional = true }
 
 [profile.release]
 codegen-units = 1
@@ -169,6 +170,7 @@ default = [
     "material_ui",
     "network",
     "clipboard",
+    "multiplayer",
 ]
 audio = ["dep:sge_audio"]
 debugging = ["dep:sge_debugging"]
@@ -176,6 +178,7 @@ debug_visualisations = ["debugging", "dep:sge_debug_visualisations"]
 # ecs = ["dep:sge_ecs"]
 egui = ["dep:sge_egui"]
 extra_fonts = ["text", "sge_text/extra_fonts"]
+multiplayer = ["dep:sge_multiplayer"]
 gamepad = ["input", "sge_input/gamepad"]
 input = ["dep:sge_input"]
 precise_cursor_movement = ["sge_input/precise_cursor_movement"]
@@ -199,7 +202,6 @@ members = [
     "crates/sge_config",
     "crates/sge_debugging",
     "crates/sge_debug_visualisations",
-    # "crates/sge_ecs",
     "crates/sge_egui",
     "crates/sge_error_union",
     "crates/sge_feature_gated",
@@ -229,6 +231,7 @@ members = [
     "crates/sge_ui",
     "crates/sge_utils",
     "crates/sge_vectors",
-    "crates/sge_window"
+    "crates/sge_window",
+    "crates/sge_multiplayer"
 ]
 resolver = "3"

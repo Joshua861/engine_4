@@ -36,6 +36,7 @@
 - [ ] some kinda mf https://docs.rs/macroquad/latest/macroquad/telemetry/index.html
 - [ ] miniquad backend + web
 - [ ] bitmap fonts
+- [ ] multiplayer "notifications" (itty messages)
 - [ ] ui slideshow from markdown render to textures
 - [X] css colours
 - [ ] unload refs

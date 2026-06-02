@@ -1,14 +1,14 @@
 //! Functionality related to random sampling from triangle meshes.
 
 use crate::{
-    primitives::{Measured2d, Triangle3d},
     ShapeSample, Vec3,
+    primitives::{Measured2d, Triangle3d},
 };
 use alloc::vec::Vec;
 use rand::RngExt;
 use rand_distr::{
-    weighted::{Error as WeightedError, WeightedAliasIndex},
     Distribution,
+    weighted::{Error as WeightedError, WeightedAliasIndex},
 };
 
 /// A [distribution] that caches data to allow fast sampling from a collection of triangles.

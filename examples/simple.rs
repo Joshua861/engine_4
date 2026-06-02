@@ -1,4 +1,4 @@
-use sge::*;
+use sge::prelude::*;
 
 #[main("Simple example")]
 async fn main() -> anyhow::Result<()> {

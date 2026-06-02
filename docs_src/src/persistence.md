@@ -42,5 +42,7 @@ often if you want. Do not save/load every frame.
 
 
 ---
+
+See [`Persistent` trait](https://docs.rs/sge/latest/sge/prelude/persistence/triat.Persistent.html)
    
 See: [`/examples/persistence`](https://github.com/LilyRL/sge/blob/master/examples/persistence.rs)

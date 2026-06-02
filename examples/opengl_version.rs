@@ -1,4 +1,4 @@
-use sge::*;
+use sge::prelude::*;
 
 fn main() {
     init_custom(
