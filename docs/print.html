@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-0a38da9d.js";
+            window.path_to_searchindex_js = "searchindex-0d6bfc22.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-130a2ce0.js"></script>
+        <script src="toc-c49a7683.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -1164,6 +1164,7 @@ struct that has fields that are all also serializable.</p>
 performs zero-copy serialization, meaning that it is very fast, so you can save
 often if you want. Do not save/load every frame.</p>
 <hr>
+<p>See <a href="https://docs.rs/sge/latest/sge/prelude/persistence/triat.Persistent.html"><code>Persistent</code> trait</a></p>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/persistence.rs"><code>/examples/persistence</code></a></p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="physics-api"><a class="header" href="#physics-api">Physics API</a></h1>
@@ -1469,6 +1470,171 @@ window to see how everything is used. The source code is <a href="https://github
 <p><img src="ui.jpg" alt="Showcase of ui elements"></p>
 <hr>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/ui/index.html">ui module</a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="multiplayer"><a class="header" href="#multiplayer">Multiplayer</a></h1>
+<p>Multiplayer netcode for video games can be really hard to write. SGE has a
+system to make this task easier.</p>
+<p>First, create a state struct to hold the data you want associated with each
+player. This struct must implement <code>Clone</code>, and be annotated with
+<code>#[persistent(diff)]</code>. The diff is to allow the multiplayer system to tell what
+part of the struct changed between updates, so it can efficiently only send
+what’s necessary.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Clone)]
+#[persistent(diff)]
+struct State {
+    position: Vec2,
+}
+<span class="boring">}</span></code></pre>
+<p>Then create a <code>MultiplayerState&lt;T&gt;</code> object with the default instance of the
+struct, a username, and room name. Your player will be connected to all other
+players in the same room, so make sure that it is, at least, unique to the video
+game you are developing by adding some random characters at the top for all
+rooms part of your game.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut state = MultiplayerState::new(
+    State {
+        position: Vec2::ZERO,
+    },
+    "Lily".to_string(),
+    "YOUR_GAME_NAME_1897".to_string(),
+);
+<span class="boring">}</span></code></pre>
+<p>From this point, you can call <code>state.update()</code>, at a rate of your choosing. I
+would recommend not sending it too often as this is bad for performance and will
+use more bandwidth, I would recommend 10 or 20 times a second.</p>
+<pre class="playground"><code class="language-rust">// 10 times a second
+const UPDATE_RATE: f32 = 0.1;
+
+fn main() -&gt; anyhow::Result&lt;()&gt; {
+    // ...
+    
+    loop {
+        // ...
+        
+        if once_per_n_seconds(UPDATE_RATE) {
+            state.update()?;
+        }
+    }
+}</code></pre>
+<p>You can access your state (i.e. the state of the player) with
+<code>state.your_state()</code>, <code>state.your_state_mut()</code>, <code>state.your_username()</code>, and
+<code>state.your_user_data()</code>. You can get the states of other users with
+<code>state.other_users()</code>, <code>state.get_user()</code>, and <code>state.get_user_mut()</code>. Note that
+any changes you make to other users states will not be reflected for other
+people, and will be updated by new data from that user changing their own state.</p>
+<p>In your cleanup (end of main function), it is best to add this code:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>state.disconnect();
+// so it has time to send the disconnect message before the process is killed
+std::thread::sleep(Duration::from_millis(50));
+<span class="boring">}</span></code></pre>
+<p>This will tell all other clients in the room that you have disconnected, and
+will remove that user from their list of users, so they won’t still show up as a
+frozen player in game.</p>
+<h2 id="interpolation"><a class="header" href="#interpolation">Interpolation</a></h2>
+<p>If you create something like this:</p>
+<pre class="playground"><code class="language-rust">struct State {
+    position: Vec2,
+}
+
+const UPDATE_RATE: f32 = 0.1;
+
+#[main("Multiplayer")]
+fn main() {
+    let mut state = MultiplayerState::new(
+        State {
+            position: Vec2::ZERO,
+        },
+        "Lily".to_string(),
+        "YOUR_GAME_NAME_1897".to_string(),
+    );
+    
+    loop {
+        // add controls for user to move around, and update the state periodically
+        
+        for (_, user) in state.other_users().iter() {
+            draw_circle_world(user.position, 50.0, Color::RED_500);
+        }
+        
+        // ...
+    }
+}</code></pre>
+<p>…you will notice that people jump around on screen in large intervals, because
+their positions are being updated at a rate less than the frame rate. To fix
+this, without reducing performance, we can use interpolation. You can implement
+interpolation manually using the history of previous state values stored in
+<code>UserData</code>, or use the builtin automatic interpolation. To use automatic
+interpolation, you need to annotate the state struct with <code>#[persistent(diff, lerp)]</code> instead.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Clone)]
+#[persistent(diff, lerp)]
+struct State {
+    position: Vec2,
+}
+<span class="boring">}</span></code></pre>
+<p>This will implement <code>PartialLerp</code> for that type, which interpolates only the
+fields that can be interpolated (<code>f32</code>, <code>f64</code>, <code>Vec2</code>, <code>Vec3</code>, <code>Vec4</code>, <code>Color</code>).
+With this, on types that implement <code>PartialLerp</code>, you can use something like
+this instead, for smooth interpolation without suttering even at low update rates.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>const UPDATE_RATE: f32 = 0.1;
+const INTERPOLATION_DELAY: f32 = UPDATE_RATE * 2.0; // can add more for more reliability; 2*update-rate is standard
+
+// ...
+
+// render target time is the time in the past we should pretend it is,
+// and interpolate based on updates we have gotten from the future (aka present)
+let render_target_time = time() - INTERPOLATION_DELAY;
+for (_, user) in state.other_users().iter() {
+    if let Some(interpolated_state) = user.current_lerped(render_target_time) {
+        draw_circle_world(user.position, 50.0, Color::RED_500);
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="notifications"><a class="header" href="#notifications">Notifications</a></h2>
+<p>If you want to communicate directly with other clients, for example when adding
+a chat system to your game, you can use notifications. Send a notification with
+<code>state.send_notification(data)</code>, and recieve with <code>state.drain_notifications()</code>.
+The data sent in a notification is a <code>Vec&lt;u8&gt;</code>,
+allowing you to send any data you want in any form. You could do this by
+reserving the first number in the series as a type specifier, and interpreting
+the rest of the sequence based on the parsed type. Remember that you can convert
+any type annotated with <code>#[persistent]</code> to bytes with <code>.to_bytes()</code>, and convert
+strings to and from bytes with <code>string.as_bytes()</code> and <code>String::from_utf8()</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut state = MultiplayerState::new(...);
+
+let mut messages = vec![];
+
+for notification in state.drain_notifications() {
+    let Some(user) = other_state.get_user(notification.user_id) else {
+        break;
+    };
+    let username = &amp;user.username;
+    let text = String::from_utf8(notification.data).unwrap();
+
+    messages.push(text);
+}
+
+let message = "hello".to_string();
+state.send_notification(message.as_bytes().to_vec());
+<span class="boring">}</span></code></pre>
+<p>See: <a href="https://docs.rs/sge/latest/sge/prelude/multiplayer/index.html">multiplayer module</a>
+See: <a href="https://github.com/LilyRL/sge/blob/master/examples/multiplayer.rs"><code>/examples/multiplayer.rs</code></a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="platform-support"><a class="header" href="#platform-support">Platform Support</a></h1>
+<p>SGE uses OpenGL, so GPU support is near universal.</p>
+<p>I test on Linux and it is guarenteed to work there. I tried to test on Windows
+but I couldn’t get networking working on Windows to clone the codebase and I
+can’t be bothered really. There’s no reason why it shouldn’t work. If you try it
+on Windows and it fails, please submit an issue and I’ll do my best to fix it.</p>
 
                     </main>
 

@@ -144,17 +144,10 @@ impl MultiplayerBackend for IttyBackend {
                 match inner(&raw) {
                     Some(v) => Some(v),
                     None => {
-                        dbg!(raw);
-
-                        match raw {
-                            _  => {
-                                warn!(
-                                    "Received malformed message or unhandled server frame. Will be ignored."
-                                );
-                                None
-                            }
-                        }
-
+                        warn!(
+                            "Received malformed message or unhandled server frame. Will be ignored."
+                        );
+                        None
                     }
                 }
             })
@@ -163,5 +156,9 @@ impl MultiplayerBackend for IttyBackend {
 
     fn init(&mut self) {
         self.socket.open();
+    }
+
+    fn close(&mut self) {
+        self.socket.close();
     }
 }

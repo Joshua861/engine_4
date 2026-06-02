@@ -346,7 +346,7 @@ pub mod exec {
 #[cfg(feature = "multiplayer")]
 pub mod multiplayer {
     pub use sge_multiplayer::{
-        MultiplayerError, MultiplayerState, UserData,
+        MultiplayerError, MultiplayerState, Notification, UserData,
         backends::{Message, MultiplayerBackend, itty::IttyBackend},
     };
 }

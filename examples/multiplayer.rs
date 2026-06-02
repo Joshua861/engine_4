@@ -1,20 +1,19 @@
 use sge::prelude::*;
 use ui::*;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 #[persistent(diff, lerp)]
-pub struct State {
+struct State {
     position: Vec2,
 }
 
 const NAMES: &[&str] = &["Alice", "Bob", "Charlie", "Derek", "Emily", "Fred", "Gurt"];
-const UPDATE_RATE: f32 = 0.05;
-const INTERPOLATION_DELAY: f32 = UPDATE_RATE * 4.0;
+const UPDATE_RATE: f32 = 0.1;
+const INTERPOLATION_DELAY: f32 = UPDATE_RATE * 2.0;
 
 #[main("Multiplayer")]
 fn main() {
     set_min_log_level(LevelFilter::Debug);
-    set_max_drawn_log_lines(50);
 
     let mut state = MultiplayerState::new(
         State {
@@ -23,8 +22,6 @@ fn main() {
         rand_choice(NAMES).to_string(),
         "example_room".to_string(),
     );
-
-    state.announce_self().unwrap();
 
     loop {
         clear_screen(Color::NEUTRAL_900);

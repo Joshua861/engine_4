@@ -4,16 +4,17 @@ use backends::{Message, MultiplayerBackend, itty::IttyBackend};
 use flate2::{Compress, CompressError, Compression, DecompressError, FlushCompress};
 use log::{debug, info, warn};
 use sge_error_union::ErrorUnion;
-use sge_persistence::{Diffable, PartialLerp, Persistent};
+use sge_persistence::{Diff, Diffable, PartialLerp, Persistent};
 use sge_rng::{rand, rand_f32};
 use sge_time::time;
 use sge_utils::ResultLoggingUtils;
 
 pub mod backends;
 
-pub struct MultiplayerState<T: Diffable + Persistent + Clone + PartialEq>
+pub struct MultiplayerState<T: Diffable + Persistent + Clone>
 where
     T::Diff: Persistent,
+    T::Diff: Diff,
 {
     buffer: Vec<u8>,
     current: T,
@@ -85,9 +86,10 @@ pub enum MultiplayerError {
     Persistence(sge_persistence::Error),
 }
 
-impl<T: Diffable + Persistent + Clone + PartialEq> MultiplayerState<T>
+impl<T: Diffable + Persistent + Clone> MultiplayerState<T>
 where
     T::Diff: Persistent,
+    T::Diff: Diff,
 {
     pub fn new(state: T, username: String, room_name: String) -> Self {
         Self::new_with_old(state.clone(), state, username, room_name)
@@ -128,6 +130,7 @@ where
             user_id: s.user_id,
             username: s.username.clone(),
         });
+        s.announce_self();
 
         s
     }
@@ -141,18 +144,19 @@ where
                 .warn_if_err("failed to handle message in `update`")?;
         }
 
-        if self.old != self.current {
+        let diff = self.diff();
+        if diff.has_changes() {
             let data = self
-                .diff_compressed()
+                .compress_diff(diff)
                 .warn_if_err("failed to compress diff")?
                 .to_vec();
             self.backend.send_message(Message::Diff {
                 user_id: self.user_id,
                 data,
             });
-
-            self.old = self.current.clone();
         }
+
+        self.old = self.current.clone();
 
         self.check_for_stale_users();
 
@@ -412,6 +416,7 @@ where
         self.backend.send_message(Message::Disconnect {
             user_id: self.user_id,
         });
+        self.backend.close();
     }
 
     pub fn your_user_data(&self) -> UserData<T> {
@@ -460,9 +465,9 @@ where
         self.diff().to_bytes()
     }
 
-    pub fn diff_compressed(&mut self) -> Result<&[u8], MultiplayerError> {
-        let bytes = self
-            .diff_bytes()
+    fn compress_diff(&mut self, diff: T::Diff) -> Result<&[u8], MultiplayerError> {
+        let bytes = diff
+            .to_bytes()
             .warn_if_err("could not convert diff to bytes in `diff_compressed`")?;
         let mut c = Compress::new(Compression::fast(), false);
 
@@ -480,6 +485,10 @@ where
         }
         let n = c.total_out() as usize;
         Ok(&self.buffer[..n])
+    }
+
+    pub fn diff_compressed(&mut self) -> Result<&[u8], MultiplayerError> {
+        self.compress_diff(self.diff())
     }
 
     pub fn uncompress_diff(&mut self, compressed: &[u8]) -> Result<T::Diff, MultiplayerError> {

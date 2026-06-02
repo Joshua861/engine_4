@@ -4,6 +4,7 @@ pub trait MultiplayerBackend {
     fn send_message(&mut self, message: Message);
     fn recieve_messages(&mut self) -> Vec<Message>;
     fn init(&mut self);
+    fn close(&mut self);
 }
 
 #[derive(Debug)]
