@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-d8a34202.js";
+            window.path_to_searchindex_js = "searchindex-b6b2c3d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-c49a7683.js"></script>
@@ -1626,6 +1626,15 @@ for notification in state.drain_notifications() {
 let message = "hello".to_string();
 state.send_notification(message.as_bytes().to_vec());
 <span class="boring">}</span></code></pre>
+<h2 id="backends"><a class="header" href="#backends">Backends</a></h2>
+<p>The multiplayer system is generic over a backend. The default backend,
+<code>IttyBackend</code>, uses <a href="https://ittysockets.com/">itty-sockets</a> to transmit data,
+but any struct that implements <code>MultiplayerBackend</code> can be used, for example you
+could write one that sends data over the LAN instead. The <code>MultiplayerBackend</code>
+interface is quite websocket/stream centered, but could easily be made to work
+with a database instead; anything that will broadcast received messages to all
+connected users and supports separate rooms will work.</p>
+<hr>
 <p>See: <a href="https://docs.rs/sge/latest/sge/prelude/multiplayer/index.html">multiplayer module</a></p>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/multiplayer.rs"><code>/examples/multiplayer.rs</code></a></p>
 <div style="break-before: page; page-break-before: always;"></div>

@@ -174,6 +174,18 @@ let message = "hello".to_string();
 state.send_notification(message.as_bytes().to_vec());
 ```
 
+## Backends
+
+The multiplayer system is generic over a backend. The default backend,
+`IttyBackend`, uses [itty-sockets](https://ittysockets.com/) to transmit data,
+but any struct that implements `MultiplayerBackend` can be used, for example you
+could write one that sends data over the LAN instead. The `MultiplayerBackend`
+interface is quite websocket/stream centered, but could easily be made to work
+with a database instead; anything that will broadcast received messages to all
+connected users and supports separate rooms will work.
+
+---
+
 See: [multiplayer module](https://docs.rs/sge/latest/sge/prelude/multiplayer/index.html)
 
 See: [`/examples/multiplayer.rs`](https://github.com/LilyRL/sge/blob/master/examples/multiplayer.rs)
