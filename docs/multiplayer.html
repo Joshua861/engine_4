@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-d7d926d0.js";
+            window.path_to_searchindex_js = "searchindex-767b0ec3.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-c49a7683.js"></script>
@@ -196,7 +196,7 @@ struct State {
     position: Vec2,
 }
 <span class="boring">}</span></code></pre>
-<p>Then create a <code>MultiplayerState&lt;T&gt;</code> object with the default instance of the
+<p>Then create a <a href="https://docs.rs/sge/latest/sge/multiplayer/struct.MultiplayerState.html"><code>MultiplayerState&lt;T&gt;</code></a> object with the default instance of the
 struct, a username, and room name. Your player will be connected to all other
 players in the same room, so make sure that it is, at least, unique to the video
 game you are developing by adding some random characters at the top for all
@@ -211,7 +211,7 @@ rooms part of your game.</p>
     "YOUR_GAME_NAME_1897".to_string(),
 );
 <span class="boring">}</span></code></pre>
-<p>From this point, you can call <code>state.update()</code>, at a rate of your choosing. I
+<p>From this point, you can call <a href="https://docs.rs/sge/latest/sge/multiplayer/struct.MultiplayerState.html#method.update"><code>state.update()</code></a>, at a rate of your choosing. I
 would recommend not sending it too often as this is bad for performance and will
 use more bandwidth, I would recommend 10 or 20 times a second.</p>
 <pre class="playground"><code class="language-rust">// 10 times a second
@@ -229,9 +229,13 @@ fn main() -&gt; anyhow::Result&lt;()&gt; {
     }
 }</code></pre>
 <p>You can access your state (i.e. the state of the player) with
-<code>state.your_state()</code>, <code>state.your_state_mut()</code>, <code>state.your_username()</code>, and
-<code>state.your_user_data()</code>. You can get the states of other users with
-<code>state.other_users()</code>, <code>state.get_user()</code>, and <code>state.get_user_mut()</code>. Note that
+<a href="https://docs.rs/sge/latest/sge/multiplayer/struct.MultiplayerState.html#method.your_state"><code>state.your_state()</code></a>,
+<a href="https://docs.rs/sge/latest/sge/multiplayer/struct.MultiplayerState.html#method.your_state_mut"><code>state.your_state_mut()</code></a>,
+<a href="https://docs.rs/sge/latest/sge/multiplayer/struct.MultiplayerState.html#method.your_username"><code>state.your_username()</code></a>, and
+<a href="https://docs.rs/sge/latest/sge/multiplayer/struct.MultiplayerState.html#method.your_user_data"><code>state.your_user_data()</code></a>. You can get the states of other users with
+<a href="https://docs.rs/sge/latest/sge/multiplayer/struct.MultiplayerState.html#method.other_users"><code>state.other_users()</code></a>,
+<a href="https://docs.rs/sge/latest/sge/multiplayer/struct.MultiplayerState.html#method.get_user"><code>state.get_user()</code></a>,
+and <a href="https://docs.rs/sge/latest/sge/multiplayer/struct.MultiplayerState.html#method.get_user_mut"><code>state.get_user_mut()</code></a>. Note that
 any changes you make to other users states will not be reflected for other
 people, and will be updated by new data from that user changing their own state.</p>
 <p>In your cleanup (end of main function), it is best to add this code:</p>
@@ -276,7 +280,8 @@ fn main() {
 their positions are being updated at a rate less than the frame rate. To fix
 this, without reducing performance, we can use interpolation. You can implement
 interpolation manually using the history of previous state values stored in
-<code>UserData</code>, or use the builtin automatic interpolation. To use automatic
+<a href="https://docs.rs/sge/latest/sge/multiplayer/struct.UserData.html"><code>UserData</code></a>,
+or use the builtin automatic interpolation. To use automatic
 interpolation, you need to annotate the state struct with <code>#[persistent(diff, lerp)]</code> instead.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -286,10 +291,11 @@ struct State {
     position: Vec2,
 }
 <span class="boring">}</span></code></pre>
-<p>This will implement <code>PartialLerp</code> for that type, which interpolates only the
+<p>This will implement <a href="https://docs.rs/sge_persistence/latest/sge_persistence/trait.PartialLerp.html"><code>PartialLerp</code></a> for that type, which interpolates only the
 fields that can be interpolated (<code>f32</code>, <code>f64</code>, <code>Vec2</code>, <code>Vec3</code>, <code>Vec4</code>, <code>Color</code>).
-With this, on types that implement <code>PartialLerp</code>, you can use something like
-this instead, for smooth interpolation without suttering even at low update rates.</p>
+With this, on types that implement <a href="https://docs.rs/sge_persistence/latest/sge_persistence/trait.PartialLerp.html"><code>PartialLerp</code></a>, you can use something like
+this instead, for smooth interpolation without suttering even at low update
+rates. You can implement <a href="https://docs.rs/sge_persistence/latest/sge_persistence/trait.PartialLerp.html"><code>PartialLerp</code></a> manually if you need more control.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>const UPDATE_RATE: f32 = 0.1;
@@ -309,13 +315,17 @@ for (_, user) in state.other_users().iter() {
 <h2 id="notifications"><a class="header" href="#notifications">Notifications</a></h2>
 <p>If you want to communicate directly with other clients, for example when adding
 a chat system to your game, you can use notifications. Send a notification with
-<code>state.send_notification(data)</code>, and recieve with <code>state.drain_notifications()</code>.
+<a href="https://docs.rs/sge/latest/sge/prelude/struct.MultiplayerState.html"><code>state.send_notification(data)</code></a>, and receive with
+<a href="https://docs.rs/sge/latest/sge/prelude/struct.MultiplayerState.html#method.drain_notifications"><code>state.drain_notifications()</code></a>.
 The data sent in a notification is a <code>Vec&lt;u8&gt;</code>,
 allowing you to send any data you want in any form. You could do this by
 reserving the first number in the series as a type specifier, and interpreting
 the rest of the sequence based on the parsed type. Remember that you can convert
-any type annotated with <code>#[persistent]</code> to bytes with <code>.to_bytes()</code>, and convert
-strings to and from bytes with <code>string.as_bytes()</code> and <code>String::from_utf8()</code>.</p>
+any type annotated with <code>#[persistent]</code> to and from bytes with <a href="https://docs.rs/sge_persistence/latest/sge_persistence/trait.Persistent.html"><code>.to_bytes()</code></a> and
+<a href="https://docs.rs/sge_persistence/latest/sge_persistence/trait.Persistent.html"><code>::from_bytes()</code></a>, and convert
+strings to and from bytes with
+<a href="https://doc.rust-lang.org/stable/std/string/struct.String.html#method.as_bytes"><code>string.as_bytes()</code></a>
+and <a href="https://doc.rust-lang.org/stable/std/string/struct.String.html#method.from_utf8"><code>String::from_utf8()</code></a>.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let mut state = MultiplayerState::new(...);
@@ -337,14 +347,14 @@ state.send_notification(message.as_bytes().to_vec());
 <span class="boring">}</span></code></pre>
 <h2 id="backends"><a class="header" href="#backends">Backends</a></h2>
 <p>The multiplayer system is generic over a backend. The default backend,
-<code>IttyBackend</code>, uses <a href="https://ittysockets.com/">itty-sockets</a> to transmit data,
-but any struct that implements <code>MultiplayerBackend</code> can be used, for example you
-could write one that sends data over the LAN instead. The <code>MultiplayerBackend</code>
+<a href="https://docs.rs/sge/latest/sge/multiplayer/struct.IttyBackend.html"><code>IttyBackend</code></a>, uses <a href="https://ittysockets.com/">itty-sockets</a> to transmit data,
+but any struct that implements <a href="https://docs.rs/sge/latest/sge/multiplayer/trait.MultiplayerBackend.html"><code>MultiplayerBackend</code></a> can be used, for example you
+could write one that sends data over the LAN instead. The <a href="https://docs.rs/sge/latest/sge/multiplayer/trait.MultiplayerBackend.html"><code>MultiplayerBackend</code></a>
 interface is quite websocket/stream centered, but could easily be made to work
 with a database instead; anything that will broadcast received messages to all
 connected users and supports separate rooms will work.</p>
 <hr>
-<p>See: <a href="https://docs.rs/sge/latest/sge/prelude/multiplayer/index.html">multiplayer module</a></p>
+<p>See: <a href="https://docs.rs/sge/latest/sge/multiplayer/index.html">multiplayer module</a></p>
 <p>See: <a href="https://github.com/LilyRL/sge/blob/master/examples/multiplayer.rs"><code>/examples/multiplayer.rs</code></a></p>
 
                     </main>

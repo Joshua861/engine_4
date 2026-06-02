@@ -7,7 +7,9 @@ pub use anyhow;
 pub use anyhow::Result as AResult;
 
 pub mod persistence {
-    pub use sge_persistence::{Error as PersistenceError, Persistent, persistent, rkyv};
+    pub use sge_persistence::{
+        Error as PersistenceError, PartialLerp, Persistent, persistent, rkyv,
+    };
 }
 
 pub mod post_processing {
