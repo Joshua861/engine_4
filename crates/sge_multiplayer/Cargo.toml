@@ -2,6 +2,10 @@
 name = "sge_multiplayer"
 version = "1.2.0"
 edition = "2024"
+description = "Multiplayer functionality for SGE"
+authors = [ "Lily Lopes <joshrl@proton.me>" ]
+repository = "https://github.com/LilyRL/sge"
+license = "MIT"
 
 [dependencies]
 flate2 = { version = "1.1.9", features = ["zlib-rs"] }
