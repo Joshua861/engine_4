@@ -9,7 +9,7 @@ repository = "https://github.com/LilyRL/sge"
 
 [dependencies]
 sge_error_union.workspace = true
-sge_persistence_macros = { path = "../sge_persistence_macros", version = "1.0.1" }
+sge_persistence_macros = { path = "../sge_persistence_macros", version = "1.2.0" }
 rkyv.workspace = true
 sge_vectors.workspace = true
 sge_color.workspace = true
