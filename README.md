@@ -1,6 +1,13 @@
 # Simple Game Engine
 
-A simple 2D/3D engine inspired by [macroquad](https://macroquad.rs/).
+A simple 2D/3D engine with:
+
+- Physics
+- UI
+- Multiplayer
+- Advanced, pixel perfect shape rendering
+- Post processing effects
+- Much more
 
 ## Documentation
 
