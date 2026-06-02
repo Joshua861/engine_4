@@ -2,7 +2,7 @@
 
 [package]
 name = "sge"
-version = "1.1.4"
+version = "1.2.0"
 edition = "2024"
 description = "Simple game engine"
 license = "MIT"
@@ -136,7 +136,7 @@ sge_vectors = { workspace = true }
 sge_window = { workspace = true }
 trig-const = { workspace = true }
 sge_exec = { version = "1.0.0", path = "crates/sge_exec" }
-sge_multiplayer = { version = "0.1.0", path = "crates/sge_multiplayer", optional = true }
+sge_multiplayer = { version = "1.2.0", path = "crates/sge_multiplayer", optional = true }
 
 [profile.release]
 codegen-units = 1
