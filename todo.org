@@ -17,6 +17,8 @@
 - [X] trying to draw a grid of squares shows gaps between them. rects are not
   exact, also quads.
 - [ ] test with all feature combinations
+- [ ] utilities for interacting with bezier curves, like finding the coordinates
+  of a point some way along the curve
 - [ ] advertise better
 - [X] rich text outline and bg fill
 - [X] docs
