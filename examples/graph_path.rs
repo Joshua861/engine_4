@@ -15,7 +15,7 @@ async fn main() -> AResult<()> {
         pan.update();
         network.update(true);
 
-        network.calc_positions_by_force(100.0, 20);
+        network.calc_positions_by_force(100.0, 10);
 
         if key_pressed(KeyCode::KeyR) {
             network.clear();

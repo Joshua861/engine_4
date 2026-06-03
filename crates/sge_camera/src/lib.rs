@@ -100,6 +100,22 @@ pub fn world_distance_to_screen(world_length: f32) -> f32 {
     get_camera_2d_mut().world_distance_to_screen(world_length)
 }
 
+pub fn world_to_screen_vec2(dist: Vec2) -> Vec2 {
+    let camera = get_camera_2d_mut();
+    Vec2::new(
+        camera.world_distance_to_screen(dist.x),
+        camera.world_distance_to_screen(dist.y),
+    )
+}
+
+pub fn screen_to_world_vec2(dist: Vec2) -> Vec2 {
+    let camera = get_camera_2d_mut();
+    Vec2::new(
+        camera.screen_distance_to_world(dist.x),
+        camera.screen_distance_to_world(dist.y),
+    )
+}
+
 pub fn world_to_screen_3d(world_pos: Vec3) -> Option<Vec2> {
     get_camera_3d_mut().world_to_screen(world_pos)
 }

@@ -194,6 +194,7 @@ pub mod math {
     pub use sge_api::area::AreaExt;
     pub use sge_math::Vec2Ext;
     pub use sge_math::collision::{self, Aabb2d, IntersectsWith};
+    pub use sge_math::curves::*;
     pub use sge_math::transform::{Transform2D, Transform3D};
     pub use sge_math::usize_rect::USizeRect;
     pub use sge_math::*;

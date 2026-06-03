@@ -5,6 +5,7 @@ use std::f32::consts::TAU;
 use sge_color::Color;
 use sge_macros::draw_shape_variants;
 use sge_math::collision::{self, HasBounds2D, Polygon};
+use sge_math::curves::*;
 use sge_rendering::{
     d2::Renderer2D,
     dq2d,
@@ -543,6 +544,28 @@ draw_variants! {
 }
 
 draw_variants! {
+    fn solid_arrow_t(
+        start: Vec2,
+        end: Vec2,
+        thickness: f32,
+        color: Color,
+        t: f32
+    ) [renderer] {
+        let dir = (end - start).normalize();
+        let perp = Vec2::new(-dir.y, dir.x);
+        let h = thickness * 4.0;
+        let mid = start + (end - start) * t;
+        let points = [
+            mid + dir * h / 2.0,
+            mid - dir * h / 2.0 + perp * h / 2.0,
+            mid - dir * h / 2.0 - perp * h / 2.0,
+        ];
+        draw_line_to(start, end, thickness, color, renderer);
+        draw_tri_to(points[0], points[1], points[2], color, renderer);
+    }
+}
+
+draw_variants! {
     fn sharp_arrow(
         start: Vec2,
         end: Vec2,
@@ -770,7 +793,7 @@ draw_variants! {
     fn quadratic_bezier(a: Vec2, b: Vec2, c: Vec2, color: Color, thickness: f32) [renderer] {
         let mut renderer = renderer;
         renderer.add_sdf(
-            Sdf::quadratic_bezier(a, b, c).with_fill_solid(color).with_corner_radius(thickness / 2.0)
+            Sdf::quadratic_bezier(a, b, c).with_fill_solid(color).with_corner_radius(thickness)
         );
     }
 }
@@ -781,6 +804,38 @@ draw_variants! {
         renderer.add_sdf(
             Sdf::cubic_bezier(a, b, c, d).with_fill_solid(color).with_corner_radius(thickness)
         );
+    }
+}
+
+draw_variants! {
+    fn draw_cubic_bezier_arrow_t(
+        a: Vec2, b: Vec2, c: Vec2, d: Vec2,
+        color: Color, thickness: f32,
+        t: f32,
+    ) [renderer] {
+        let mut renderer = renderer;
+        let bezier = Sdf::cubic_bezier(a, b, c, d);
+        renderer.add_sdf(bezier.with_fill_solid(color).with_corner_radius(thickness));
+
+        let point = point_on_cubic_bezier(a, b, c, d, t);
+        let tangent = tangent_to_cubic_bezier(a, b, c, d, t);
+        let perp = tangent.perp();
+        let h = thickness * 4.0;
+        let points = [
+            point + tangent * h / 2.0,
+            point - tangent * h / 2.0 + perp * h / 2.0,
+            point - tangent * h / 2.0 - perp * h / 2.0,
+        ];
+        draw_tri_to(points[0], points[1], points[2], color, renderer);
+    }
+}
+
+draw_variants! {
+    fn draw_cubic_bezier_arrow(
+        a: Vec2, b: Vec2, c: Vec2, d: Vec2,
+        color: Color, thickness: f32,
+    ) [renderer] {
+        draw_draw_cubic_bezier_arrow_t_to(a, b, c, d, color, thickness, 1.0, renderer);
     }
 }
 

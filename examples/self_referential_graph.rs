@@ -5,49 +5,49 @@ use sge::prelude::*;
 fn main() {
     let mut network = Network::new();
     network.insert_nodes_with_links(&[&[0, 2], &[0, 3], &[1, 3], &[4], &[1]]);
+    network.allow_dragging = true;
+    network.use_expensive_algorithms = true;
+    network.node_radius = 50.0;
 
     let mut controller = PanningCameraController::new();
 
     loop {
         clear_screen(Color::NEUTRAL_100);
 
-        controller.update();
-
-        network.update(true);
-        network.calc_positions_by_force(300.0, 10);
+        if !network.update(true) {
+            controller.update();
+            network.calc_positions_by_force(300.0, 10);
+        }
 
         for line in network.iter_connection_lines() {
-            if line.start_id == line.end_id {
-                let p = line.start - vec2(90.0, 97.5);
-                draw_cubic_bezier_world(
-                    line.start,
-                    line.start - vec2(250.0, 0.0),
-                    line.start - vec2(0.0, 250.0),
-                    line.start,
-                    Color::NEUTRAL_500,
-                    5.0,
-                );
-                draw_tri_world(
-                    p,
-                    p + vec2(5.0, -15.0),
-                    p + vec2(15.0, 0.0),
-                    Color::NEUTRAL_500,
-                );
-            } else {
-                draw_solid_arrow_middle_world(line.start, line.end, 5.0, Color::NEUTRAL_500);
+            for n in [0.0, 0.5] {
+                let t = (time() + n) % 1.0;
+                if line.start_id == line.end_id {
+                    draw_draw_cubic_bezier_arrow_t_world(
+                        line.start,
+                        line.start - vec2(250.0, 0.0),
+                        line.start - vec2(0.0, 250.0),
+                        line.start,
+                        Color::NEUTRAL_500,
+                        5.0,
+                        t,
+                    );
+                } else {
+                    draw_solid_arrow_t_world(line.start, line.end, 5.0, Color::NEUTRAL_500, t);
+                }
             }
         }
 
         for node in network.iter_node_positions() {
-            let sdf = Sdf::circle(node.pos, 50.0)
+            let sdf = Sdf::circle(node.pos, node.radius)
                 .with_fill(
-                    Color::NEUTRAL_100,
-                    Color::NEUTRAL_200,
-                    FRAC_PI_4,
-                    5.0,
-                    SdfFill::Lines,
+                    Color::WHITE,
+                    Color::NEUTRAL_300,
+                    0.0,
+                    10.0,
+                    SdfFill::RadialGradient,
                 )
-                .with_shadow(vec2(3.0, 3.0), 2.0, Color::NEUTRAL_400)
+                .with_shadow(vec2(3.0, 3.0), 10.0, Color::NEUTRAL_900.with_alpha(0.4))
                 .with_stroke(7.0, Color::NEUTRAL_800, SdfStroke::Inside);
             draw_sdf_world(sdf);
 

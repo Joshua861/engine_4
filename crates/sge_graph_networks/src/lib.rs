@@ -4,17 +4,26 @@ use std::{
 };
 
 use nalgebra::{DMatrix, SymmetricEigen};
-use sge_camera::screen_to_world;
+use sge_camera::{
+    screen_distance_to_world, screen_to_world, screen_to_world_vec2, world_distance_to_screen,
+    world_to_screen_vec2,
+};
 use sge_color::Color;
-use sge_input::last_cursor_pos;
+use sge_input::{
+    MouseButton, cursor_diff, last_cursor_pos, mouse_held, mouse_pressed, mouse_released,
+};
 use sge_rng::id;
 use sge_vectors::Vec2;
+use sge_window::use_pointer_cursor_icon;
 
 pub struct Network {
     nodes: Vec<Node>,
     hovered: NodeId,
-    node_radius: f32,
+    pub node_radius: f32,
+    /// more expensive, produces better results. fine for small networks/iteration counts
     pub use_expensive_algorithms: bool,
+    pub allow_dragging: bool,
+    dragging: Option<NodeId>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -59,6 +68,8 @@ impl Network {
             hovered: NodeId(usize::MAX),
             node_radius: 20.0,
             use_expensive_algorithms: false,
+            allow_dragging: false,
+            dragging: None,
         }
     }
 
@@ -267,24 +278,64 @@ impl Network {
         &mut self.nodes[id.0]
     }
 
-    pub fn update(&mut self, world: bool) {
+    /// returns true if a node is being dragged
+    pub fn update(&mut self, world: bool) -> bool {
         let mut cursor = last_cursor_pos();
         if world {
             cursor = screen_to_world(cursor);
         }
-        let radius_squared = self.node_radius * self.node_radius;
-        for node in &self.nodes {
-            let pos = node.pos;
-            let delta = cursor - pos;
-            let dist_squared = delta.length_squared();
+        let radius_squared = if world {
+            let r = world_distance_to_screen(self.node_radius);
+            r * r
+        } else {
+            self.node_radius * self.node_radius
+        };
+
+        let mut found_hovered = false;
+
+        for node in &mut self.nodes {
+            let dist_squared = if world {
+                world_to_screen_vec2(cursor - node.pos).length_squared()
+            } else {
+                (cursor - node.pos).length_squared()
+            };
 
             if dist_squared < radius_squared {
                 self.hovered = node.id;
-                return;
+                use_pointer_cursor_icon();
+
+                if self.allow_dragging && mouse_pressed(MouseButton::Left) {
+                    self.dragging = Some(node.id);
+                }
+
+                found_hovered = true;
+                break;
             }
         }
 
-        self.hovered = NodeId(usize::MAX);
+        if !found_hovered {
+            self.hovered = NodeId(usize::MAX);
+        }
+
+        self.do_dragging(world);
+
+        return self.dragging.is_some();
+    }
+
+    fn do_dragging(&mut self, world: bool) {
+        if !mouse_held(MouseButton::Left) {
+            self.dragging = None;
+            return;
+        }
+
+        if let Some(dragging) = self.dragging {
+            let mut diff = cursor_diff();
+            if world {
+                diff = screen_to_world_vec2(diff);
+            }
+
+            self.get_mut(dragging).pos += diff;
+        }
     }
 
     pub fn iter_connections<'a>(&'a self) -> ConnectionIterator<'a> {
@@ -421,6 +472,7 @@ pub struct NodePosition {
     pub n: usize,
     pub is_hovered: bool,
     pub id: NodeId,
+    pub radius: f32,
 }
 
 impl<'a> Iterator for NodePositionIterator<'a> {
@@ -436,6 +488,7 @@ impl<'a> Iterator for NodePositionIterator<'a> {
             n: node.id.0,
             is_hovered: node.id == self.network.hovered,
             id: node.id,
+            radius: self.network.node_radius,
         })
     }
 }

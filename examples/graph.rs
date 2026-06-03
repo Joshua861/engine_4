@@ -6,13 +6,14 @@ async fn main() -> AResult<()> {
     let mut pan = PanningCameraController::new();
 
     let mut network = Network::new();
+    network.allow_dragging = true;
     init_network(&mut network);
 
     loop {
-        pan.update();
-        network.update(true);
-
-        network.calc_positions_by_force(100.0, 20);
+        if !network.update(true) {
+            pan.update();
+            network.calc_positions_by_force(100.0, 20);
+        }
 
         if key_pressed(KeyCode::KeyR) {
             network.clear();

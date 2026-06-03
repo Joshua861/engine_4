@@ -17,7 +17,7 @@
 - [X] trying to draw a grid of squares shows gaps between them. rects are not
   exact, also quads.
 - [ ] test with all feature combinations
-- [ ] utilities for interacting with bezier curves, like finding the coordinates
+- [X] utilities for interacting with bezier curves, like finding the coordinates
   of a point some way along the curve
 - [ ] advertise better
 - [X] rich text outline and bg fill
@@ -26,7 +26,7 @@
 - [X] move to stable rust
 - [X] support underline colour and style (wavy?)
 - [ ] shiny metallic fill effect like the image
-- [ ] fill effects based on distance
+- [X] fill effects based on distance
 - [-] High priority bugs:
   - [X] tailwind colors are wrong. oklch conversion is probably wrong
   - [ ] transparency

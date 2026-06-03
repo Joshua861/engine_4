@@ -1,6 +1,7 @@
 use sge_vectors::Vec2;
 
 pub mod collision;
+pub mod curves;
 pub mod transform;
 pub mod usize_rect;
 

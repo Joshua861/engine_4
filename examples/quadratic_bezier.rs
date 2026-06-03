@@ -11,6 +11,12 @@ async fn main() {
         let b = screen_to_world(last_cursor_pos());
         let c = vec2(300.0, 0.0);
 
+        for n in [0.0, 0.5] {
+            let t = (time() + n) % 1.0;
+            let p = point_on_quadratic_bezier(a, b, c, t);
+            draw_circle_world(p, 8.0, Color::BLACK);
+        }
+
         for p in [a, c] {
             draw_line_world(b, p, 4.0, Color::BLACK);
         }
@@ -19,8 +25,8 @@ async fn main() {
 
         let m = (a + c) / 2.0;
 
-        draw_circle_outline_world((a + m) / 2.0, 149.0, Color::BLACK, 2.0);
-        draw_circle_outline_world((c + m) / 2.0, 149.0, Color::BLACK, 2.0);
+        draw_circle_outline_world((a + m) / 2.0, 150.0, Color::BLACK, 2.0);
+        draw_circle_outline_world((c + m) / 2.0, 150.0, Color::BLACK, 2.0);
 
         draw_dashed_line_world(a, c, 3.0, Color::BLACK, 9.0);
 
