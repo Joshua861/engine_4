@@ -1,53 +1,29 @@
 #+title: Todo
 
-- [X] Fix quads
 - [ ] Check if bounding boxes are excessively big
   - [ ] they definately are. fix it now!!!
-- [X] improve multiplayer documentation with links after docs.rs finishes building
-- [X] Fix gradients
-- [X] Fix radial gradients
-- [X] Move things using 4 point custom shapes to quad sdfs
-- [X] test all shapes under all conditions
-- [X] test all fill parameters
 - [ ] do more testing with shadows (like when should they run? and what parameters
 - [ ] sdf text for zooming in
-- [X] dithering for gradients
-- [X] reimplement multigradients
-- [X] reimplement gradient lines
-- [X] trying to draw a grid of squares shows gaps between them. rects are not
-  exact, also quads.
 - [ ] test with all feature combinations
-- [X] utilities for interacting with bezier curves, like finding the coordinates
-  of a point some way along the curve
 - [ ] advertise better
-- [X] rich text outline and bg fill
-- [X] docs
 - [ ] move rich text to UI and change syntax to be like markdown. probably need to change to a different method of adding colours like with |red| instead
-- [X] move to stable rust
-- [X] support underline colour and style (wavy?)
 - [ ] shiny metallic fill effect like the image
-- [X] fill effects based on distance
-- [-] High priority bugs:
-  - [X] tailwind colors are wrong. oklch conversion is probably wrong
-  - [ ] transparency
-  colors and a bit of refactoring.
-     that they can be batch drawn together. use instancing for grouped circles
+- [ ] transparency
 - [ ] texture/atlas particles
 - [ ] sound rotation
   - i wrote this forever ago. what could this possibly mean?
 - [ ] have a look at texture atlasses and see if we can make something good for 2d platformer levels. maybe an add colliders toggle
 - [ ] some kinda mf https://docs.rs/macroquad/latest/macroquad/telemetry/index.html
 - [ ] miniquad backend + web
+- [ ] bar chart
+- [ ] improve line chart
+- [ ] pie chart (easy)
 - [ ] bitmap fonts
 - [ ] nine slice fill ui element
-- [X] multiplayer "notifications" (itty messages)
 - [ ] ui slideshow from markdown render to textures
-- [X] css colours
 - [ ] unload refs
 - [ ] set target fps
 - [ ] get screen to world ray
-- [X] take screenshot
-- [X] load image from texture
 - [ ] ui dropdown
 - [ ] draw something behind something else
 - [ ] animate in by checking if the state exists, or if the state was updated last frame and then transitioning in. could do anything...
@@ -59,7 +35,6 @@
 - [ ] 3d scene for point lights
 - [ ] ui routing with wrapper widget with back and forward buttons and title at
   the top
-- [X] ui resizable, like docking and panels
 - [ ] ui span support, so i can have links and stuff inside a paragraph
 - [ ] ui select text
 - [ ] ui select in text edit
@@ -72,7 +47,6 @@
 - [ ] ui checkbox
 - [ ] ui radio buttons
 - [ ] ui navbar
-- [X] ui dotted border
   floating window
 - [ ] dirty struct macro, which automatically keeps track of what is dirty, and you can define computations as impls with a function that takes some fields and returns a value and adds that as a field on the struct with methods for getting and getting mut and setting fields which deals with making things dirty
 - [ ] more filters
@@ -117,16 +91,12 @@
   - [ ] needs gouraud shading
 - [ ] sphere SDF
 - [ ] video
-- [X] screenshake
 - [ ] sepia
 - [ ] edge detection
-- [X] sharpen
 - [ ] 3d scene with lights and shadow
 - [ ] list view builder where it only generates the nodes that are actually visible
 - [ ] loading spinner
   - [ ] needs arcs
-- [X] player controllers
-- [X] probably add bold and italic to rich text. so we need fonts to be packaged
   with all three and make bold and italics optional, and fall back to default
 - [ ] automatic interpolated values for ui elements
 - [ ] you should be able to delete textures and images and stuff
@@ -158,7 +128,7 @@
   - [X] rich text
   - [X] text measurement
   - [ ] text scale and rotation
-  - [ ] sdf?
+  - [ ] sdf!!!
   - [ ] 3d
 - [-] Animation support
   - [X] Needs some sort of retained state.
@@ -212,9 +182,6 @@
     statistics about progress and they can render it themselves. sounds good to me
 - [ ] benchmarks
 - [ ] normal mapping in 2d and 3d
-- [X] metaballs
-  - [X] SDF in 2D?
-- [X] Svelte(fire) style macro for multiplayer. just have some kind of struct /
   macro thing that detects the difference between the state of the struct
   between frames and automatically handles that between players
   - very high trust level. could be improved. very simple though
@@ -492,3 +459,36 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 - [X] draw pixel
 - [X] draw pixel line
 - [X] crates.io
+- [X] dithering for gradients
+- [X] reimplement multigradients
+- [X] reimplement gradient lines
+- [X] trying to draw a grid of squares shows gaps between them. rects are not
+  exact, also quads.
+- [X] Fix quads
+- [X] improve multiplayer documentation with links after docs.rs finishes building
+- [X] Fix gradients
+- [X] Fix radial gradients
+- [X] Move things using 4 point custom shapes to quad sdfs
+- [X] test all shapes under all conditions
+- [X] test all fill parameters
+- [X] utilities for interacting with bezier curves, like finding the coordinates
+  of a point some way along the curve
+- [X] rich text outline and bg fill
+- [X] docs
+- [X] move to stable rust
+- [X] support underline colour and style (wavy?)
+- [X] fill effects based on distance
+- [X] ui resizable, like docking and panels
+- [X] take screenshot
+- [X] load image from texture
+- [X] css colours
+- [X] tailwind colors are wrong. oklch conversion is probably wrong
+- [X] multiplayer "notifications" (itty messages)
+- [X] ui dotted border
+- [X] screenshake
+- [X] sharpen
+- [X] player controllers
+- [X] probably add bold and italic to rich text. so we need fonts to be packaged
+- [X] metaballs
+  - [X] SDF in 2D?
+- [X] Svelte(fire) style macro for multiplayer. just have some kind of struct /
