@@ -10,3 +10,4 @@ documentation/book
 config.bin
 profile.json.gz
 rust-analyzer-target
+examples/lucas_graph.rs

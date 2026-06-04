@@ -23,10 +23,13 @@ fn main() {
             for n in [0.0, 0.5] {
                 let t = (time() + n) % 1.0;
                 if line.start_id == line.end_id {
+                    let away_from_center = line.start.normalize() * 250.0;
+                    let a = away_from_center.rotated_around_origin(FRAC_PI_4);
+                    let b = away_from_center.rotated_around_origin(-FRAC_PI_4);
                     draw_draw_cubic_bezier_arrow_t_world(
                         line.start,
-                        line.start - vec2(250.0, 0.0),
-                        line.start - vec2(0.0, 250.0),
+                        line.start + a,
+                        line.start + b,
                         line.start,
                         Color::NEUTRAL_500,
                         5.0,

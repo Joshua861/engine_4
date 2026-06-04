@@ -395,11 +395,6 @@ impl UiNode for Text {
         let size = area.size();
         let dim = self.preferred_dimensions();
 
-        let is_overflow = size.x < dim.x || size.y < dim.y;
-        if is_overflow {
-            warn!("Text overflows container: '{}'.", self.text);
-        }
-
         if self.wrap {
             draw_wrapped_text_in_area(
                 &self.text,

@@ -19,6 +19,7 @@
 - [ ] improve line chart
 - [ ] pie chart (easy)
 - [ ] bitmap fonts
+- [ ] physics 3d
 - [ ] nine slice fill ui element
 - [ ] ui slideshow from markdown render to textures
 - [ ] unload refs

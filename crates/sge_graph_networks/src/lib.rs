@@ -5,13 +5,10 @@ use std::{
 
 use nalgebra::{DMatrix, SymmetricEigen};
 use sge_camera::{
-    screen_distance_to_world, screen_to_world, screen_to_world_vec2, world_distance_to_screen,
-    world_to_screen_vec2,
+    screen_to_world, screen_to_world_vec2, world_distance_to_screen, world_to_screen_vec2,
 };
 use sge_color::Color;
-use sge_input::{
-    MouseButton, cursor_diff, last_cursor_pos, mouse_held, mouse_pressed, mouse_released,
-};
+use sge_input::{MouseButton, cursor_diff, last_cursor_pos, mouse_held, mouse_pressed};
 use sge_rng::id;
 use sge_vectors::Vec2;
 use sge_window::use_pointer_cursor_icon;
@@ -26,8 +23,8 @@ pub struct Network {
     dragging: Option<NodeId>,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct NodeId(usize);
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct NodeId(pub usize);
 
 impl Debug for NodeId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
