@@ -3,7 +3,7 @@
 - [ ] Check if bounding boxes are excessively big
   - [ ] they definately are. fix it now!!!
 - [ ] do more testing with shadows (like when should they run? and what parameters
-- [ ] sdf text for zooming in
+- [ ] sdf text for zooming in // https://www.redblobgames.com/articles/sdf-fonts/
 - [ ] test with all feature combinations
 - [ ] advertise better
 - [ ] move rich text to UI and change syntax to be like markdown. probably need to change to a different method of adding colours like with |red| instead
@@ -34,8 +34,7 @@
 - [ ] stop_sound
 - [ ] safe multithreading
 - [ ] 3d scene for point lights
-- [ ] ui routing with wrapper widget with back and forward buttons and title at
-  the top
+- [ ] ui routing with wrapper widget with back and forward buttons and title at the top
 - [ ] ui span support, so i can have links and stuff inside a paragraph
 - [ ] ui select text
 - [ ] ui select in text edit
@@ -48,7 +47,6 @@
 - [ ] ui checkbox
 - [ ] ui radio buttons
 - [ ] ui navbar
-  floating window
 - [ ] dirty struct macro, which automatically keeps track of what is dirty, and you can define computations as impls with a function that takes some fields and returns a value and adds that as a field on the struct with methods for getting and getting mut and setting fields which deals with making things dirty
 - [ ] more filters
   - [ ] crt
