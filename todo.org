@@ -7,6 +7,8 @@
 - [ ] test with all feature combinations
 - [ ] advertise better
 - [ ] move rich text to UI and change syntax to be like markdown. probably need to change to a different method of adding colours like with |red| instead
+- docs for custom initialisation
+- docs for graph networks
 - [ ] shiny metallic fill effect like the image
 - [ ] transparency
 - [ ] texture/atlas particles
