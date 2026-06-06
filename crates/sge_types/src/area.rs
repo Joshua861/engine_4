@@ -25,14 +25,18 @@ impl Area {
 
     pub fn to_glium_rect(self) -> glium::Rect {
         let window_size = window_size();
+        let bottom = window_size.y - (self.top_left.y + self.size.y);
+        let left = self.top_left.x;
+        let width = self.width();
+        let height = self.height();
 
-        let bottom_y = window_size.y - (self.top_left.y + self.size.y);
+        dbg!(left, bottom, width, height);
 
         glium::Rect {
-            left: self.top_left.x.round() as u32,
-            bottom: bottom_y.round() as u32,
-            width: self.size.x.round() as u32,
-            height: self.size.y.round() as u32,
+            bottom: bottom as u32,
+            left: left as u32,
+            width: width as u32,
+            height: height as u32,
         }
     }
 
@@ -246,7 +250,8 @@ impl From<Area> for sge_vectors::Rect {
 
 impl From<glium::Rect> for Area {
     fn from(value: glium::Rect) -> Self {
-        let bl = vec2(value.bottom as f32, value.left as f32);
+        let window_size = window_size();
+        let bl = vec2(value.left as f32, window_size.y - value.bottom as f32);
         let size = vec2(value.width as f32, value.height as f32);
         let tl = bl - vec2(0.0, size.y);
         Self::new(tl, size)

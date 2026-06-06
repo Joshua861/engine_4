@@ -50,7 +50,7 @@ pub enum BufferError {
     Index(glium::index::BufferCreationError),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum ResizeMethod {
     Stretch,
     Tile,

@@ -125,6 +125,9 @@ pub use loading_spinner::*;
 mod dock;
 pub use dock::*;
 
+mod nine_slice;
+pub use nine_slice::*;
+
 use sge_window::window_width;
 
 pub fn media_query<T>(small: T, medium: T, large: T) -> T {

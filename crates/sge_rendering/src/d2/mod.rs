@@ -10,7 +10,7 @@ use sge_textures::TextureRef;
 use sge_types::{
     Area, ColorVertex2D, LineBatch, MeshBatch, MetaballBatch, Pattern, PointBatch, Sdf, SdfBatch,
 };
-use sge_vectors::{Mat4, Rect, Vec2, Vec3};
+use sge_vectors::{Mat4, Vec2, Vec3};
 use sge_window::get_display;
 
 use crate::scissor::current_scissor;

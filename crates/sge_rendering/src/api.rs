@@ -8,7 +8,7 @@ use sge_programs::{
 };
 use sge_textures::TextureRef;
 use sge_types::{Area, ResizeMethod};
-use sge_vectors::{Rect, UVec2, Vec2, Vec3, bvec2, uvec2, vec2};
+use sge_vectors::{Vec2, Vec3, vec2};
 use sge_window::window_size;
 
 use crate::{

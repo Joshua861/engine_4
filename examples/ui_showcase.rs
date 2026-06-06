@@ -39,6 +39,7 @@ const NODES: &[(&str, fn() -> UiRef)] = &[
     ("Loading Bar", loading_bar),
     ("Loading Spinner", loading_spinner),
     ("Modal", modal),
+    ("Nine slice", nine_slice),
     ("Outline", outline),
     ("Progress Bar", progress_bar),
     ("Scissor Box", scissor_box),
@@ -213,6 +214,22 @@ fn border() -> UiRef {
 
 fn box_fill() -> UiRef {
     BoxFill::new(SCHEME.green, EMPTY).square(200.0)
+}
+
+fn nine_slice() -> UiRef {
+    struct State {
+        texture: TextureRef,
+    }
+
+    if !storage_exists::<State>() {
+        let texture = load_texture_sync("assets/textures/nine_slice_example.png").unwrap();
+        storage_store_state(State { texture });
+    }
+
+    let texture = storage_get_state::<State>().texture;
+
+    NineSliceFill::new(texture, Vec2::splat(10.0), 3, ResizeMethod::Tile, EMPTY)
+        .sized_wh(400.0, 300.0)
 }
 
 fn pattern_fill() -> UiRef {
