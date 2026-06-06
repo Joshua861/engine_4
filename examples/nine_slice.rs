@@ -50,7 +50,7 @@ fn main() {
         } else {
             last_cursor_pos()
         } - Vec2::splat(50.0);
-        let size = size.max(Vec2::splat(textures[n].corner_size as f32 * 4.0));
+        let size = size.max(Vec2::splat(textures[n].corner_size as f32 * 2.0) * 10.0);
 
         draw_nine_slice(
             textures[n].texture,
