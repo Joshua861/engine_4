@@ -89,3 +89,54 @@ fn main() {
 
 `init` creates the window and sets everything up. `run_async` sets up an asynchronous
 environment for your code to run in, and makes sure it is updated once per frame.
+
+## Custom initialisation
+
+The engine can be initialised with custom parameters, however this requires that
+you not use the `#[main]` macro. You can initialise the engine without the macro
+like this:
+
+```rust
+fn main() -> anyhow::Result<()> {
+    init("Title")?;
+    
+    // do whatever
+    
+    run_async(async move {
+        // do whatever, async
+    
+        loop {
+            // main loop
+            
+            if should_quit() {
+                break;
+            }
+
+            next_frame().await;
+        }
+    });
+}
+```
+
+Or you can use `init_custom` to specify more options.
+
+```rust
+let opts = EngineCreationOptions::builder()
+    .window_transparent(true)
+    .opengl_debug(true)
+    .dithering(false)
+    .opengl_profile(GlProfile::Core)
+    .default_magnify_filter(MagnifySamplerFilter::Nearest)
+    .log_verbosity(Verbosity::Medium)
+    .window_blur(true)
+    // lets it run at unlimited fps
+    .swap_interval(SwapInterval::DontWait) 
+    // title is required, everything else is optional
+    .title("Custom init".to_string())
+    .build();
+    
+init_custom(opts)?;
+```
+
+See: [`Opts`](https://docs.rs/sge/latest/sge/config/struct.Opts.html) for a list
+of all options.

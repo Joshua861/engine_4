@@ -67,7 +67,7 @@ impl UiNode for LoadingBar {
     }
 
     fn draw(&self, area: Area, _: &UiState) -> Vec2 {
-        push_scissor(area.to_rect());
+        push_scissor(area.to_glium_rect());
         area.fill(self.bg);
 
         let pattern_width = self.bar_width;

@@ -90,7 +90,7 @@ impl UiNode for TextInput {
             use_text_cursor_icon();
         }
 
-        push_scissor(area.to_rect());
+        push_scissor(area.to_glium_rect());
 
         if state.is_active {
             for key in input_text() {

@@ -1,4 +1,4 @@
-use sge_vectors::Vec2;
+use sge_vectors::{Vec2, vec2};
 use sge_window::window_size;
 
 use crate::Orientation;
@@ -19,16 +19,20 @@ impl Area {
         Self { top_left, size }
     }
 
-    pub fn to_rect(self) -> glium::Rect {
+    pub fn from_glium_rect(rect: glium::Rect) -> Self {
+        rect.into()
+    }
+
+    pub fn to_glium_rect(self) -> glium::Rect {
         let window_size = window_size();
 
         let bottom_y = window_size.y - (self.top_left.y + self.size.y);
 
         glium::Rect {
-            left: self.top_left.x as u32,
-            bottom: bottom_y as u32,
-            width: self.size.x as u32,
-            height: self.size.y as u32,
+            left: self.top_left.x.round() as u32,
+            bottom: bottom_y.round() as u32,
+            width: self.size.x.round() as u32,
+            height: self.size.y.round() as u32,
         }
     }
 
@@ -187,11 +191,70 @@ impl Area {
             }
         }
     }
+
+    #[inline]
+    pub fn min(self) -> Vec2 {
+        self.top_left
+    }
+
+    #[inline]
+    pub fn max(self) -> Vec2 {
+        self.bottom_right()
+    }
+
+    pub fn from_min_max(min: Vec2, max: Vec2) -> Self {
+        Self {
+            top_left: min,
+            size: max - min,
+        }
+    }
+
+    pub fn from_corners(a: Vec2, b: Vec2) -> Self {
+        Self::from_min_max(a.min(b), a.max(b))
+    }
+
+    pub fn from_rect(rect: sge_vectors::Rect) -> Self {
+        Self::from_min_max(rect.min, rect.max)
+    }
+
+    pub fn to_rect(self) -> sge_vectors::Rect {
+        self.into()
+    }
 }
 
 pub fn window_area() -> Area {
     Area {
         top_left: Vec2::ZERO,
         size: window_size(),
+    }
+}
+
+impl From<sge_vectors::Rect> for Area {
+    fn from(value: sge_vectors::Rect) -> Self {
+        Self::from_rect(value)
+    }
+}
+
+impl From<Area> for sge_vectors::Rect {
+    fn from(value: Area) -> Self {
+        Self {
+            min: value.min(),
+            max: value.max(),
+        }
+    }
+}
+
+impl From<glium::Rect> for Area {
+    fn from(value: glium::Rect) -> Self {
+        let bl = vec2(value.bottom as f32, value.left as f32);
+        let size = vec2(value.width as f32, value.height as f32);
+        let tl = bl - vec2(0.0, size.y);
+        Self::new(tl, size)
+    }
+}
+
+impl From<Area> for glium::Rect {
+    fn from(value: Area) -> Self {
+        value.to_glium_rect()
     }
 }

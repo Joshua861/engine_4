@@ -7,8 +7,8 @@
 - [ ] test with all feature combinations
 - [ ] advertise better
 - [ ] move rich text to UI and change syntax to be like markdown. probably need to change to a different method of adding colours like with |red| instead
-- docs for custom initialisation
-- docs for graph networks
+- [X] docs for custom initialisation
+- [ ] docs for graph networks
 - [ ] shiny metallic fill effect like the image
 - [ ] transparency
 - [ ] texture/atlas particles
@@ -23,6 +23,7 @@
 - [ ] bitmap fonts
 - [ ] physics 3d
 - [ ] nine slice fill ui element
+- [ ] rich text print to stdout ansi colours for light mode terminals. make more robust
 - [ ] ui slideshow from markdown render to textures
 - [ ] unload refs
 - [ ] set target fps

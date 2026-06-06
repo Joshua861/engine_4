@@ -25,7 +25,7 @@ impl UiNode for ScissorBox {
     }
 
     fn draw(&self, area: Area, ui: &UiState) -> Vec2 {
-        push_scissor(area.to_rect());
+        push_scissor(area.to_glium_rect());
 
         let dimensions = self.child.node.draw(area, ui);
 

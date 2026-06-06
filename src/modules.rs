@@ -134,16 +134,17 @@ pub mod textures {
             Sprite, SpriteKey, TextureAtlas, TextureAtlasRef, create_spritesheet,
         };
     }
-
     pub use sge_macros::include_texture;
     pub use sge_rendering::api::{
-        draw_fullscreen_texture, draw_texture, draw_texture_ex, draw_texture_scaled,
-        draw_texture_scaled_world, draw_texture_world, draw_texture_world_ex,
+        draw_fullscreen_texture, draw_nine_slice, draw_nine_slice_to, draw_nine_slice_world,
+        draw_texture, draw_texture_ex, draw_texture_scaled, draw_texture_scaled_world,
+        draw_texture_world, draw_texture_world_ex,
     };
     pub use sge_textures::{
         LoadTextureError, SgeTexture, TextureRef, load_texture_from_bytes_sync, load_texture_sync,
         num_registered_textures,
     };
+    pub use sge_types::ResizeMethod;
 }
 
 pub mod render_textures {

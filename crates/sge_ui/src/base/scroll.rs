@@ -181,7 +181,7 @@ impl UiNode for Scroll {
         measure_area.size.y = f32::INFINITY;
         self.child.node.size(measure_area);
 
-        push_scissor(area.to_rect());
+        push_scissor(area.to_glium_rect());
 
         let mut draw_area = area;
         draw_area.top_left.y -= state.offset;

@@ -220,7 +220,7 @@ impl TextureAtlas {
             self.texture().ok()?,
             Transform2D::from_scale_translation(sprite.normalized_dimensions * scale, position),
             Color::WHITE,
-            Some(sprite.rect.as_rect()),
+            Some(sprite.rect.as_rect().into()),
         );
 
         Some(())
@@ -237,7 +237,7 @@ impl TextureAtlas {
             self.texture().ok()?,
             Transform2D::from_scale_translation(sprite.normalized_dimensions * scale, position),
             Color::WHITE,
-            Some(sprite.rect.as_rect()),
+            Some(sprite.rect.as_rect().into()),
         );
 
         Some(())
@@ -250,7 +250,7 @@ impl TextureAtlas {
             self.texture().ok()?,
             Transform2D::from_scale_translation(scale, position),
             Color::WHITE,
-            Some(sprite.rect.as_rect()),
+            Some(sprite.rect.as_rect().into()),
         );
 
         Some(())
@@ -268,7 +268,7 @@ impl TextureAtlas {
             self.texture().ok()?,
             Transform2D::from_scale_translation(scale, position),
             Color::WHITE,
-            Some(sprite.rect.as_rect()),
+            Some(sprite.rect.as_rect().into()),
         );
 
         Some(())
@@ -286,7 +286,7 @@ impl TextureAtlas {
             self.texture().ok()?,
             transform,
             color,
-            Some(sprite.rect.as_rect()),
+            Some(sprite.rect.as_rect().into()),
         );
 
         Some(())
@@ -304,7 +304,7 @@ impl TextureAtlas {
             self.texture().ok()?,
             transform,
             color,
-            Some(sprite.rect.as_rect()),
+            Some(sprite.rect.as_rect().into()),
         );
 
         Some(())

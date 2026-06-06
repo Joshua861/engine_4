@@ -8,7 +8,7 @@ use sge_math::transform::Transform2D;
 use sge_shapes::d2::{QUAD_INDICES, Shape2D, UNIT_QUAD};
 use sge_textures::TextureRef;
 use sge_types::{
-    ColorVertex2D, LineBatch, MeshBatch, MetaballBatch, Pattern, PointBatch, Sdf, SdfBatch,
+    Area, ColorVertex2D, LineBatch, MeshBatch, MetaballBatch, Pattern, PointBatch, Sdf, SdfBatch,
 };
 use sge_vectors::{Mat4, Rect, Vec2, Vec3};
 use sge_window::get_display;
@@ -148,13 +148,14 @@ impl Renderer2D {
             .push(DrawCommand::Metaballs(batch as *const MetaballBatch));
     }
 
-    pub fn add_sprite(
+    pub fn add_texture(
         &mut self,
         texture: TextureRef,
         mut transform: Transform2D,
         color: Color,
-        region: Option<Rect>,
+        region: Option<Area>,
     ) {
+        let region = region.map(|a| a.to_rect());
         debugger_add_drawn_objects(1);
 
         let (tex_min_x, tex_min_y, tex_max_x, tex_max_y) = if let Some(region) = region {

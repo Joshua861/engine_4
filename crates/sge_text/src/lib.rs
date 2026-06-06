@@ -644,7 +644,12 @@ fn draw_text_to(
             Vec2::new(glyph_position.x + x_offset, glyph_position.y + pos.y),
         );
 
-        renderer.add_sprite(font.atlas.texture().unwrap(), transform, color, Some(rectf));
+        renderer.add_texture(
+            font.atlas.texture().unwrap(),
+            transform,
+            color,
+            Some(rectf.into()),
+        );
     }
 
     let size = Vec2::new(width, layout.height());

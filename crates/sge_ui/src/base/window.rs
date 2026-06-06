@@ -197,7 +197,7 @@ impl FloatingWindow {
             area.size.x -= button_block_width;
         }
 
-        push_scissor(area.to_rect());
+        push_scissor(area.to_glium_rect());
         area.top_left.x += self.padding;
         Center::vertical(self.title).draw(area, ui);
         pop_scissor();
@@ -213,7 +213,7 @@ impl FloatingWindow {
             self.border.thickness,
             self.border.color,
         );
-        push_scissor(area.to_rect());
+        push_scissor(area.to_glium_rect());
         self.contents.draw(area.with_padding(self.padding), ui);
         pop_scissor();
     }

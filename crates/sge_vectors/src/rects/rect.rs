@@ -59,6 +59,14 @@ impl Rect {
         Self::from_corners(Vec2::new(x0, y0), Vec2::new(x1, y1))
     }
 
+    #[inline]
+    pub fn from_tl_size(tl: Vec2, size: Vec2) -> Self {
+        Self {
+            min: tl,
+            max: tl + size,
+        }
+    }
+
     /// Create a new rectangle from two corner points.
     ///
     /// The two points do not need to be the minimum and/or maximum corners.

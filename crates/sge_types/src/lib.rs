@@ -49,3 +49,9 @@ pub enum BufferError {
     Vertex(glium::vertex::BufferCreationError),
     Index(glium::index::BufferCreationError),
 }
+
+#[derive(Clone, Copy)]
+pub enum ResizeMethod {
+    Stretch,
+    Tile,
+}

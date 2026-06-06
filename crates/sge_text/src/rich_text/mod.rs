@@ -205,8 +205,12 @@ impl RichText {
         use owo_colors::OwoColorize;
 
         for block in &self.blocks {
-            let (r, g, b) = block.style.color.to_u8();
-            let mut text = block.text.truecolor(r, g, b).to_string();
+            let mut text = if block.style.color == Color::WHITE {
+                block.text.to_string()
+            } else {
+                let (r, g, b) = block.style.color.to_u8();
+                block.text.truecolor(r, g, b).to_string()
+            };
 
             if block.style.underline.is_some() {
                 text = text.underline().to_string();

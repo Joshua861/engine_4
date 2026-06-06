@@ -75,7 +75,7 @@ async fn draw_pattern() {
         let r = min_window_dimension() / 5.0;
 
         draw_circle(window_center(), r, Color::BLACK);
-        push_scissor(Area::new(vec2(window_center().x, 0.0), window_size()).to_rect());
+        push_scissor(Area::new(vec2(window_center().x, 0.0), window_size()).to_glium_rect());
         draw_circle(window_center(), r, Color::WHITE);
         pop_scissor();
 

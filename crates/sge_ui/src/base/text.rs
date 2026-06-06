@@ -1,6 +1,5 @@
 use core::f32;
 
-use log::warn;
 use sge_color::Color;
 use sge_vectors::Vec2;
 
@@ -392,9 +391,6 @@ impl UiNode for Text {
     }
 
     fn draw(&self, area: super::Area, _: &UiState) -> Vec2 {
-        let size = area.size();
-        let dim = self.preferred_dimensions();
-
         if self.wrap {
             draw_wrapped_text_in_area(
                 &self.text,

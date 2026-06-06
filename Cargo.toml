@@ -187,7 +187,7 @@ text = ["dep:sge_text"]
 ui = ["extra_fonts", "dep:sge_ui"]
 network = ["sge_exec/network"]
 clipboard = ["sge_input/clipboard"]
-material_ui = ["sge_ui/material"]
+material_ui = ["sge_ui/material", "ui"]
 
 [workspace]
 members = [

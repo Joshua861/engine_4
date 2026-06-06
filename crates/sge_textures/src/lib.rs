@@ -116,7 +116,7 @@ impl SgeTexture {
     pub fn download_to_image(&self) -> Image {
         let layer = self.gl_texture.main_level().first_layer();
         let any_image = layer.into_image(None).unwrap();
-        let rect = Area::new(Vec2::new(0.0, 0.0), self.dimensions.as_vec2()).to_rect();
+        let rect = Area::new(Vec2::new(0.0, 0.0), self.dimensions.as_vec2()).to_glium_rect();
         let format = self.gl_texture.get_internal_format().unwrap();
 
         match format {

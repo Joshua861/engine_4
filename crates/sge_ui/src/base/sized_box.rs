@@ -1,5 +1,7 @@
 use core::f32;
 
+use sge_vectors::vec2;
+
 use super::*;
 
 /// be careful with what order you place sized boxes and other nodes
@@ -107,11 +109,21 @@ impl UiRef {
 
 impl UiNode for SizedBox {
     fn preferred_dimensions(&self) -> Vec2 {
-        let child_dimensions = self.child.node.preferred_dimensions();
-        Vec2::new(
-            self.x.unwrap_or(child_dimensions.x),
-            self.y.unwrap_or(child_dimensions.y),
-        )
+        let area = vec2(
+            self.x.unwrap_or(f32::INFINITY),
+            self.y.unwrap_or(f32::INFINITY),
+        );
+        let mut size = self.child.size(Area::new(Vec2::ZERO, area));
+
+        if let Some(x) = self.x {
+            size.x = x;
+        }
+
+        if let Some(y) = self.y {
+            size.y = y;
+        }
+
+        size
     }
 
     fn size(&self, area: Area) -> Vec2 {

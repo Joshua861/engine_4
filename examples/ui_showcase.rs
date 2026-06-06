@@ -1,10 +1,8 @@
 use core::f32;
 use std::f32::consts::PI;
 
-use sge::prelude::{
-    icons::{ICON_BOMB, ICON_CARET_DOWN, ICON_CIRCLE_NOTCH, ICON_PLUS_CIRCLE},
-    prelude::*,
-};
+use sge::prelude::icons::{ICON_BOMB, ICON_CARET_DOWN, ICON_CIRCLE_NOTCH, ICON_PLUS_CIRCLE};
+use sge::prelude::*;
 use ui::*;
 
 const NODES: &[(&str, fn() -> UiRef)] = &[
@@ -58,7 +56,7 @@ const NODES: &[(&str, fn() -> UiRef)] = &[
 const SCHEME: ColorScheme = ColorScheme::LACKLUSTER;
 
 #[main("UI Showcase")]
-fn main() -> anyhow::Result<()> {
+async fn main() -> anyhow::Result<()> {
     let select = id!();
 
     loop {

@@ -1,4 +1,5 @@
 use glium::Rect;
+use sge_types::Area;
 
 use crate::get_render_state;
 
@@ -6,7 +7,8 @@ pub fn get_scissor_stack() -> &'static mut Vec<Rect> {
     &mut get_render_state().scissor_stack
 }
 
-pub fn push_scissor(rect: glium::Rect) {
+pub fn push_scissor(rect: impl Into<Area>) {
+    let rect = rect.into().to_glium_rect();
     let stack = get_scissor_stack();
 
     let final_rect = if let Some(current) = stack.last() {
