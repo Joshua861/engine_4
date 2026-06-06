@@ -30,13 +30,11 @@ impl Area {
         let width = self.width();
         let height = self.height();
 
-        dbg!(left, bottom, width, height);
-
         glium::Rect {
-            bottom: bottom as u32,
-            left: left as u32,
-            width: width as u32,
-            height: height as u32,
+            bottom: bottom.round() as u32,
+            left: left.round() as u32,
+            width: width.round() as u32,
+            height: height.round() as u32,
         }
     }
 
