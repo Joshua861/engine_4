@@ -1,0 +1,8 @@
+(
+    window: Window (
+            size: (1920, 1080),
+            position: [50, 70],
+            title: "Game window"
+    ),
+    joy: "overwhelming",
+)
