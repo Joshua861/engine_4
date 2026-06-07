@@ -30,7 +30,7 @@ impl OrbitCameraController {
             is_orbiting: false,
             last_mouse_pos: Vec2::ZERO,
             enabled: true,
-            sensitivity: 0.005,
+            sensitivity: 0.003,
             zoom_speed: 0.5,
             min_distance: 1.0,
             max_distance: 100.0,

@@ -7,7 +7,9 @@ use glium::{
     uniform,
 };
 use materials::init_materials;
-use pipeline::{RenderPipeline, RenderTarget, RenderTexture, empty_render_texture};
+use pipeline::{
+    RenderPipeline, RenderTarget, RenderTexture, current_render_pipeline, empty_render_texture,
+};
 use post_processing::render_fullscreen_quad;
 use sge_image::Image;
 use sge_programs::COPY_PROGRAM;
@@ -111,17 +113,11 @@ pub fn init() {
 }
 
 pub fn dq2d() -> Renderer2D {
-    get_render_state()
-        .render_pipeline
-        .draw_queue_2d()
-        .renderer()
+    current_render_pipeline().draw_queue_2d().renderer()
 }
 
 pub fn wdq2d() -> Renderer2D {
-    get_render_state()
-        .render_pipeline
-        .world_draw_queue_2d()
-        .renderer()
+    current_render_pipeline().world_draw_queue_2d().renderer()
 }
 
 pub fn take_screenshot() -> TextureRef {

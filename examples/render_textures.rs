@@ -10,10 +10,9 @@ fn main() -> anyhow::Result<()> {
     let render_texture = create_empty_render_texture(size.x, size.y)?;
 
     loop {
-        clear_screen(Color::BLACK);
-
         start_rendering_to_texture(render_texture);
         clear_screen(Color::WHITE);
+        draw_ellipse(fsize / 2.0, fsize / 4.0, Color::RED_500);
         draw_tri(
             Vec2::new(0.0, fsize.y),
             fsize / 2.0,
@@ -24,6 +23,7 @@ fn main() -> anyhow::Result<()> {
         end_rendering_to_texture();
 
         draw_fullscreen_texture(render_texture.color_texture);
+        draw_fps_bg();
 
         if should_quit() {
             break;
