@@ -12,7 +12,7 @@ impl TextInput {
     pub fn new(bg: Color, id: usize) -> UiRef {
         Fit::new(BoxFill::new(
             bg,
-            base::TextInput::new(id, None, Some(SANS), 16, PRIMARY_TEXT_COLOR, 10.0, true),
+            base::TextInput::new(id, None, Some(SANS), 16, PRIMARY_TEXT_COLOR, 10.0),
         ))
     }
 
@@ -26,7 +26,6 @@ impl TextInput {
                 16,
                 PRIMARY_TEXT_COLOR,
                 10.0,
-                true,
             ),
         ))
     }
@@ -38,7 +37,7 @@ impl<T: DataInputValue> DataInput<T> {
     pub fn new(bg: Color, id: usize) -> UiRef {
         Fit::new(BoxFill::new(
             bg,
-            base::DataInput::<T>::new(id, None, Some(SANS), 16, PRIMARY_TEXT_COLOR, 10.0, true),
+            base::DataInput::<T>::new(id, None, Some(SANS), 16, PRIMARY_TEXT_COLOR, 10.0),
         ))
     }
 
@@ -52,7 +51,6 @@ impl<T: DataInputValue> DataInput<T> {
                 16,
                 PRIMARY_TEXT_COLOR,
                 10.0,
-                true,
             ),
         ))
     }
@@ -60,7 +58,7 @@ impl<T: DataInputValue> DataInput<T> {
     pub fn mono(bg: Color, id: usize) -> UiRef {
         Fit::new(BoxFill::new(
             bg,
-            base::DataInput::<T>::new(id, None, Some(MONO), 16, PRIMARY_TEXT_COLOR, 10.0, true),
+            base::DataInput::<T>::new(id, None, Some(MONO), 16, PRIMARY_TEXT_COLOR, 10.0),
         ))
     }
 
@@ -74,7 +72,6 @@ impl<T: DataInputValue> DataInput<T> {
                 16,
                 PRIMARY_TEXT_COLOR,
                 10.0,
-                true,
             ),
         ))
     }

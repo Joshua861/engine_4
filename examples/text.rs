@@ -79,12 +79,6 @@ fn main() -> anyhow::Result<()> {
             }
 
             draw_circle_world(Vec2::ZERO, 20.0, Color::RED_300);
-            // draw_circle_outline_world(
-            //     Vec2::ZERO,
-            //     min_window_dimension() / 4.0,
-            //     Color::GRAY_800,
-            //     20.0,
-            // );
 
             let text = "Hello world";
             let mut params = TextDrawParams {
@@ -95,12 +89,12 @@ fn main() -> anyhow::Result<()> {
                 ),
                 font_size: 100,
                 color: Color::PINK_300,
-                do_dpi_scaling: true,
+                line_spacing: 1.0,
             };
-            let dimensions = measure_text_ex(text, params);
+            let dimensions = measure_text_ex(text, MONO, 100);
             params.position -= dimensions.size / 2.0;
             draw_rect_world(params.position, dimensions.size, Color::GRAY_800);
-            draw_text_world_custom(text, params);
+            draw_text_custom_world(text, params);
         }
 
         if should_quit() {

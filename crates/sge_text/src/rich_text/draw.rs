@@ -3,7 +3,7 @@ use sge_color::Color;
 use sge_rendering::d2::Renderer2D;
 use sge_vectors::{Vec2, vec2};
 
-use crate::{TextDimensions, TextDrawParams, draw_text_to};
+use crate::{TextDimensions, TextDrawParams, draw_text_custom_to};
 
 use super::{RichText, RichTextParams, RichTextStyle, layout::LayoutLine};
 
@@ -15,10 +15,7 @@ impl RichText {
         params: RichTextParams,
         renderer: Renderer2D,
     ) -> TextDimensions {
-        let RichTextParams {
-            line_spacing,
-            do_dpi_scaling,
-        } = params;
+        let RichTextParams { line_spacing } = params;
 
         let mut y = 0.0;
         let mut total_width: f32 = 0.0;
@@ -80,14 +77,14 @@ impl RichText {
             }
 
             for (word, pos) in text_elements {
-                draw_text_to(
+                draw_text_custom_to(
                     &word.text,
                     TextDrawParams {
                         font: Some(word.style.font()),
                         font_size: word.style.font_size,
                         color: word.style.color,
                         position: pos,
-                        do_dpi_scaling,
+                        line_spacing: 1.0,
                     },
                     renderer,
                 );

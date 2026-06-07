@@ -21,6 +21,8 @@
 - [ ] improve line chart
 - [ ] pie chart (easy)
 - [ ] bitmap fonts
+- [ ] store measured size on text ui element to stop it from being recalculated
+  every time
 - [ ] physics 3d
 - [X] nine slice fill ui element
   - [X] draw function

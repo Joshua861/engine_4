@@ -6,8 +6,8 @@ use sge_vectors::Vec2;
 use super::*;
 use sge_text::{
     FontRef, MONO, SANS, SANS_BOLD, SANS_BOLD_ITALIC, SANS_DISPLAY, SANS_ITALIC, TextDrawParams,
-    draw_multiline_text_ex, measure_multiline_text_ex, measure_wrapped_text,
-    wrapped_text::draw_wrapped_text_in_area,
+    draw_multiline_text, draw_wrapped_text_in_area, measure_multiline_text_ex,
+    measure_wrapped_text_ex,
 };
 
 #[derive(Debug)]
@@ -16,8 +16,6 @@ pub struct Text {
     font: FontRef,
     font_size: usize,
     color: Color,
-    /// scale the font size by the DPI scaling of your monitor
-    do_dpi_scaling: bool,
     line_spacing: f32,
     wrap: bool,
 }
@@ -29,7 +27,6 @@ impl Default for Text {
             text: String::new(),
             font_size: params.font_size,
             color: params.color,
-            do_dpi_scaling: params.do_dpi_scaling,
             font: SANS,
             line_spacing: 1.0,
             wrap: true,
@@ -44,7 +41,6 @@ impl From<Text> for TextDrawParams {
             font_size: value.font_size,
             color: value.color,
             position: Vec2::ZERO,
-            do_dpi_scaling: value.do_dpi_scaling,
             ..Default::default()
         }
     }
@@ -57,7 +53,6 @@ impl From<&Text> for TextDrawParams {
             font_size: value.font_size,
             color: value.color,
             position: Vec2::ZERO,
-            do_dpi_scaling: value.do_dpi_scaling,
             ..Default::default()
         }
     }
@@ -317,7 +312,6 @@ impl Text {
         font: FontRef,
         font_size: usize,
         color: Color,
-        do_dpi_scaling: bool,
         line_spacing: f32,
         wrap: bool,
     ) -> UiRef {
@@ -326,7 +320,6 @@ impl Text {
             font,
             font_size,
             color,
-            do_dpi_scaling,
             line_spacing,
             wrap,
         }
@@ -339,7 +332,6 @@ impl Text {
         font: Option<FontRef>,
         font_size: Option<usize>,
         color: Option<Color>,
-        do_dpi_scaling: Option<bool>,
         line_spacing: Option<f32>,
         wrap: Option<bool>,
     ) -> UiRef {
@@ -348,7 +340,6 @@ impl Text {
             font: font.unwrap_or(SANS),
             font_size: font_size.unwrap_or(TextDrawParams::default().font_size),
             color: color.unwrap_or(TextDrawParams::default().color),
-            do_dpi_scaling: do_dpi_scaling.unwrap_or(TextDrawParams::default().do_dpi_scaling),
             line_spacing: line_spacing.unwrap_or(1.0),
             wrap: wrap.unwrap_or(true),
         }
@@ -361,7 +352,6 @@ impl Text {
             font: params.font.unwrap_or(SANS),
             font_size: params.font_size,
             color: params.color,
-            do_dpi_scaling: params.do_dpi_scaling,
             line_spacing: 1.0,
             wrap,
         }
@@ -371,18 +361,16 @@ impl Text {
 
 impl UiNode for Text {
     fn preferred_dimensions(&self) -> sge_vectors::Vec2 {
-        let params: TextDrawParams = self.into();
-        measure_multiline_text_ex(&self.text, params, self.line_spacing).size
+        measure_multiline_text_ex(&self.text, self.font_size, self.line_spacing).size
     }
 
     fn size(&self, area: Area) -> Vec2 {
         if self.wrap {
-            measure_wrapped_text(
+            measure_wrapped_text_ex(
                 &self.text,
-                area.width(),
-                Some(self.font),
                 self.font_size,
-                self.do_dpi_scaling,
+                self.font,
+                area.width(),
                 self.line_spacing,
             )
         } else {
@@ -395,16 +383,20 @@ impl UiNode for Text {
             draw_wrapped_text_in_area(
                 &self.text,
                 area,
-                Some(self.font),
-                self.font_size,
                 self.color,
-                self.do_dpi_scaling,
+                self.font_size,
+                self.font,
                 self.line_spacing,
             )
         } else {
-            let mut params: TextDrawParams = self.into();
-            params.position = area.top_left;
-            draw_multiline_text_ex(&self.text, params, self.line_spacing).size
+            draw_multiline_text(
+                &self.text,
+                area.top_left,
+                self.color,
+                self.font_size,
+                self.line_spacing,
+            )
+            .size
         }
     }
 }

@@ -1,199 +1,216 @@
 use sge_color::Color;
-use sge_types::Area;
-use sge_vectors::Vec2;
-use sge_window::dpi_scaling;
+use sge_rendering::d2::Renderer2D;
+use sge_vectors::{Vec2, vec2};
 
-use crate::{Font, FontRef, Glyph, MONO, TextDrawParams, draw_text_custom, measure_text_ex};
+use crate::{CharacterInfo, Font, FontSource, Glyph};
 
-pub fn wrap_text_to_width(
-    text: &str,
-    mut max_width: f32,
-    font: &mut Font,
-    font_size: usize,
-    do_dpi_scaling: bool,
-) -> Vec<String> {
-    // FIXME: please. this is so sad. this makes me sad
-    max_width *= 0.97; // sucks to suck
+pub struct LayoutWord {
+    pub text: String,
+    pub space_before: f32,
+    pub width: f32,
+}
 
-    let dpi_scaling = if do_dpi_scaling { dpi_scaling() } else { 1.0 };
-    let font_size_scaled = (font_size as f32 * dpi_scaling).ceil();
+pub struct LayoutLine {
+    pub words: Vec<LayoutWord>,
+}
 
-    let mut layout = fontdue::layout::Layout::new(fontdue::layout::CoordinateSystem::PositiveYDown);
+impl LayoutLine {
+    pub(crate) fn total_width(&self) -> f32 {
+        self.words.iter().map(|w| w.space_before + w.width).sum()
+    }
+}
 
-    layout.clear();
-    layout.append(
-        &[&font.font],
-        &fontdue::layout::TextStyle::new(" ", font_size_scaled, 0),
-    );
-    let space_width = layout
-        .glyphs()
-        .last()
-        .map(|g| {
-            let glyph = Glyph {
-                character: g.parent,
-                size: font_size_scaled as usize,
-            };
-            if !font.contains(glyph) {
-                font.cache_glyph(glyph);
-            }
-            g.x + font.characters[&glyph].advance
+impl Font {
+    pub(crate) fn measure_space(&mut self, font_size: usize) -> CharacterInfo {
+        self.font.character_info(Glyph {
+            character: ' ',
+            size: font_size,
         })
-        .unwrap_or(0.0);
+    }
 
-    let estimated_lines = (text.len() / 50).max(1);
-    let mut lines = Vec::with_capacity(estimated_lines);
+    pub(crate) fn measure_space_width(&mut self, font_size: usize) -> f32 {
+        self.measure_space(font_size).advance
+    }
 
-    for paragraph in text.lines() {
-        if paragraph.is_empty() {
-            lines.push(String::new());
-            continue;
+    pub fn layout(&mut self, text: String, font_size: usize, max_width: f32) -> Vec<LayoutLine> {
+        let mut lines = Vec::new();
+
+        let mut current = LayoutLine { words: Vec::new() };
+
+        let flush = |lines: &mut Vec<LayoutLine>, current: &mut LayoutLine| {
+            if !current.words.is_empty() {
+                lines.push(LayoutLine {
+                    words: std::mem::take(&mut current.words),
+                });
+            }
+        };
+
+        let mut pending_spaces: usize = 0;
+
+        let mut first_paragraph = true;
+        for paragraph in text.split('\n') {
+            if !first_paragraph {
+                flush(&mut lines, &mut current);
+                pending_spaces = 0;
+            }
+            first_paragraph = false;
+
+            for token in tokenize(paragraph) {
+                match token {
+                    Token::Spaces(count) => {
+                        pending_spaces += count;
+                    }
+
+                    Token::Text(word) => {
+                        let word_width = self.measure_text(word.to_string(), font_size).size.x;
+                        let mut space_before = if pending_spaces > 0 && !current.words.is_empty() {
+                            self.measure_space_width(font_size) * pending_spaces as f32
+                        } else {
+                            0.0
+                        };
+
+                        let needed = current.total_width() + space_before + word_width;
+
+                        if !current.words.is_empty() && needed > max_width {
+                            flush(&mut lines, &mut current);
+                            space_before = 0.0;
+                        }
+
+                        current.words.push(LayoutWord {
+                            text: word.to_string(),
+                            space_before: space_before,
+                            width: word_width,
+                        });
+
+                        pending_spaces = 0;
+                    }
+                }
+            }
         }
 
-        let words: Vec<_> = paragraph.split_whitespace().collect();
-        let mut current_line = String::with_capacity(50);
-        let mut current_width = 0.0;
+        flush(&mut lines, &mut current);
+        lines
+    }
 
-        for word in words {
-            layout.clear();
-            layout.append(
-                &[&font.font],
-                &fontdue::layout::TextStyle::new(word, font_size_scaled, 0),
-            );
+    pub fn measure_wrapped_text(
+        &mut self,
+        text: String,
+        max_width: f32,
+        font_size: usize,
+        line_spacing: f32,
+    ) -> Vec2 {
+        let layout = self.layout(text, font_size, max_width);
+        self.measure_layout(layout, font_size, line_spacing)
+    }
 
-            let mut word_width = 0.0f32;
-            for glyph_pos in layout.glyphs() {
-                let glyph = Glyph {
-                    character: glyph_pos.parent,
-                    size: font_size_scaled as usize,
-                };
+    pub fn measure_layout(
+        &mut self,
+        layout: Vec<LayoutLine>,
+        font_size: usize,
+        line_spacing: f32,
+    ) -> Vec2 {
+        let mut max_width = 0.0f32;
 
-                if !font.contains(glyph) {
-                    font.cache_glyph(glyph);
+        let space = self.measure_space(font_size);
+        let line_height = space.offset.y as f32 * line_spacing;
+        let total_height = line_height * (layout.len() - 1) as f32 + space.offset.y as f32;
+
+        for line in layout {
+            max_width = max_width.max(line.total_width());
+        }
+
+        Vec2::new(max_width, total_height)
+    }
+
+    pub fn draw_wrapped_text(
+        &mut self,
+        text: String,
+        position: Vec2,
+        color: Color,
+        font_size: usize,
+        line_spacing: f32,
+        max_width: f32,
+        renderer: Renderer2D,
+    ) -> Vec2 {
+        let layout = self.layout(text, font_size, max_width);
+        self.draw_layout(layout, position, color, font_size, line_spacing, renderer)
+    }
+
+    pub fn draw_layout(
+        &mut self,
+        layout: Vec<LayoutLine>,
+        position: Vec2,
+        color: Color,
+        font_size: usize,
+        line_spacing: f32,
+        renderer: Renderer2D,
+    ) -> Vec2 {
+        let mut max_width = 0.0f32;
+
+        let space = self.measure_space(font_size);
+        let line_height = space.offset.y as f32 * line_spacing;
+        let total_height = line_height * (layout.len() - 1) as f32 + space.offset.y as f32;
+
+        let y_offset = position.y;
+
+        for line in layout {
+            max_width = max_width.max(line.total_width());
+
+            let mut x = position.x;
+
+            for word in line.words {
+                x += word.space_before;
+                self.draw_text_to(
+                    word.text,
+                    position + vec2(x, y_offset),
+                    color,
+                    font_size,
+                    line_spacing,
+                    renderer,
+                );
+                x += word.width;
+            }
+        }
+
+        Vec2::new(max_width, total_height)
+    }
+}
+
+pub(crate) enum Token<'a> {
+    Text(&'a str),
+    Spaces(usize),
+}
+
+pub(crate) fn tokenize(text: &str) -> impl Iterator<Item = Token<'_>> {
+    let mut chars = text.char_indices().peekable();
+
+    std::iter::from_fn(move || {
+        let (start, first) = chars.next()?;
+
+        if first.is_whitespace() {
+            let mut count = 1;
+            while let Some((_, c)) = chars.peek() {
+                if !c.is_whitespace() {
+                    break;
                 }
-
-                let char_info = &font.characters[&glyph];
-                let glyph_end = glyph_pos.x + char_info.advance;
-                word_width = word_width.max(glyph_end);
+                count += 1;
+                chars.next();
             }
 
-            if current_line.is_empty() {
-                if word_width <= max_width {
-                    current_line.push_str(word);
-                    current_width = word_width;
-                } else {
-                    lines.push(word.to_string());
-                }
-            } else {
-                let test_width = current_width + space_width + word_width;
+            return Some(Token::Spaces(count));
+        }
 
-                if test_width <= max_width {
-                    current_line.push(' ');
-                    current_line.push_str(word);
-                    current_width = test_width;
-                } else {
-                    lines.push(current_line);
-                    current_line = String::with_capacity(50);
-                    current_line.push_str(word);
-                    current_width = word_width;
-                }
+        let mut end = start + first.len_utf8();
+
+        while let Some((i, c)) = chars.peek().copied() {
+            if c.is_whitespace() {
+                break;
             }
+
+            chars.next();
+            end = i + c.len_utf8();
         }
 
-        if !current_line.is_empty() {
-            lines.push(current_line);
-        }
-    }
-
-    lines
-}
-
-pub fn get_space_width(font: &mut Font, font_size: usize) -> f32 {
-    let space_glyph = Glyph {
-        character: ' ',
-        size: font_size,
-    };
-
-    if !font.contains(space_glyph) {
-        font.cache_glyph(space_glyph);
-    }
-
-    font.characters
-        .get(&space_glyph)
-        .map(|c| c.advance)
-        .unwrap_or(0.0)
-}
-
-pub fn draw_wrapped_text_in_area(
-    text: &str,
-    area: Area,
-    font: Option<FontRef>,
-    font_size: usize,
-    color: Color,
-    do_dpi_scaling: bool,
-    line_spacing: f32,
-) -> Vec2 {
-    let params = TextDrawParams {
-        font,
-        font_size,
-        color,
-        position: Vec2::ZERO,
-        do_dpi_scaling,
-    };
-
-    let wrapped_lines = wrap_text_to_width(
-        text,
-        area.width(),
-        font.unwrap_or(MONO).get_mut(),
-        font_size,
-        do_dpi_scaling,
-    );
-
-    let mut y_offset = 0.0;
-    let line_height = font_size as f32 * line_spacing;
-    let mut max_width: f32 = 0.0;
-
-    for line in &wrapped_lines {
-        let mut line_params = params;
-        line_params.position = area.top_left() + Vec2::new(0.0, y_offset);
-        let line_size = draw_text_custom(line, line_params).size;
-        max_width = max_width.max(line_size.x);
-        y_offset += line_height;
-    }
-
-    Vec2::new(max_width, y_offset)
-}
-
-pub fn measure_wrapped_text(
-    text: &str,
-    max_width: f32,
-    font: Option<FontRef>,
-    font_size: usize,
-    do_dpi_scaling: bool,
-    line_spacing: f32,
-) -> Vec2 {
-    let params = TextDrawParams {
-        font,
-        font_size,
-        color: Color::NEUTRAL_100,
-        position: Vec2::ZERO,
-        do_dpi_scaling,
-    };
-
-    let wrapped_lines = wrap_text_to_width(
-        text,
-        max_width,
-        font.unwrap_or(MONO).get_mut(),
-        font_size,
-        do_dpi_scaling,
-    );
-    let line_height = font_size as f32 * line_spacing;
-    let total_height = wrapped_lines.len() as f32 * line_height;
-
-    let mut max_actual_width = 0.0f32;
-    for line in &wrapped_lines {
-        let width = measure_text_ex(line, params).size.x;
-        max_actual_width = max_actual_width.max(width);
-    }
-
-    Vec2::new(max_actual_width, total_height)
+        Some(Token::Text(&text[start..end]))
+    })
 }

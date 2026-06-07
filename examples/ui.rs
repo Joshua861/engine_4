@@ -343,5 +343,5 @@ fn black_text(text: impl ToString) -> UiRef {
 }
 
 fn bold_italic_colored(text: impl ToString, color: Color) -> UiRef {
-    Text::new_full(text, SANS_BOLD_ITALIC, 24, color, true, 1.0, false)
+    Text::new_full(text, SANS_BOLD_ITALIC, 24, color, 1.0, false)
 }

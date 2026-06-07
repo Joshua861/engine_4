@@ -54,11 +54,8 @@ fn main() {
                 .with_stroke(7.0, Color::NEUTRAL_800, SdfStroke::Inside);
             draw_sdf_world(sdf);
 
-            let dim = measure_text_ex(
-                node.n.to_string(),
-                TextDrawParams::builder().font_size(30).build(),
-            );
-            draw_text_world_ex(node.n, node.pos - dim.size / 2.0, Color::BLACK, 30);
+            let dim = measure_text_ex(node.n.to_string(), MONO, 30);
+            draw_text_ex_world(node.n, node.pos - dim.size / 2.0, Color::BLACK, 30);
         }
 
         if should_quit() {

@@ -13,7 +13,6 @@ impl Text {
             SANS_DISPLAY,
             rem(3.563),
             scheme().on_background,
-            true,
             1.123,
             true,
         )
@@ -25,7 +24,6 @@ impl Text {
             SANS_DISPLAY,
             rem(2.813),
             scheme().on_background,
-            true,
             1.156,
             true,
         )
@@ -37,7 +35,6 @@ impl Text {
             SANS_DISPLAY,
             rem(2.25),
             scheme().on_background,
-            true,
             1.222,
             true,
         )
@@ -49,7 +46,6 @@ impl Text {
             SANS_DISPLAY,
             rem(2.0),
             scheme().on_background,
-            true,
             1.25,
             true,
         )
@@ -61,7 +57,6 @@ impl Text {
             SANS_DISPLAY,
             rem(1.75),
             scheme().on_background,
-            true,
             1.286,
             true,
         )
@@ -73,7 +68,6 @@ impl Text {
             SANS_DISPLAY,
             rem(1.5),
             scheme().on_background,
-            true,
             1.333,
             true,
         )
@@ -85,7 +79,6 @@ impl Text {
             SANS_DISPLAY,
             rem(1.375),
             scheme().on_background,
-            true,
             1.273,
             true,
         )
@@ -97,7 +90,6 @@ impl Text {
             SANS_DISPLAY,
             rem(1.0),
             scheme().on_background,
-            true,
             1.5,
             true,
         )
@@ -109,14 +101,13 @@ impl Text {
             SANS_DISPLAY,
             rem(0.875),
             scheme().on_background,
-            true,
             1.429,
             true,
         )
     }
 
     pub fn color(text: impl ToString, color: Color) -> UiRef {
-        base::Text::new_full(text, SANS, rem(1.0), color, true, 1.5, true)
+        base::Text::new_full(text, SANS, rem(1.0), color, 1.5, true)
     }
 
     pub fn on_background(text: impl ToString) -> UiRef {

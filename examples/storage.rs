@@ -28,7 +28,12 @@ fn main() -> anyhow::Result<()> {
 
 fn show_score() {
     let state = storage_get_state::<MyState>();
-    draw_text_size(state.score.to_string(), Vec2::splat(100.0), 100);
+    draw_text_ex(
+        state.score.to_string(),
+        Vec2::splat(100.0),
+        Color::WHITE,
+        100,
+    );
 }
 
 fn increment_score() {

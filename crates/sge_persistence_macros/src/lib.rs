@@ -200,7 +200,6 @@ pub fn persistent(args: TokenStream, item: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         #(#attrs)*
-        use ::sge_persistence::rkyv;
         #[derive(
             ::sge_persistence::rkyv::Archive,
             ::sge_persistence::rkyv::Serialize,

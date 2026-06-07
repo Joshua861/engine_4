@@ -72,14 +72,7 @@ fn main() {
 
         clear_screen(Color::WHITE);
 
-        draw_multiline_text_ex(
-            window_info,
-            TextDrawParams::builder()
-                .color(Color::BLACK)
-                .position(vec2(20.0, 20.0))
-                .build(),
-            1.0,
-        );
+        draw_text_ex(window_info, vec2(20.0, 20.0), Color::BLACK, 20);
 
         if should_quit() {
             break;

@@ -95,15 +95,11 @@ impl Default for RichTextStyle {
 
 pub struct RichTextParams {
     pub line_spacing: f32,
-    pub do_dpi_scaling: bool,
 }
 
 impl Default for RichTextParams {
     fn default() -> Self {
-        Self {
-            line_spacing: 1.1,
-            do_dpi_scaling: false,
-        }
+        Self { line_spacing: 1.1 }
     }
 }
 
@@ -133,7 +129,7 @@ impl RichText {
     }
 
     pub fn measure(&self, max_width: f32, line_spacing: f32) -> Vec2 {
-        let lines = self.layout(max_width, true);
+        let lines = self.layout(max_width);
         Self::measure_layout(&lines, line_spacing)
     }
 
@@ -150,11 +146,8 @@ impl RichText {
     }
 
     pub fn draw_to(&self, area: Area, line_spacing: f32, renderer: Renderer2D) -> TextDimensions {
-        let lines = self.layout(area.width(), true);
-        let params = RichTextParams {
-            line_spacing,
-            do_dpi_scaling: false,
-        };
+        let lines = self.layout(area.width());
+        let params = RichTextParams { line_spacing };
         self.draw_layout_to(&lines, area.top_left(), params, renderer)
     }
 
@@ -172,7 +165,7 @@ impl RichText {
         params: RichTextParams,
         renderer: Renderer2D,
     ) -> TextDimensions {
-        let lines = self.layout(area.width(), params.do_dpi_scaling);
+        let lines = self.layout(area.width());
         self.draw_layout_to(&lines, area.top_left(), params, renderer)
     }
 

@@ -1,143 +1,363 @@
 use std::{collections::HashMap, hash::Hash};
 
-use fontdue::{Metrics, layout::TextStyle};
+use bitmap::{BitmapFont, BitmapFontSettings};
 use glium::uniforms::{MagnifySamplerFilter, MinifySamplerFilter};
-use sge_color::{Color, u8::ColorU8};
+use sge_color::Color;
 use sge_error_union::ErrorUnion;
-use sge_image::Image;
 use sge_macros::gen_ref_type;
 use sge_math::transform::Transform2D;
-use sge_rendering::{d2::Renderer2D, dq2d, wdq2d};
-use sge_rng::rand;
+use sge_rendering::{api::draw_texture_to_ex, d2::Renderer2D, dq2d, wdq2d};
 use sge_texture_atlas::{SpriteKey, TextureAtlas};
 use sge_textures::TextureRef;
-use sge_vectors::{IVec2, Rect, Vec2};
-use sge_window::dpi_scaling;
+use sge_vectors::{IVec2, Vec2, vec2};
 
+pub mod api;
+pub mod bitmap;
 pub mod icons;
 pub mod rich_text;
+pub mod typeface;
+pub mod vector;
 pub mod wrapped_text;
 
+pub use api::*;
+pub use typeface::*;
+
+use vector::VectorFont;
 pub use wrapped_text::*;
 
 pub const DEFAULT_FONT_SIZE: usize = TextDrawParams::DEFAULT.font_size;
 
-#[cfg(feature = "extra_fonts")]
-pub const SANS_TYPEFACE: Typeface = Typeface {
-    base: SANS,
-    bold: Some(SANS_BOLD),
-    italic: Some(SANS_ITALIC),
-    bold_italic: Some(SANS_BOLD_ITALIC),
-    display: Some(SANS_DISPLAY),
-};
+enum FontInner {
+    Bitmap(BitmapFont),
+    Vector(VectorFont),
+}
 
-pub const MONO_TYPEFACE: Typeface = Typeface {
-    base: MONO,
-    bold: None,
-    italic: None,
-    bold_italic: None,
-    display: None,
-};
+impl FontSource for FontInner {
+    #[inline]
+    fn character_info(&mut self, glyph: Glyph) -> CharacterInfo {
+        match self {
+            Self::Vector(v) => v.character_info(glyph),
+            Self::Bitmap(b) => b.character_info(glyph),
+        }
+    }
+
+    #[inline]
+    fn font_metrics(&self, font_size: usize) -> FontMetrics {
+        match self {
+            Self::Vector(v) => v.font_metrics(font_size),
+            Self::Bitmap(b) => b.font_metrics(font_size),
+        }
+    }
+
+    #[inline]
+    fn texture_atlas_mut(&mut self) -> &mut TextureAtlas {
+        match self {
+            Self::Vector(v) => v.texture_atlas_mut(),
+            Self::Bitmap(b) => b.texture_atlas_mut(),
+        }
+    }
+
+    #[inline]
+    fn texture_atlas(&self) -> &TextureAtlas {
+        match self {
+            Self::Vector(v) => v.texture_atlas(),
+            Self::Bitmap(b) => b.texture_atlas(),
+        }
+    }
+
+    #[inline]
+    fn contains(&self, glyph: Glyph) -> bool {
+        match self {
+            Self::Vector(v) => v.contains(glyph),
+            Self::Bitmap(b) => b.contains(glyph),
+        }
+    }
+}
+
+trait FontSource {
+    fn character_info(&mut self, glyph: Glyph) -> CharacterInfo;
+    fn font_metrics(&self, font_size: usize) -> FontMetrics;
+    fn texture_atlas(&self) -> &TextureAtlas;
+    fn texture_atlas_mut(&mut self) -> &mut TextureAtlas;
+    fn contains(&self, glyph: Glyph) -> bool;
+
+    fn set_minify_filter(&mut self, filter_mode: MinifySamplerFilter) {
+        self.texture_atlas_mut().set_minify_filter(filter_mode);
+    }
+
+    fn set_magnify_filter(&mut self, filter_mode: MagnifySamplerFilter) {
+        self.texture_atlas_mut().set_magnify_filter(filter_mode);
+    }
+
+    fn use_linear_filtering(&mut self) {
+        self.texture_atlas_mut().use_linear_filtering();
+    }
+
+    fn use_nearest_filtering(&mut self) {
+        self.texture_atlas_mut().use_nearest_filtering();
+    }
+
+    fn texture(&mut self) -> TextureRef {
+        self.texture_atlas_mut().texture().unwrap()
+    }
+
+    fn draw_sprite(
+        &mut self,
+        key: SpriteKey,
+        color: Color,
+        position: Vec2,
+        renderer: Renderer2D,
+    ) -> Option<()> {
+        let sprite = self.texture_atlas().get(key)?;
+        let sprite_size = sprite.rect.size();
+        let scale = vec2(sprite_size.x as f32, sprite_size.y as f32);
+
+        let transform = Transform2D::from_scale_translation(scale, position);
+        let texture = self.texture();
+
+        draw_texture_to_ex(
+            texture,
+            transform,
+            color,
+            Some(sprite.rect.as_rect().into()),
+            renderer,
+        );
+
+        Some(())
+    }
+
+    fn measure_text(&mut self, text: &str, font_size: usize) -> TextDimensions {
+        if text.is_empty() {
+            return TextDimensions::default();
+        }
+
+        let metrics = self.font_metrics(font_size);
+        let mut width = 0.0f32;
+
+        for c in text.chars() {
+            let glyph = Glyph {
+                size: font_size,
+                character: c,
+            };
+
+            let info = self.character_info(glyph);
+            width += info.advance;
+        }
+
+        let size = vec2(width, metrics.line_height());
+        TextDimensions {
+            size,
+            final_cursor_pos: size,
+        }
+    }
+}
 
 pub struct Font {
-    font: fontdue::Font,
-    atlas: TextureAtlas,
-    characters: HashMap<Glyph, CharacterInfo>,
-    /// not the same as font ref
-    id: u32,
+    font: FontInner,
+    cache: HashMap<(usize, String), Vec2>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Typeface {
-    pub base: FontRef,
-    pub bold: Option<FontRef>,
-    pub italic: Option<FontRef>,
-    pub bold_italic: Option<FontRef>,
-    pub display: Option<FontRef>,
-}
-
-impl Typeface {
-    pub fn get_font(&self, font_type: FontType) -> FontRef {
-        match font_type {
-            FontType::Regular => self.base,
-            FontType::Bold => self.bold.unwrap_or(self.base),
-            FontType::Italic => self.italic.unwrap_or(self.base),
-            FontType::BoldItalic => self.bold_italic.unwrap_or(self.bold.unwrap_or(self.base)),
-            FontType::Display => self.display.unwrap_or(self.bold.unwrap_or(self.base)),
-        }
-    }
-}
-
-#[cfg(feature = "extra_fonts")]
-impl Default for Typeface {
-    fn default() -> Self {
-        SANS_TYPEFACE
-    }
-}
-
-#[cfg(not(feature = "extra_fonts"))]
-impl Default for Typeface {
-    fn default() -> Self {
-        MONO_TYPEFACE
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FontType {
-    Regular,
-    Bold,
-    Italic,
-    BoldItalic,
-    Display,
-}
-
-impl FontType {
-    pub fn toggle_bold(&mut self) {
-        *self = match self {
-            Self::Regular => Self::Bold,
-            Self::Italic => Self::BoldItalic,
-            Self::Bold => Self::Regular,
-            Self::BoldItalic => Self::Italic,
-            Self::Display => Self::Bold,
-        };
+impl Font {
+    fn vector_from_bytes(bytes: &[u8]) -> Result<Self, LoadFontError> {
+        Ok(Self {
+            font: FontInner::Vector(VectorFont::from_bytes(bytes)?),
+            cache: HashMap::new(),
+        })
     }
 
-    pub fn toggle_italic(&mut self) {
-        *self = match self {
-            Self::Regular => Self::Italic,
-            Self::Bold => Self::BoldItalic,
-            Self::Italic => Self::Regular,
-            Self::BoldItalic => Self::Bold,
-            Self::Display => Self::Italic,
-        };
+    fn bitmap_from_bytes(
+        bytes: &[u8],
+        settings: &BitmapFontSettings,
+    ) -> Result<Self, LoadFontError> {
+        Ok(Self {
+            font: FontInner::Bitmap(BitmapFont::load_from_bytes(bytes, settings)?),
+            cache: HashMap::new(),
+        })
     }
 
-    pub fn set_bold(&mut self, bold: bool) {
-        match (&self, bold) {
-            (Self::Regular, true) => *self = Self::Bold,
-            (Self::Italic, true) => *self = Self::BoldItalic,
-            (Self::Bold, false) => *self = Self::Regular,
-            (Self::BoldItalic, false) => *self = Self::Italic,
-            _ => {}
+    fn measure_text(&mut self, text: String, font_size: usize) -> TextDimensions {
+        // FIXME: this clone is probably avoidable
+        if let Some(size) = self.cache.get(&(font_size, text.clone())) {
+            TextDimensions {
+                size: *size,
+                final_cursor_pos: *size,
+            }
+        } else {
+            let dimensions = self.font.measure_text(&text, font_size);
+            self.cache.insert((font_size, text), dimensions.size);
+            dimensions
         }
     }
 
-    pub fn set_italic(&mut self, italic: bool) {
-        match (&self, italic) {
-            (Self::Regular, true) => *self = Self::Italic,
-            (Self::Bold, true) => *self = Self::BoldItalic,
-            (Self::Italic, false) => *self = Self::Regular,
-            (Self::BoldItalic, false) => *self = Self::Bold,
-            _ => {}
+    pub fn ascii_character_list() -> Vec<char> {
+        (0..255).filter_map(::std::char::from_u32).collect()
+    }
+
+    pub fn latin_character_list() -> Vec<char> {
+        "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*(){}[].,:"
+            .chars()
+            .collect()
+    }
+
+    pub fn populate_font_cache(&mut self, characters: &[char], size: usize) {
+        for character in characters {
+            self.font.character_info(Glyph {
+                character: *character,
+                size,
+            });
         }
     }
 
-    pub fn is_italic(&self) -> bool {
-        matches!(self, Self::Italic | Self::BoldItalic)
+    pub fn draw_text_to(
+        &mut self,
+        text: String,
+        position: Vec2,
+        color: Color,
+        font_size: usize,
+        line_spacing: f32,
+        renderer: Renderer2D,
+    ) -> TextDimensions {
+        if text.is_empty() {
+            return TextDimensions::default();
+        }
+
+        let metrics = self.font.font_metrics(font_size);
+        let base_line_height = metrics.line_height();
+        let scaled_line_height = base_line_height * line_spacing;
+
+        let space_advance = self
+            .font
+            .character_info(Glyph {
+                character: ' ',
+                size: font_size,
+            })
+            .advance;
+
+        let mut chars = text.chars().peekable();
+
+        let mut x = position.x;
+        let mut y = position.y;
+        let mut width = 0.0;
+        let mut height = 0.0f32;
+
+        while chars.peek() == Some(&' ') {
+            chars.next();
+            x += space_advance;
+            width += space_advance;
+        }
+
+        for c in chars {
+            if c == '\n' {
+                x = position.x;
+                y += scaled_line_height;
+                height += scaled_line_height;
+                continue;
+            }
+
+            let glyph = Glyph {
+                character: c,
+                size: font_size,
+            };
+
+            let char_info = self.font.character_info(glyph);
+
+            let baseline_y = y + metrics.ascent;
+
+            let glyph_render_pos = vec2(
+                x + char_info.offset.x as f32,
+                baseline_y - char_info.offset.y as f32,
+            );
+
+            self.font
+                .draw_sprite(char_info.sprite, color, glyph_render_pos, renderer);
+
+            x += char_info.advance;
+            width += char_info.advance;
+        }
+
+        let size = Vec2::new(width, height.max(base_line_height));
+        TextDimensions {
+            size,
+            final_cursor_pos: size,
+        }
     }
 
-    pub fn is_bold(&self) -> bool {
-        matches!(self, Self::Bold | Self::BoldItalic)
+    pub fn draw_text(
+        &mut self,
+        text: String,
+        position: Vec2,
+        color: Color,
+        font_size: usize,
+        line_spacing: f32,
+    ) -> TextDimensions {
+        self.draw_text_to(text, position, color, font_size, line_spacing, dq2d())
+    }
+
+    pub fn draw_text_world(
+        &mut self,
+        text: String,
+        position: Vec2,
+        color: Color,
+        font_size: usize,
+        line_spacing: f32,
+    ) -> TextDimensions {
+        self.draw_text_to(text, position, color, font_size, line_spacing, wdq2d())
+    }
+
+    pub fn measure_multiline_text(
+        &mut self,
+        text: String,
+        font_size: usize,
+        line_spacing: f32,
+    ) -> TextDimensions {
+        if text.is_empty() {
+            return TextDimensions::default();
+        }
+
+        let space_info = self.measure_space(font_size);
+        let line_height = space_info.offset.y as f32 * line_spacing;
+
+        let mut width = 0.0f32;
+        let mut height = 0.0f32;
+
+        let mut lines = text.split('\n');
+        if let Some(first_line) = lines.next() {
+            width = self.font.measure_text(first_line, font_size).size.x;
+
+            for line in lines {
+                height += line_height;
+                let line_width = self.font.measure_text(line, font_size).size.x;
+                width = width.max(line_width);
+            }
+        }
+
+        height = height.max(space_info.offset.y as f32);
+
+        let size = Vec2::new(width, height);
+        TextDimensions {
+            size,
+            final_cursor_pos: size,
+        }
+    }
+
+    pub fn set_minify_filter(&mut self, filter_mode: MinifySamplerFilter) {
+        self.font.set_minify_filter(filter_mode);
+    }
+
+    pub fn set_magnify_filter(&mut self, filter_mode: MagnifySamplerFilter) {
+        self.font.set_magnify_filter(filter_mode);
+    }
+
+    pub fn use_linear_filtering(&mut self) {
+        self.font.use_linear_filtering();
+    }
+
+    pub fn use_nearest_filtering(&mut self) {
+        self.font.use_nearest_filtering();
+    }
+
+    pub fn texture(&mut self) -> TextureRef {
+        self.font.texture()
     }
 }
 
@@ -149,11 +369,24 @@ pub(crate) struct CharacterInfo {
     pub sprite: SpriteKey,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct FontMetrics {
+    pub ascent: f32,
+    pub descent: f32,
+    pub line_gap: f32,
+}
+
+impl FontMetrics {
+    #[inline]
+    pub fn line_height(&self) -> f32 {
+        self.ascent - self.descent + self.line_gap
+    }
+}
+
 #[derive(Default)]
 pub struct TextDimensions {
     pub size: Vec2,
     pub final_cursor_pos: Vec2,
-    // pub offset_y: f32,
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
@@ -170,172 +403,8 @@ impl Default for FontRef {
     }
 }
 
-pub struct TextMeasureCache {
-    map: HashMap<(u32, String), Vec2>,
-}
-
-sge_global::global!(TextMeasureCache, text_measure_cache);
-
 pub fn default_font() -> FontRef {
     FontRef(0)
-}
-
-#[allow(unused)]
-impl FontRef {
-    pub fn draw_text(&self, text: impl ToString, position: Vec2, size: usize) -> TextDimensions {
-        draw_text_custom(
-            text,
-            TextDrawParams {
-                font: Some(*self),
-                font_size: size,
-                position,
-                ..Default::default()
-            },
-        )
-    }
-
-    pub fn draw_text_world(
-        &self,
-        text: impl ToString,
-        position: Vec2,
-        size: usize,
-    ) -> TextDimensions {
-        draw_text_world_custom(
-            text,
-            TextDrawParams {
-                font: Some(*self),
-                font_size: size,
-                position,
-                ..Default::default()
-            },
-        )
-    }
-
-    pub fn draw_text_world_ex(
-        &self,
-        text: impl ToString,
-        position: Vec2,
-        size: usize,
-        color: Color,
-        do_dpi_scaling: bool,
-    ) -> TextDimensions {
-        draw_text_world_custom(
-            text,
-            TextDrawParams {
-                font: Some(*self),
-                font_size: size,
-                position,
-                color,
-                do_dpi_scaling,
-                ..Default::default()
-            },
-        )
-    }
-
-    pub fn draw_text_ex(
-        &self,
-        text: impl ToString,
-        position: Vec2,
-        size: usize,
-        color: Color,
-        do_dpi_scaling: bool,
-    ) -> TextDimensions {
-        draw_text_custom(
-            text,
-            TextDrawParams {
-                font: Some(*self),
-                font_size: size,
-                position,
-                color,
-                do_dpi_scaling,
-                ..Default::default()
-            },
-        )
-    }
-
-    pub fn draw_multiline_text(
-        &self,
-        text: impl ToString,
-        position: Vec2,
-        size: usize,
-        line_spacing: f32,
-    ) -> TextDimensions {
-        draw_multiline_text_ex(
-            text,
-            TextDrawParams {
-                font: Some(*self),
-                font_size: size,
-                position,
-                ..Default::default()
-            },
-            line_spacing,
-        )
-    }
-
-    pub fn draw_multiline_text_world(
-        &self,
-        text: impl ToString,
-        position: Vec2,
-        size: usize,
-        line_spacing: f32,
-    ) -> TextDimensions {
-        draw_multiline_text_world_ex(
-            text,
-            TextDrawParams {
-                font: Some(*self),
-                font_size: size,
-                position,
-                ..Default::default()
-            },
-            line_spacing,
-        )
-    }
-
-    pub fn draw_multiline_text_ex(
-        &self,
-        text: impl ToString,
-        position: Vec2,
-        size: usize,
-        color: Color,
-        do_dpi_scaling: bool,
-        line_spacing: f32,
-        transform: Transform2D,
-    ) -> TextDimensions {
-        draw_multiline_text_ex(
-            text,
-            TextDrawParams {
-                font: Some(*self),
-                font_size: size,
-                position,
-                color,
-                do_dpi_scaling,
-            },
-            line_spacing,
-        )
-    }
-
-    pub fn draw_multiline_text_world_ex(
-        &self,
-        text: impl ToString,
-        position: Vec2,
-        size: usize,
-        color: Color,
-        do_dpi_scaling: bool,
-        line_spacing: f32,
-        transform: Transform2D,
-    ) -> TextDimensions {
-        draw_multiline_text_world_ex(
-            text,
-            TextDrawParams {
-                font: Some(*self),
-                font_size: size,
-                position,
-                color,
-                do_dpi_scaling,
-            },
-            line_spacing,
-        )
-    }
 }
 
 #[derive(ErrorUnion, Debug)]
@@ -343,172 +412,13 @@ pub enum LoadFontError {
     Other(&'static str),
     Texture(glium::texture::TextureCreationError),
     Io(std::io::Error),
-}
-
-impl Font {
-    pub(crate) fn load_from_bytes(bytes: &[u8]) -> Result<Font, LoadFontError> {
-        Self::load_from_bytes_with_atlas(TextureAtlas::new()?, bytes)
-    }
-
-    pub(crate) fn load_from_bytes_with_atlas(
-        atlas: TextureAtlas,
-        bytes: &[u8],
-    ) -> Result<Self, LoadFontError> {
-        Ok(Self {
-            font: fontdue::Font::from_bytes(bytes, fontdue::FontSettings::default())?,
-            characters: HashMap::new(),
-            atlas,
-            id: rand::<u32>(),
-        })
-    }
-
-    #[allow(unused)]
-    pub(crate) fn descent(&self, font_size: f32) -> f32 {
-        self.font
-            .horizontal_line_metrics(font_size)
-            .unwrap()
-            .descent
-    }
-
-    fn rasterize_glyph(&self, glyph: Glyph) -> (Metrics, Vec<u8>) {
-        self.font.rasterize(glyph.character, glyph.size as f32)
-    }
-
-    pub(crate) fn cache_glyph(&mut self, glyph: Glyph) {
-        if self.contains(glyph) {
-            return;
-        }
-
-        let (metrics, bitmap) = self.rasterize_glyph(glyph);
-        let sprite = self.atlas.cache_sprite(&Image::new(
-            metrics.width,
-            metrics.height,
-            bitmap
-                .iter()
-                .map(|coverage| ColorU8::from_rgba(255, 255, 255, *coverage))
-                .collect(),
-        ));
-        let advance = metrics.advance_width;
-        let offset = (metrics.xmin, metrics.ymin).into();
-
-        let character_info = CharacterInfo {
-            advance,
-            offset,
-            sprite,
-        };
-
-        self.characters.insert(glyph, character_info);
-    }
-
-    pub(crate) fn contains(&self, glyph: Glyph) -> bool {
-        self.characters.contains_key(&glyph)
-    }
-
-    pub(crate) fn measure_text(
-        &mut self,
-        text: impl ToString,
-        font_size: f32,
-        do_dpi_scaling: bool,
-    ) -> TextDimensions {
-        let text = text.to_string();
-        let cache = &mut get_text_measure_cache().map;
-
-        if let Some(&size) = cache.get(&(self.id, text.clone())) {
-            return TextDimensions {
-                size,
-                final_cursor_pos: size,
-            };
-        }
-
-        let result = self.measure_text_inner(&text, font_size, do_dpi_scaling);
-        cache.insert((self.id, text), result.size);
-        result
-    }
-
-    fn measure_text_inner(
-        &mut self,
-        text: impl ToString,
-        font_size: f32,
-        do_dpi_scaling: bool,
-    ) -> TextDimensions {
-        let text = text.to_string();
-
-        if text.is_empty() {
-            return TextDimensions::default();
-        }
-
-        let dpi_scaling = if do_dpi_scaling { dpi_scaling() } else { 1.0 };
-        let font_size = (font_size * dpi_scaling).ceil();
-        let mut layout =
-            fontdue::layout::Layout::new(fontdue::layout::CoordinateSystem::PositiveYDown);
-        layout.append(&[&self.font], &TextStyle::new(&text, font_size, 0));
-
-        let mut width = 0.0f32;
-
-        for position in layout.glyphs() {
-            let glyph = Glyph {
-                character: position.parent,
-                size: font_size as usize,
-            };
-            if !self.contains(glyph) {
-                self.cache_glyph(glyph);
-            }
-
-            let char_info = self.characters[&glyph];
-
-            let glyph_end = position.x + char_info.advance;
-            width = width.max(glyph_end);
-        }
-
-        let size = Vec2::new(width, layout.height());
-        TextDimensions {
-            size,
-            final_cursor_pos: size,
-        }
-    }
-
-    pub fn ascii_character_list() -> Vec<char> {
-        (0..255).filter_map(::std::char::from_u32).collect()
-    }
-
-    pub fn latin_character_list() -> Vec<char> {
-        "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*(){}[].,:"
-            .chars()
-            .collect()
-    }
-
-    pub fn populate_font_cache(&mut self, characters: &[char], size: usize) {
-        for character in characters {
-            self.cache_glyph(Glyph {
-                character: *character,
-                size,
-            });
-        }
-    }
-
-    pub fn set_minify_filter(&mut self, filter_mode: MinifySamplerFilter) {
-        self.atlas.set_minify_filter(filter_mode);
-    }
-
-    pub fn set_magnify_filter(&mut self, filter_mode: MagnifySamplerFilter) {
-        self.atlas.set_magnify_filter(filter_mode);
-    }
-
-    pub fn use_linear_filtering(&mut self) {
-        self.atlas.use_linear_filtering();
-    }
-
-    pub fn use_nearest_filtering(&mut self) {
-        self.atlas.use_nearest_filtering();
-    }
-
-    pub fn texture(&mut self) -> TextureRef {
-        self.atlas.texture().unwrap()
-    }
+    ImageDecoding(sge_image::image_rs::ImageError),
+    SgeImage(sge_image::SgeImageError),
+    Bitmap(bitmap::BitmapFontDecodingError),
 }
 
 pub fn create_ttf_font(bytes: &[u8]) -> Result<FontRef, LoadFontError> {
-    Font::load_from_bytes(bytes).map(|f| f.create())
+    Font::vector_from_bytes(bytes).map(|f| f.create())
 }
 
 #[derive(Clone, Copy)]
@@ -517,8 +427,7 @@ pub struct TextDrawParams {
     pub font_size: usize,
     pub color: Color,
     pub position: Vec2,
-    /// scale the font size by the DPI scaling of your monitor
-    pub do_dpi_scaling: bool,
+    pub line_spacing: f32,
 }
 
 #[bon::bon]
@@ -527,8 +436,8 @@ impl TextDrawParams {
         font: None,
         font_size: 16,
         color: Color::NEUTRAL_100,
-        do_dpi_scaling: false,
         position: Vec2::ZERO,
+        line_spacing: 1.0,
     };
 
     #[builder]
@@ -537,7 +446,7 @@ impl TextDrawParams {
         font_size: Option<usize>,
         color: Option<Color>,
         position: Option<Vec2>,
-        do_dpi_scaling: Option<bool>,
+        line_spacing: Option<f32>,
     ) -> Self {
         let d = Self::default();
         Self {
@@ -545,7 +454,7 @@ impl TextDrawParams {
             font_size: font_size.unwrap_or(d.font_size),
             color: color.unwrap_or(d.color),
             position: position.unwrap_or(d.position),
-            do_dpi_scaling: do_dpi_scaling.unwrap_or(d.do_dpi_scaling),
+            line_spacing: line_spacing.unwrap_or(d.line_spacing),
         }
     }
 }
@@ -586,399 +495,18 @@ pub(crate) fn init_fonts() -> Result<(), LoadFontError> {
     Ok(())
 }
 
-fn draw_text_to(
-    text: impl ToString,
-    params: TextDrawParams,
-    mut renderer: Renderer2D,
-) -> TextDimensions {
-    let text = text.to_string();
-    let TextDrawParams {
-        font,
-        font_size,
-        color,
-        position: pos,
-        do_dpi_scaling,
-    } = params;
-
-    if text.is_empty() {
-        return TextDimensions::default();
-    }
-
-    let dpi_scaling = if do_dpi_scaling { dpi_scaling() } else { 1.0 };
-    let font_size = (font_size as f32 * dpi_scaling).ceil();
-    let mut font = font.unwrap_or(default_font());
-
-    let space_metrics = font.font.metrics(' ', font_size);
-    let space_advance = space_metrics.advance_width;
-
-    let leading_spaces = text.chars().take_while(|&c| c == ' ').count();
-    let x_offset = pos.x + leading_spaces as f32 * space_advance;
-    let stripped = text.trim_start_matches(' ');
-
-    let mut layout = fontdue::layout::Layout::new(fontdue::layout::CoordinateSystem::PositiveYDown);
-    layout.append(&[&font.font], &TextStyle::new(stripped, font_size, 0));
-
-    let mut width = leading_spaces as f32 * space_advance;
-
-    for glyph_position in layout.glyphs() {
-        let glyph = Glyph {
-            character: glyph_position.parent,
-            size: font_size as usize,
-        };
-
-        if !font.contains(glyph) {
-            font.cache_glyph(glyph);
-        }
-
-        let char_info = font.characters[&glyph];
-        let sprite = font.atlas.get(char_info.sprite).unwrap();
-        let rect = sprite.rect;
-        let rectf: Rect = rect.into();
-
-        let glyph_end =
-            glyph_position.x + char_info.advance + leading_spaces as f32 * space_advance;
-        width = width.max(glyph_end);
-
-        let transform = Transform2D::from_scale_translation(
-            Vec2::new(glyph_position.width as f32, glyph_position.height as f32),
-            Vec2::new(glyph_position.x + x_offset, glyph_position.y + pos.y),
-        );
-
-        renderer.add_texture(
-            font.atlas.texture().unwrap(),
-            transform,
-            color,
-            Some(rectf.into()),
-        );
-    }
-
-    let size = Vec2::new(width, layout.height());
-    TextDimensions {
-        size,
-        final_cursor_pos: size,
-    }
-}
-
-pub fn draw_text_custom(text: impl ToString, params: TextDrawParams) -> TextDimensions {
-    draw_text_to(text, params, dq2d())
-}
-
-pub fn draw_text_ex(
-    text: impl ToString,
-    position: Vec2,
-    color: Color,
-    font_size: usize,
-) -> TextDimensions {
-    draw_text_to(
-        text,
-        TextDrawParams {
-            position,
-            color,
-            font_size,
-            ..Default::default()
-        },
-        dq2d(),
-    )
-}
-
-pub fn draw_text_world_ex(
-    text: impl ToString,
-    position: Vec2,
-    color: Color,
-    font_size: usize,
-) -> TextDimensions {
-    draw_text_to(
-        text,
-        TextDrawParams {
-            position,
-            color,
-            font_size,
-            ..Default::default()
-        },
-        wdq2d(),
-    )
-}
-
-pub fn draw_text(text: impl ToString, position: Vec2) -> TextDimensions {
-    draw_text_to(
-        text,
-        TextDrawParams {
-            position,
-            ..Default::default()
-        },
-        dq2d(),
-    )
-}
-
-pub fn draw_colored_text(text: impl ToString, position: Vec2, color: Color) -> TextDimensions {
-    draw_text_to(
-        text,
-        TextDrawParams {
-            position,
-            color,
-            ..Default::default()
-        },
-        dq2d(),
-    )
-}
-
-pub fn draw_colored_text_world(
-    text: impl ToString,
-    position: Vec2,
-    color: Color,
-) -> TextDimensions {
-    draw_text_to(
-        text,
-        TextDrawParams {
-            position,
-            color,
-            ..Default::default()
-        },
-        wdq2d(),
-    )
-}
-
-pub fn draw_text_size(text: impl ToString, position: Vec2, size: usize) -> TextDimensions {
-    draw_text_to(
-        text,
-        TextDrawParams {
-            position,
-            font_size: size,
-            ..Default::default()
-        },
-        dq2d(),
-    )
-}
-
-pub fn draw_text_world_custom(text: impl ToString, params: TextDrawParams) -> TextDimensions {
-    draw_text_to(text, params, wdq2d())
-}
-
-pub fn draw_text_world(text: impl ToString, position: Vec2) -> TextDimensions {
-    draw_text_to(
-        text,
-        TextDrawParams {
-            position,
-            ..Default::default()
-        },
-        wdq2d(),
-    )
-}
-
-pub fn draw_text_size_world(text: impl ToString, position: Vec2, size: usize) -> TextDimensions {
-    draw_text_to(
-        text,
-        TextDrawParams {
-            position,
-            font_size: size,
-            ..Default::default()
-        },
-        wdq2d(),
-    )
-}
-
 pub fn load_font_sync(bytes: &[u8]) -> Result<FontRef, LoadFontError> {
-    Font::load_from_bytes(bytes).map(|f| f.create())
+    Font::vector_from_bytes(bytes).map(|f| f.create())
 }
 
-pub fn measure_text(text: impl ToString) -> TextDimensions {
-    measure_text_ex(text, TextDrawParams::default())
-}
-
-/// Does not take translatation, rotation or colour into account. Feel free to exclude them.
-pub fn measure_text_ex(text: impl ToString, params: TextDrawParams) -> TextDimensions {
-    let TextDrawParams {
-        font,
-        font_size,
-        do_dpi_scaling,
-        ..
-    } = params;
-
-    font.unwrap_or(default_font())
-        .measure_text(text, font_size as f32, do_dpi_scaling)
-}
-
-fn draw_multiline_text_to(
-    text: impl ToString,
-    params: TextDrawParams,
-    line_spacing: f32,
-    renderer: Renderer2D,
-) -> TextDimensions {
-    let text = text.to_string();
-    let lines: Vec<&str> = text.lines().collect();
-
-    if lines.is_empty() {
-        return TextDimensions::default();
-    }
-
-    let mut max_width = 0.0f32;
-    let mut current_y = params.position.y;
-    let mut current_x = 0.0;
-    let line_height = params.font_size as f32 * line_spacing;
-
-    for line in &lines {
-        if line.is_empty() {
-            current_y += line_height;
-            current_x = 0.0;
-            continue;
-        }
-
-        let dims = draw_text_to(
-            line,
-            TextDrawParams {
-                position: Vec2::new(params.position.x, current_y),
-                ..params
-            },
-            renderer,
-        );
-        current_x = dims.size.x;
-        max_width = max_width.max(dims.size.x);
-        current_y += line_height;
-    }
-
-    let total_height = line_height * (lines.len() as f32);
-
-    // Check if text ends with a newline - if so, cursor should be at start of next line
-    let ends_with_newline = text.ends_with('\n') || text.ends_with("\r\n");
-    let final_x = if ends_with_newline {
-        params.position.x
-    } else {
-        current_x + params.position.x
-    };
-    let final_y = if ends_with_newline {
-        params.position.y + total_height
-    } else {
-        params.position.y + total_height - line_height
-    };
-
-    TextDimensions {
-        size: Vec2::new(max_width, total_height),
-        final_cursor_pos: Vec2::new(final_x, final_y),
-    }
-}
-
-pub fn draw_multiline_text(
-    text: impl ToString,
-    position: Vec2,
-    line_spacing: f32,
-) -> TextDimensions {
-    draw_multiline_text_to(
-        text,
-        TextDrawParams {
-            position,
-            ..Default::default()
-        },
-        line_spacing,
-        dq2d(),
-    )
-}
-
-pub fn draw_multiline_text_size(
-    text: impl ToString,
-    position: Vec2,
-    size: usize,
-    line_spacing: f32,
-) -> TextDimensions {
-    draw_multiline_text_to(
-        text,
-        TextDrawParams {
-            position,
-            font_size: size,
-            ..Default::default()
-        },
-        line_spacing,
-        dq2d(),
-    )
-}
-
-pub fn draw_multiline_text_ex(
-    text: impl ToString,
-    params: TextDrawParams,
-    line_spacing: f32,
-) -> TextDimensions {
-    draw_multiline_text_to(text, params, line_spacing, dq2d())
-}
-
-pub fn draw_multiline_text_world(
-    text: impl ToString,
-    position: Vec2,
-    line_spacing: f32,
-) -> TextDimensions {
-    draw_multiline_text_to(
-        text,
-        TextDrawParams {
-            position,
-            ..Default::default()
-        },
-        line_spacing,
-        wdq2d(),
-    )
-}
-
-pub fn draw_multiline_text_size_world(
-    text: impl ToString,
-    position: Vec2,
-    size: usize,
-    line_spacing: f32,
-) -> TextDimensions {
-    draw_multiline_text_to(
-        text,
-        TextDrawParams {
-            position,
-            font_size: size,
-            ..Default::default()
-        },
-        line_spacing,
-        wdq2d(),
-    )
-}
-
-pub fn draw_multiline_text_world_ex(
-    text: impl ToString,
-    params: TextDrawParams,
-    line_spacing: f32,
-) -> TextDimensions {
-    draw_multiline_text_to(text, params, line_spacing, wdq2d())
-}
-
-pub fn measure_multiline_text(text: impl ToString, line_spacing: f32) -> TextDimensions {
-    measure_multiline_text_ex(text, TextDrawParams::default(), line_spacing)
-}
-
-pub fn measure_multiline_text_ex(
-    text: impl ToString,
-    params: TextDrawParams,
-    line_spacing: f32,
-) -> TextDimensions {
-    let text = text.to_string();
-    let lines: Vec<&str> = text.lines().collect();
-
-    if lines.is_empty() {
-        return TextDimensions::default();
-    }
-
-    let mut max_width = 0.0f32;
-    let line_height = params.font_size as f32 * line_spacing;
-    let mut current_x = 0.0;
-
-    for line in &lines {
-        let dims = measure_text_ex(line, params);
-        current_x = dims.size.x;
-        max_width = max_width.max(dims.size.x);
-    }
-
-    let total_height = line_height * (lines.len() as f32);
-
-    TextDimensions {
-        size: Vec2::new(max_width, total_height),
-        final_cursor_pos: Vec2::new(current_x, total_height),
-    }
+pub fn load_bitmap_font_sync(
+    bytes: &[u8],
+    settings: &BitmapFontSettings,
+) -> Result<FontRef, LoadFontError> {
+    Font::bitmap_from_bytes(bytes, settings).map(|f| f.create())
 }
 
 pub fn init() -> Result<(), LoadFontError> {
-    set_text_measure_cache(TextMeasureCache {
-        map: HashMap::new(),
-    });
     init_fonts_storage();
     init_fonts()?;
 

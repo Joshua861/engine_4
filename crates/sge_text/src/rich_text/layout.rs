@@ -1,6 +1,6 @@
 use sge_vectors::Vec2;
 
-use crate::{TextDrawParams, get_space_width, measure_text_ex};
+use crate::{TextDrawParams, Token, measure_text_custom, tokenize};
 
 use super::{RichText, RichTextStyle};
 
@@ -23,30 +23,23 @@ impl LayoutLine {
 }
 
 impl RichText {
-    fn measure_word(word: &str, style: &RichTextStyle, do_dpi_scaling: bool) -> f32 {
+    fn measure_word(word: &str, style: &RichTextStyle) -> f32 {
         let params = TextDrawParams {
             font: Some(style.font()),
             font_size: style.font_size,
             color: style.color,
             position: Vec2::ZERO,
-            do_dpi_scaling,
+            line_spacing: 1.0,
         };
-        measure_text_ex(word, params).size.x
+        measure_text_custom(word, params).size.x
     }
 
-    fn measure_space(style: &RichTextStyle, do_dpi_scaling: bool) -> f32 {
-        let mut font = style.font().get_mut();
-        let font_size = (style.font_size as f32
-            * if do_dpi_scaling {
-                sge_window::dpi_scaling()
-            } else {
-                1.0
-            })
-        .round() as usize;
-        get_space_width(&mut font, font_size)
+    fn measure_space(style: &RichTextStyle) -> f32 {
+        let font = style.font().get_mut();
+        font.measure_space_width(style.font_size)
     }
 
-    pub fn layout(&self, max_width: f32, do_dpi_scaling: bool) -> Vec<LayoutLine> {
+    pub fn layout(&self, max_width: f32) -> Vec<LayoutLine> {
         let mut lines = Vec::new();
 
         let mut current = LayoutLine {
@@ -83,11 +76,10 @@ impl RichText {
                         }
 
                         Token::Text(word) => {
-                            let word_width = Self::measure_word(word, &block.style, do_dpi_scaling);
+                            let word_width = Self::measure_word(word, &block.style);
 
                             let space_before = if pending_spaces > 0 && !current.words.is_empty() {
-                                Self::measure_space(&block.style, do_dpi_scaling)
-                                    * pending_spaces as f32
+                                Self::measure_space(&block.style) * pending_spaces as f32
                             } else {
                                 0.0
                             };
@@ -122,43 +114,4 @@ impl RichText {
         flush(&mut lines, &mut current);
         lines
     }
-}
-
-enum Token<'a> {
-    Text(&'a str),
-    Spaces(usize),
-}
-
-fn tokenize(text: &str) -> impl Iterator<Item = Token<'_>> {
-    let mut chars = text.char_indices().peekable();
-
-    std::iter::from_fn(move || {
-        let (start, first) = chars.next()?;
-
-        if first.is_whitespace() {
-            let mut count = 1;
-            while let Some((_, c)) = chars.peek() {
-                if !c.is_whitespace() {
-                    break;
-                }
-                count += 1;
-                chars.next();
-            }
-
-            return Some(Token::Spaces(count));
-        }
-
-        let mut end = start + first.len_utf8();
-
-        while let Some((i, c)) = chars.peek().copied() {
-            if c.is_whitespace() {
-                break;
-            }
-
-            chars.next();
-            end = i + c.len_utf8();
-        }
-
-        Some(Token::Text(&text[start..end]))
-    })
 }

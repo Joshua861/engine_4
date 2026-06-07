@@ -19,8 +19,6 @@ pub struct TextInput {
     font: FontRef,
     font_size: usize,
     color: Color,
-    /// scale the font size by the DPI scaling of your monitor
-    do_dpi_scaling: bool,
     padding: f32,
 }
 
@@ -32,7 +30,6 @@ impl TextInput {
         font_size: usize,
         color: Color,
         padding: f32,
-        do_dpi_scaling: bool,
     ) -> UiRef {
         let state = State::from_id(id);
         TextInput {
@@ -41,7 +38,6 @@ impl TextInput {
             font: font.unwrap_or_default(),
             font_size,
             color,
-            do_dpi_scaling,
             padding,
         }
         .to_ref()
@@ -126,7 +122,6 @@ impl UiNode for TextInput {
                 &self.prompt,
                 TextDrawParams {
                     color: self.color.with_alpha(0.5),
-                    do_dpi_scaling: self.do_dpi_scaling,
                     font: Some(self.font),
                     font_size: self.font_size,
                     position: inner.top_left,
@@ -138,7 +133,6 @@ impl UiNode for TextInput {
                 text,
                 TextDrawParams {
                     color: self.color,
-                    do_dpi_scaling: self.do_dpi_scaling,
                     font: Some(self.font),
                     font_size: self.font_size,
                     position: inner.top_left,

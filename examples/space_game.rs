@@ -58,11 +58,12 @@ impl State {
         let text = format!("GAME OVER!\n\nScore: {}", self.score);
         let mut params = TextDrawParams {
             font_size: 30,
+            line_spacing: 1.5,
             ..Default::default()
         };
-        let dimensions = measure_multiline_text_ex(&text, params, 1.5);
+        let dimensions = measure_multiline_text_ex(&text, params.font_size, 1.5);
         params.position = window_size() / 2.0 - dimensions.size / 2.0;
-        draw_multiline_text_ex(text, params, 1.5);
+        draw_text_custom(text, params);
     }
 
     fn game_update(&mut self) {

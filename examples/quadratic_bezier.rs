@@ -34,13 +34,13 @@ async fn main() {
             draw_circle_world(p, 5.0, Color::BLACK);
         }
 
-        draw_text_world_ex("a", a + vec2(-40.0, -30.0), Color::BLACK, 40);
+        draw_text_ex_world("a", a + vec2(-40.0, -30.0), Color::BLACK, 40);
         if b.y < 0.0 {
-            draw_text_world_ex("b", b + vec2(-10.0, -60.0), Color::BLACK, 40);
+            draw_text_ex_world("b", b + vec2(-10.0, -60.0), Color::BLACK, 40);
         } else {
-            draw_text_world_ex("b", b + vec2(-10.0, 0.0), Color::BLACK, 40);
+            draw_text_ex_world("b", b + vec2(-10.0, 0.0), Color::BLACK, 40);
         }
-        draw_text_world_ex("c", c + vec2(40.0, -30.0), Color::BLACK, 40);
+        draw_text_ex_world("c", c + vec2(40.0, -30.0), Color::BLACK, 40);
 
         if should_quit() {
             break;

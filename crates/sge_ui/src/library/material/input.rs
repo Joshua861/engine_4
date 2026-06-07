@@ -8,7 +8,7 @@ pub struct TextInput;
 
 impl TextInput {
     fn new(id: usize, prompt: Option<String>, width: f32, bg: Color, fg: Color) -> UiRef {
-        base::TextInput::new(id, prompt, Some(SANS), rem(1.0), fg, INPUT_PADDING, true)
+        base::TextInput::new(id, prompt, Some(SANS), rem(1.0), fg, INPUT_PADDING)
             .width(width)
             .rounded_fill(bg, INPUT_RADIUS)
             .fit()

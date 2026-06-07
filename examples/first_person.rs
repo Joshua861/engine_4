@@ -1,8 +1,7 @@
 use sge::{
     prelude::*,
-    ui::{Center, Text},
 };
-use sge_ui::draw_ui_in_area;
+use ui::*;
 
 #[main("First person")]
 async fn main() -> anyhow::Result<()> {

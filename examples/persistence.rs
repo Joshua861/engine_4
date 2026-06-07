@@ -40,7 +40,7 @@ async fn main() -> anyhow::Result<()> {
 
     loop {
         clear_screen(config.color);
-        draw_text_size(config.counter, Vec2::splat(20.0), 300);
+        draw_text_ex(config.counter, Vec2::splat(20.0), Color::WHITE, 300);
         sharpen_screen(1.0);
 
         if key_held(KeyCode::Space) {

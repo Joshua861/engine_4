@@ -105,10 +105,9 @@ async fn main() -> anyhow::Result<()> {
 
         draw_simple_debug_info();
 
-        draw_multiline_text(
+        draw_text(
             "Press D to toggle debug mode\nSpace to jump\nA to move right\nF to move left",
             Vec2::splat(10.0),
-            1.0,
         );
 
         if !debug_mode {

@@ -293,17 +293,13 @@ pub mod input {
 
 #[cfg(feature = "text")]
 pub mod text {
+    pub use sge_exec::fs::{load_font, load_font_from_bytes};
+    pub use sge_text::api::*;
     pub use sge_text::rich_text::*;
     pub use sge_text::{
         DEFAULT_FONT_SIZE, Font, FontRef, FontType, Glyph, LoadFontError, MONO, MONO_TYPEFACE,
-        TextDimensions, TextDrawParams, TextDrawParamsBuilder, TextMeasureCache, Typeface,
-        create_ttf_font, default_font, draw_colored_text, draw_colored_text_world,
-        draw_multiline_text, draw_multiline_text_ex, draw_multiline_text_size,
-        draw_multiline_text_size_world, draw_multiline_text_world, draw_multiline_text_world_ex,
-        draw_text, draw_text_custom, draw_text_ex, draw_text_size, draw_text_size_world,
-        draw_text_world, draw_text_world_custom, draw_text_world_ex, draw_wrapped_text_in_area,
-        get_space_width, icons, load_font_sync, measure_multiline_text, measure_multiline_text_ex,
-        measure_text, measure_text_ex, measure_wrapped_text, wrap_text_to_width, wrapped_text,
+        TextDimensions, TextDrawParams, TextDrawParamsBuilder, Typeface, create_ttf_font,
+        default_font, icons, load_bitmap_font_sync, load_font_sync, wrapped_text,
     };
 }
 

@@ -26,6 +26,8 @@ fn main() {
                 avg_fps()
             ),
             Vec2::ZERO,
+            Color::WHITE,
+            16,
             1.0,
         );
 

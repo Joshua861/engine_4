@@ -8,6 +8,8 @@ use sge_math::usize_rect::USizeRect;
 use sge_vectors::{USizeVec2, UVec2};
 use thiserror::Error;
 
+pub use ::image as image_rs;
+
 mod rendering;
 
 #[derive(Clone)]

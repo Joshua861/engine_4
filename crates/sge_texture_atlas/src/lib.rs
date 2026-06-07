@@ -19,6 +19,18 @@ pub struct Sprite {
     pub normalized_dimensions: Vec2,
 }
 
+impl Sprite {
+    pub fn new(rect: USizeRect) -> Self {
+        Self {
+            rect,
+            normalized_dimensions: SgeTexture::create_normalized_dimensions(
+                rect.width() as u32,
+                rect.height() as u32,
+            ),
+        }
+    }
+}
+
 pub struct TextureAtlas {
     pub texture: TextureRef,
     pub sprites: HashMap<SpriteKey, Sprite>,
@@ -42,6 +54,24 @@ impl TextureAtlas {
 
     pub fn new() -> Result<TextureAtlas, TextureCreationError> {
         Self::new_with_size(Self::DEFAULT_WIDTH, Self::DEFAULT_HEIGHT)
+    }
+
+    pub unsafe fn from_image_and_texture(image: Image, texture: TextureRef) -> Self {
+        Self {
+            texture,
+            sprites: HashMap::new(),
+            cursor: USizeVec2::ZERO,
+            dirty: false,
+            image,
+            max_line_height: 0,
+            next_id: 0,
+        }
+    }
+
+    pub unsafe fn insert(&mut self, sprite: Sprite) -> SpriteKey {
+        let id = self.gen_key();
+        self.sprites.insert(id, sprite);
+        id
     }
 
     pub fn new_with_size(
@@ -184,16 +214,8 @@ impl TextureAtlas {
                 }
             }
 
-            self.sprites.insert(
-                key,
-                Sprite {
-                    rect: USizeRect::new(x, y, x + dim.x, y + dim.y),
-                    normalized_dimensions: SgeTexture::create_normalized_dimensions(
-                        dim.x as u32,
-                        dim.y as u32,
-                    ),
-                },
-            );
+            self.sprites
+                .insert(key, Sprite::new(USizeRect::new(x, y, x + dim.x, y + dim.y)));
         }
     }
 

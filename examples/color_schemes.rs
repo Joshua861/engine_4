@@ -16,8 +16,8 @@ async fn main() -> anyhow::Result<()> {
 
         text_params.position = draw_palette() + Vec2::splat(20.0);
 
-        let dimensions = measure_text_ex(text, text_params);
-        draw_rect(text_params.position, dimensions.size, COLORS.bg1);
+        let dimensions = measure_text_ex(text, MONO, text_params.font_size);
+        draw_rect(text_params.position, dimensions.size, COLORS.bg2);
         draw_text_custom(text, text_params);
 
         if should_quit() {
