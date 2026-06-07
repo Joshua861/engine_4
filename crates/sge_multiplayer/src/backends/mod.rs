@@ -1,4 +1,5 @@
 pub mod itty;
+pub mod lan;
 
 pub trait MultiplayerBackend {
     fn send_message(&mut self, message: Message);

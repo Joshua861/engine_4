@@ -20,6 +20,8 @@ impl NineSliceFill {
         resize_method: ResizeMethod,
         child: Child,
     ) -> UiRef {
+        let padding = corner_size as f32 * scale;
+        let child = Padding::xy(padding.x, padding.y, child);
         Self {
             texture,
             scale,

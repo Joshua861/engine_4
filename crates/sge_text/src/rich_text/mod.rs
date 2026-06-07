@@ -41,6 +41,7 @@ impl RichTextBlock {
             text: text.to_string(),
             style: RichTextStyle {
                 underline: Some(color),
+                color: color,
                 ..Default::default()
             },
         }

@@ -14,6 +14,7 @@ impl<T, const N: usize> RotatingArray<T, N> {
         Self { n: 0, arr }
     }
 
+    #[allow(clippy::uninit_assumed_init)]
     pub fn empty() -> Self {
         Self {
             n: 0,
@@ -335,6 +336,7 @@ impl<T, const N: usize> ConstantArray<T, N> {
         self.as_mut_slice().iter_mut()
     }
 
+    #[allow(clippy::uninit_assumed_init)]
     pub fn new() -> Self {
         Self {
             data: unsafe { MaybeUninit::uninit().assume_init() },
@@ -346,6 +348,13 @@ impl<T, const N: usize> ConstantArray<T, N> {
         Self { data, len: N }
     }
 
+    pub fn from_const_slice(slice: [T; N]) -> Self {
+        Self {
+            data: slice,
+            len: N,
+        }
+    }
+
     pub fn from_slice(slice: &[T]) -> Result<Self, CapacityReached>
     where
         T: Copy,
@@ -353,6 +362,7 @@ impl<T, const N: usize> ConstantArray<T, N> {
         if slice.len() > N {
             return Err(CapacityReached);
         }
+        #[allow(clippy::uninit_assumed_init)]
         let mut data: [T; N] = unsafe { MaybeUninit::uninit().assume_init() };
         for (i, item) in slice.iter().enumerate() {
             data[i] = *item;

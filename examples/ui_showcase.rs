@@ -228,8 +228,14 @@ fn nine_slice() -> UiRef {
 
     let texture = storage_get_state::<State>().texture;
 
-    NineSliceFill::new(texture, Vec2::splat(10.0), 3, ResizeMethod::Tile, EMPTY)
-        .sized_wh(400.0, 300.0)
+    NineSliceFill::new(
+        texture,
+        Vec2::splat(10.0),
+        3,
+        ResizeMethod::Tile,
+        EMPTY.fill(Color::BLACK).square(20.0),
+    )
+    .sized_wh(400.0, 300.0)
 }
 
 fn pattern_fill() -> UiRef {

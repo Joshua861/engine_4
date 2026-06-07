@@ -24,10 +24,10 @@ pub fn global(input: TokenStream) -> TokenStream {
     let state = format!("{}_STATE", name.to_string().to_uppercase());
     let state = Ident::new(&state, name.span());
 
-    let get = format!("get_{}", name);
+    let get = format!("get_{name}");
     let get = Ident::new(&get, name.span());
 
-    let maybe_get = format!("maybe_get_{}", name);
+    let maybe_get = format!("maybe_get_{name}");
     let maybe_get = Ident::new(&maybe_get, name.span());
 
     let set = format!("set_{}", name);

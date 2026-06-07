@@ -3,7 +3,7 @@
 - [ ] Check if bounding boxes are excessively big
   - [ ] they definately are. fix it now!!!
 - [ ] do more testing with shadows (like when should they run? and what parameters
-- [ ] sdf text for zooming in // https://www.redblobgames.com/articles/sdf-fonts/
+- [ ] sdf text for zooming in https://www.redblobgames.com/articles/sdf-fonts/
 - [ ] test with all feature combinations
 - [ ] advertise better
 - [ ] move rich text to UI and change syntax to be like markdown. probably need to change to a different method of adding colours like with |red| instead
