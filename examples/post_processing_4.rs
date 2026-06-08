@@ -17,6 +17,7 @@ fn main() -> anyhow::Result<()> {
 
         quantization_screen(oscillate(2.0, 20.0));
         wobbly_screen(time(), 5.0, 0.025, 10.0);
+        fish_eye_screen(5.0);
 
         if should_quit() {
             break;

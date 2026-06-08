@@ -20,7 +20,7 @@
 - [ ] bar chart
 - [ ] improve line chart
 - [ ] pie chart (easy)
-- [ ] bitmap fonts
+- [X] bitmap fonts
 - [ ] store measured size on text ui element to stop it from being recalculated
   every time
 - [ ] physics 3d
@@ -61,10 +61,10 @@
 - [ ] post processing docs
 - [-] more filters
   - [ ] crt
-  - [ ] wobbly
+  - [X] wobbly
   - [X] chromatic abboration
   - [ ] glitch
-  - [ ] fish eye
+  - [X] fish eye
   - [ ] pixel sort
   - [ ] custom
 - [ ] coroutines, some kind of future management so that the user can ask to run some code at the end of the frame, in some number of frames, after some time, or when something next happens
@@ -105,9 +105,8 @@
 - [ ] edge detection
 - [ ] 3d scene with lights and shadow
 - [ ] list view builder where it only generates the nodes that are actually visible
-- [ ] loading spinner
-  - [ ] needs arcs
-  with all three and make bold and italics optional, and fall back to default
+- [X] loading spinner
+  - [X] needs arcs
 - [ ] automatic interpolated values for ui elements
 - [ ] you should be able to delete textures and images and stuff
 - [ ] scissor example
@@ -124,7 +123,7 @@
   - maybe dont have to do culling every frame, like every 5 frames or something.
     zoo wee mama!!!
 - [ ] match material HashMap<Material, Mesh>
-- [ ] Circle anti aliasing between outline and fill is non existent
+- [X] Circle anti aliasing between outline and fill is non existent
 - [ ] also fix anti aliasing in pattern fills
 - [ ] Dithering to reduce colour banding
 - [ ] Signed distance field / https://raytracing.github.io/books/RayTracingInOneWeekend.html
@@ -172,7 +171,7 @@
 - [ ] splines
 - [ ] let people write [a, b] instead of vec2(a, b)
 - [ ] Transform example
-- [ ] test colours
+- [X] test colours
 - [ ] test everything
 - [ ] 2D custom materials
   - [ ] use_material & use_default_material functions

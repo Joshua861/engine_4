@@ -24,6 +24,7 @@ use glium::{
     },
 };
 use glutin_winit::{DisplayBuilder, GlWindow};
+#[cfg(debug_assertions)]
 use log::info;
 use sge_error_union::ErrorUnion;
 use sge_vectors::{UVec2, Vec2};
