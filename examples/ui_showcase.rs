@@ -1068,6 +1068,7 @@ fn text_showcase() -> UiRef {
             Text::body(
                 "Lorem ipsum dolor sit amet, consectetur\n\n adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
             ),
+            Text::body("Hello, world!").fill(Color::NEUTRAL_600).fit(),
             Text::h1("Heading 1"),
             Text::body("Lorem ipsum dolor sit amet."),
             Text::h2("Heading 1"),

@@ -1,14 +1,21 @@
 use std::collections::HashMap;
 
+use sge_color::Color;
 use sge_image::Image;
 use sge_image::image_rs as image;
 use sge_image::image_rs::GenericImageView;
+use sge_math::transform::Transform2D;
 use sge_math::usize_rect::USizeRect;
+use sge_rendering::api::draw_texture_to_ex;
+use sge_rendering::d2::Renderer2D;
 use sge_texture_atlas::Sprite;
+use sge_texture_atlas::SpriteKey;
 use sge_texture_atlas::TextureAtlas;
 use sge_textures::SgeTexture;
 use sge_vectors::UVec2;
+use sge_vectors::Vec2;
 use sge_vectors::uvec2;
+use sge_vectors::vec2;
 use thiserror::Error;
 
 use crate::FontMetrics;
@@ -30,12 +37,12 @@ pub enum BitmapFontProcessing {
 }
 
 pub struct BitmapFontSettings {
-    char_size: UVec2,
-    advance: u32,
-    gaps_in: u32,
-    gaps_out: GapsOut,
-    processing: BitmapFontProcessing,
-    layout: String,
+    pub char_size: UVec2,
+    pub advance: u32,
+    pub gaps_in: u32,
+    pub gaps_out: GapsOut,
+    pub processing: BitmapFontProcessing,
+    pub layout: String,
 }
 
 pub struct GapsOut {
@@ -137,12 +144,12 @@ impl BitmapFont {
         let mut cursor = uvec2(settings.gaps_out.left, settings.gaps_out.top);
 
         for c in settings.layout.chars() {
-            if cursor.x > max_x {
+            if cursor.x + settings.char_size.x > max_x {
                 cursor.x = settings.gaps_out.left;
                 cursor.y += settings.gaps_in + settings.char_size.y;
             }
 
-            if cursor.y > max_y {
+            if cursor.y + settings.char_size.y > max_y {
                 return Err(LoadFontError::Bitmap(
                     BitmapFontDecodingError::LayoutOverflows { max_y },
                 ));
@@ -178,14 +185,23 @@ impl BitmapFont {
 
 impl FontSource for BitmapFont {
     fn character_info(&mut self, glyph: crate::Glyph) -> CharacterInfo {
-        match self.characters.get(&glyph.character) {
+        let scale_factor = (glyph.size as f32 / self.char_size_y as f32).max(1.0);
+
+        let mut info = match self.characters.get(&glyph.character) {
             Some(c) => c.clone(),
             None => self
                 .characters
                 .get(&' ')
                 .expect("bitmap font does not contain space character")
                 .clone(),
-        }
+        };
+
+        info.advance *= scale_factor;
+
+        info.offset.x = (info.offset.x as f32 * scale_factor) as i32;
+        info.offset.y = (info.offset.y as f32 * scale_factor) as i32;
+
+        info
     }
 
     fn texture_atlas(&self) -> &TextureAtlas {
@@ -200,11 +216,40 @@ impl FontSource for BitmapFont {
         self.characters.contains_key(&glyph.character)
     }
 
-    fn font_metrics(&self, _font_size: usize) -> crate::FontMetrics {
+    fn font_metrics(&self, font_size: usize) -> crate::FontMetrics {
+        let scale_factor = (font_size as f32 / self.char_size_y as f32).max(1.0);
         FontMetrics {
-            ascent: self.char_size_y as f32,
+            ascent: (scale_factor * self.char_size_y as f32),
             descent: 0.0,
             line_gap: 0.0,
         }
+    }
+
+    fn draw_sprite(
+        &mut self,
+        key: SpriteKey,
+        color: Color,
+        position: Vec2,
+        renderer: Renderer2D,
+        font_size: usize,
+    ) -> Option<()> {
+        let sprite = self.texture_atlas().get(key)?;
+        let sprite_size = sprite.rect.size();
+
+        let base_scale = vec2(sprite_size.x as f32, sprite_size.y as f32);
+        let scale_factor = (font_size as f32 / self.char_size_y as f32).max(1.0);
+
+        let transform = Transform2D::from_scale_translation(base_scale * scale_factor, position);
+        let texture = self.texture();
+
+        draw_texture_to_ex(
+            texture,
+            transform,
+            color,
+            Some(sprite.rect.as_rect().into()),
+            renderer,
+        );
+
+        Some(())
     }
 }

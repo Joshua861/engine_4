@@ -58,10 +58,11 @@
 - [ ] ui radio buttons
 - [ ] ui navbar
 - [ ] dirty struct macro, which automatically keeps track of what is dirty, and you can define computations as impls with a function that takes some fields and returns a value and adds that as a field on the struct with methods for getting and getting mut and setting fields which deals with making things dirty
-- [ ] more filters
+- [ ] post processing docs
+- [-] more filters
   - [ ] crt
   - [ ] wobbly
-  - [ ] chromatic abboration
+  - [X] chromatic abboration
   - [ ] glitch
   - [ ] fish eye
   - [ ] pixel sort

@@ -111,9 +111,15 @@ impl Font {
     ) -> Vec2 {
         let mut max_width = 0.0f32;
 
-        let space = self.measure_space(font_size);
-        let line_height = space.offset.y as f32 * line_spacing;
-        let total_height = line_height * (layout.len() - 1) as f32 + space.offset.y as f32;
+        let metrics = self.font.font_metrics(font_size);
+        let base_line_height = metrics.line_height();
+        let line_height = base_line_height * line_spacing;
+
+        let total_height = if layout.is_empty() {
+            0.0
+        } else {
+            line_height * layout.len().saturating_sub(1) as f32 + base_line_height
+        };
 
         for line in layout {
             max_width = max_width.max(line.total_width());
@@ -147,11 +153,17 @@ impl Font {
     ) -> Vec2 {
         let mut max_width = 0.0f32;
 
-        let space = self.measure_space(font_size);
-        let line_height = space.offset.y as f32 * line_spacing;
-        let total_height = line_height * (layout.len() - 1) as f32 + space.offset.y as f32;
+        let metrics = self.font.font_metrics(font_size);
+        let base_line_height = metrics.line_height();
+        let line_height = base_line_height * line_spacing;
 
-        let y_offset = position.y;
+        let total_height = if layout.is_empty() {
+            0.0
+        } else {
+            line_height * layout.len().saturating_sub(1) as f32 + base_line_height
+        };
+
+        let mut y_offset = position.y;
 
         for line in layout {
             max_width = max_width.max(line.total_width());
@@ -162,7 +174,7 @@ impl Font {
                 x += word.space_before;
                 self.draw_text_to(
                     word.text,
-                    position + vec2(x, y_offset),
+                    vec2(x, y_offset),
                     color,
                     font_size,
                     line_spacing,
@@ -170,6 +182,8 @@ impl Font {
                 );
                 x += word.width;
             }
+
+            y_offset += line_height;
         }
 
         Vec2::new(max_width, total_height)

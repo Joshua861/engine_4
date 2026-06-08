@@ -51,6 +51,11 @@ impl RenderTexture {
             glium::uniforms::MagnifySamplerFilter::Linear,
         );
     }
+
+    pub fn color_framebuffer(&self) -> SimpleFrameBuffer<'_> {
+        let display = get_display();
+        SimpleFrameBuffer::new(display, &self.color_texture.get().gl_texture).unwrap()
+    }
 }
 
 gen_ref_type!(RenderTexture, RenderTextureRef, render_textures);
@@ -236,7 +241,7 @@ impl RenderPipeline {
                         effect
                             .apply(
                                 a.color_texture,
-                                &mut b.framebuffer(),
+                                &mut b.color_framebuffer(),
                                 Vec2::new(dimensions.0 as f32, dimensions.1 as f32),
                             )
                             .unwrap();

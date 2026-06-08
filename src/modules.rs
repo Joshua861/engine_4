@@ -16,9 +16,9 @@ pub mod post_processing {
     pub use sge_rendering::post_processing::{
         PostProcessingEffect, PostProcessingError, RenderFullscreenQuadError,
         add_post_processing_effect, bloom_screen, blur_screen, brighten_screen,
-        chromatic_abberation_screen, contrast_screen, film_grain_screen, greyscale_screen,
-        hue_rotate_screen, invert_screen, pixelate_screen, saturate_screen, sharpen_screen,
-        vignette_screen,
+        chromatic_abberation_screen, contrast_screen, film_grain_screen, fish_eye_screen,
+        greyscale_screen, hue_rotate_screen, invert_screen, pixelate_screen, quantization_screen,
+        saturate_screen, sharpen_screen, vignette_screen, wobbly_screen,
     };
 }
 
@@ -298,8 +298,9 @@ pub mod text {
     pub use sge_text::rich_text::*;
     pub use sge_text::{
         DEFAULT_FONT_SIZE, Font, FontRef, FontType, Glyph, LoadFontError, MONO, MONO_TYPEFACE,
-        TextDimensions, TextDrawParams, TextDrawParamsBuilder, Typeface, create_ttf_font,
-        default_font, icons, load_bitmap_font_sync, load_font_sync, wrapped_text,
+        TextDimensions, TextDrawParams, TextDrawParamsBuilder, Typeface,
+        bitmap::{BitmapFontProcessing, BitmapFontSettings, GapsOut},
+        create_ttf_font, default_font, icons, load_bitmap_font_sync, load_font_sync, wrapped_text,
     };
 }
 

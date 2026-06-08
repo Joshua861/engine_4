@@ -51,6 +51,18 @@ pub enum PostProcessingEffect {
         strength: f32,
         seed: f32,
     },
+    Quantization {
+        colors_per_channel: f32,
+    },
+    Wobbly {
+        time: f32,
+        speed: f32,
+        amplitude: f32,
+        frequency: f32,
+    },
+    FishEye {
+        strength: f32,
+    },
 }
 
 #[derive(ErrorUnion, Debug)]
@@ -249,6 +261,38 @@ impl PostProcessingEffect {
                 };
                 render_fullscreen_quad(target, program.get(), &uniforms)?;
             }
+            Self::Quantization { colors_per_channel } => {
+                let program = get_or_create_quantization_program();
+                let uniforms = uniform! {
+                    tex: source.get().gl_texture.sampled(),
+                    colors_per_channel: *colors_per_channel,
+                };
+                render_fullscreen_quad(target, program.get(), &uniforms)?;
+            }
+            Self::Wobbly {
+                time,
+                speed,
+                amplitude,
+                frequency,
+            } => {
+                let program = get_or_create_wobbly_program();
+                let uniforms = uniform! {
+                    tex: source.get().gl_texture.sampled(),
+                    time: *time,
+                    speed: *speed,
+                    amplitude: *amplitude,
+                    frequency: *frequency,
+                };
+                render_fullscreen_quad(target, program.get(), &uniforms)?;
+            }
+            Self::FishEye { strength } => {
+                let program = get_or_create_fish_eye_program();
+                let uniforms = uniform! {
+                    tex: source.get().gl_texture.sampled(),
+                    strength: *strength,
+                };
+                render_fullscreen_quad(target, program.get(), &uniforms)?;
+            }
         }
 
         Ok(())
@@ -332,6 +376,9 @@ static INVERT_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 static CHROMATIC_ABERRATION_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 static SHARPEN_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 static FILM_GRAIN_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
+static QUANTIZATION_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
+static WOBBLY_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
+static FISH_EYE_PROGRAM: OnceLock<ProgramRef> = OnceLock::new();
 
 fn get_or_create_gaussian_blur_program() -> &'static ProgramRef {
     GAUSSIAN_BLUR_PROGRAM.get_or_init(|| {
@@ -418,6 +465,24 @@ fn get_or_create_sharpen_program() -> &'static ProgramRef {
 fn get_or_create_film_grain_program() -> &'static ProgramRef {
     FILM_GRAIN_PROGRAM.get_or_init(|| {
         load_program_sync(POSTPROCESS_VERTEX_SHADER, FILM_GRAIN_FRAGMENT_SHADER).unwrap()
+    })
+}
+
+fn get_or_create_quantization_program() -> &'static ProgramRef {
+    QUANTIZATION_PROGRAM.get_or_init(|| {
+        load_program_sync(POSTPROCESS_VERTEX_SHADER, QUANTIZATION_FRAGMENT_SHADER).unwrap()
+    })
+}
+
+fn get_or_create_wobbly_program() -> &'static ProgramRef {
+    WOBBLY_PROGRAM.get_or_init(|| {
+        load_program_sync(POSTPROCESS_VERTEX_SHADER, WOBBLY_FRAGMENT_SHADER).unwrap()
+    })
+}
+
+fn get_or_create_fish_eye_program() -> &'static ProgramRef {
+    FISH_EYE_PROGRAM.get_or_init(|| {
+        load_program_sync(POSTPROCESS_VERTEX_SHADER, FISH_EYE_FRAGMENT_SHADER).unwrap()
     })
 }
 
@@ -757,6 +822,73 @@ void main() {
 }
 "#;
 
+const QUANTIZATION_FRAGMENT_SHADER: &str = r#"
+#version 140
+in vec2 v_tex_coords;
+out vec4 color;
+uniform sampler2D tex;
+uniform float colors_per_channel;
+
+void main() {
+    vec4 tex_color = texture(tex, v_tex_coords);
+
+    // Round each channel into steps (e.g. 8.0 levels for retro look)
+    vec3 quantized = floor(tex_color.rgb * colors_per_channel) / (colors_per_channel - 1.0);
+
+    color = vec4(quantized, tex_color.a);
+}
+"#;
+
+const WOBBLY_FRAGMENT_SHADER: &str = r#"
+#version 140
+in vec2 v_tex_coords;
+out vec4 color;
+uniform sampler2D tex;
+uniform float time;
+uniform float speed;
+uniform float amplitude;
+uniform float frequency;
+
+void main() {
+    // Displace the UV coordinates based on a sine wave function over space and time
+    vec2 uv = v_tex_coords;
+    uv.x += sin(uv.y * frequency + time * speed) * amplitude;
+    uv.y += cos(uv.x * frequency + time * speed) * amplitude;
+
+    color = texture(tex, uv);
+}
+"#;
+
+const FISH_EYE_FRAGMENT_SHADER: &str = r#"
+#version 140
+in vec2 v_tex_coords;
+out vec4 color;
+uniform sampler2D tex;
+uniform float strength;
+
+void main() {
+    // Map UV coordinates from [0, 1] to [-1, 1]
+    vec2 uv = v_tex_coords - vec2(0.5);
+    float r = length(uv);
+
+    // Apply barrel distortion formula
+    if (strength != 0.0) {
+        float distortion = 1.0 + r * r * strength;
+        uv *= distortion;
+    }
+
+    // Remap coordinates back to [0, 1] range
+    uv += vec2(0.5);
+
+    // Output black if the warped texture coordinates are outside the viewport bounds
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+        color = vec4(0.0, 0.0, 0.0, 1.0);
+    } else {
+        color = texture(tex, uv);
+    }
+}
+"#;
+
 pub fn add_post_processing_effect(effect: PostProcessingEffect) {
     current_render_pipeline().add_effect(effect);
 }
@@ -817,4 +949,21 @@ pub fn sharpen_screen(strength: f32) {
 
 pub fn film_grain_screen(strength: f32, seed: f32) {
     add_post_processing_effect(PostProcessingEffect::FilmGrain { strength, seed });
+}
+
+pub fn quantization_screen(colors_per_channel: f32) {
+    add_post_processing_effect(PostProcessingEffect::Quantization { colors_per_channel });
+}
+
+pub fn wobbly_screen(time: f32, speed: f32, amplitude: f32, frequency: f32) {
+    add_post_processing_effect(PostProcessingEffect::Wobbly {
+        time,
+        speed,
+        amplitude,
+        frequency,
+    });
+}
+
+pub fn fish_eye_screen(strength: f32) {
+    add_post_processing_effect(PostProcessingEffect::FishEye { strength });
 }

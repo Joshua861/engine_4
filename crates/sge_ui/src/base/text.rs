@@ -361,7 +361,9 @@ impl Text {
 
 impl UiNode for Text {
     fn preferred_dimensions(&self) -> sge_vectors::Vec2 {
-        measure_multiline_text_ex(&self.text, self.font_size, self.line_spacing).size
+        let mut font = self.font.clone();
+        font.measure_multiline_text(self.text.clone(), self.font_size, self.line_spacing)
+            .size
     }
 
     fn size(&self, area: Area) -> Vec2 {
@@ -389,14 +391,16 @@ impl UiNode for Text {
                 self.line_spacing,
             )
         } else {
-            draw_multiline_text(
-                &self.text,
-                area.top_left,
-                self.color,
-                self.font_size,
-                self.line_spacing,
-            )
-            .size
+            self.font
+                .get_mut()
+                .draw_text(
+                    self.text.clone(),
+                    area.top_left,
+                    self.color,
+                    self.font_size,
+                    self.line_spacing,
+                )
+                .size
         }
     }
 }

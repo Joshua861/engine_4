@@ -72,6 +72,29 @@ impl FontSource for FontInner {
             Self::Bitmap(b) => b.contains(glyph),
         }
     }
+
+    #[inline]
+    fn draw_sprite(
+        &mut self,
+        key: SpriteKey,
+        color: Color,
+        position: Vec2,
+        renderer: Renderer2D,
+        font_size: usize,
+    ) -> Option<()> {
+        match self {
+            Self::Vector(v) => v.draw_sprite(key, color, position, renderer, font_size),
+            Self::Bitmap(b) => b.draw_sprite(key, color, position, renderer, font_size),
+        }
+    }
+
+    #[inline]
+    fn measure_text(&mut self, text: &str, font_size: usize) -> TextDimensions {
+        match self {
+            Self::Vector(v) => v.measure_text(text, font_size),
+            Self::Bitmap(b) => b.measure_text(text, font_size),
+        }
+    }
 }
 
 trait FontSource {
@@ -107,6 +130,7 @@ trait FontSource {
         color: Color,
         position: Vec2,
         renderer: Renderer2D,
+        _font_size: usize,
     ) -> Option<()> {
         let sprite = self.texture_atlas().get(key)?;
         let sprite_size = sprite.rect.size();
@@ -176,7 +200,6 @@ impl Font {
     }
 
     fn measure_text(&mut self, text: String, font_size: usize) -> TextDimensions {
-        // FIXME: this clone is probably avoidable
         if let Some(size) = self.cache.get(&(font_size, text.clone())) {
             TextDimensions {
                 size: *size,
@@ -268,8 +291,13 @@ impl Font {
                 baseline_y - char_info.offset.y as f32,
             );
 
-            self.font
-                .draw_sprite(char_info.sprite, color, glyph_render_pos, renderer);
+            self.font.draw_sprite(
+                char_info.sprite,
+                color,
+                glyph_render_pos,
+                renderer,
+                font_size,
+            );
 
             x += char_info.advance;
             width += char_info.advance;
@@ -314,8 +342,9 @@ impl Font {
             return TextDimensions::default();
         }
 
-        let space_info = self.measure_space(font_size);
-        let line_height = space_info.offset.y as f32 * line_spacing;
+        let metrics = self.font.font_metrics(font_size);
+        let base_line_height = metrics.line_height();
+        let line_height = base_line_height * line_spacing;
 
         let mut width = 0.0f32;
         let mut height = 0.0f32;
@@ -331,7 +360,7 @@ impl Font {
             }
         }
 
-        height = height.max(space_info.offset.y as f32);
+        height = height.max(base_line_height);
 
         let size = Vec2::new(width, height);
         TextDimensions {
@@ -392,7 +421,7 @@ pub struct TextDimensions {
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct Glyph {
     character: char,
-    size: usize, // using usize because i just dont like the idea of using a hashmap of f32 keys, right? that sounds bad right?
+    size: usize,
 }
 
 gen_ref_type!(Font, FontRef, fonts);
