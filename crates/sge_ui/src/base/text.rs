@@ -6,8 +6,7 @@ use sge_vectors::Vec2;
 use super::*;
 use sge_text::{
     FontRef, MONO, SANS, SANS_BOLD, SANS_BOLD_ITALIC, SANS_DISPLAY, SANS_ITALIC, TextDrawParams,
-    draw_multiline_text, draw_wrapped_text_in_area, measure_multiline_text_ex,
-    measure_wrapped_text_ex,
+    draw_wrapped_text_in_area, measure_wrapped_text_ex,
 };
 
 #[derive(Debug)]
