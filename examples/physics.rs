@@ -82,7 +82,7 @@ fn main() {
         .create_fixed_with(Bounds::Circle(80.0), ColliderConfig::default().sensor(true))
         .with_position(sensor_pos);
 
-    let mut objects: Vec<(ObjectRef, ShapeType)> = Vec::new();
+    let mut objects: Vec<(PhysicsObjectRef, ShapeType)> = Vec::new();
 
     for i in 0..50 {
         let pos = Vec2::new(
@@ -145,9 +145,6 @@ fn main() {
                         Text::body("• Left Click: Spawn object"),
                         Text::body("• Right Click (hold): Apply force"),
                         Text::body("• D: Toggle collider debug"),
-                        Text::h2("Shapes"),
-                        Text::body("Circle, Square, Rect, Capsule (Y/X),"),
-                        Text::body("Triangle, Hexagon, Star (compound)"),
                     ]),
                 ),
             ));

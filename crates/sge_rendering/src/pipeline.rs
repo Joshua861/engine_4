@@ -1,9 +1,9 @@
 use crate::d3::DrawQueue3D;
 use crate::get_render_state;
-use crate::post_processing::PostProcessingEffect;
+use crate::post_processing::{PostProcessingEffect, render_fullscreen_quad};
 use crate::{DrawQueues, d2::DrawQueue2D};
-use glium::Texture2d;
 use glium::framebuffer::{DepthRenderBuffer, RenderBuffer};
+use glium::{GlObject, Texture2d};
 use glium::{
     Surface,
     framebuffer::SimpleFrameBuffer,
@@ -13,7 +13,7 @@ use glium::{
 use sge_camera::{Cameras, get_cameras};
 use sge_color::Color;
 use sge_macros::gen_ref_type;
-use sge_programs::COPY_PROGRAM;
+use sge_programs::{COPY_PROGRAM, UNRESOLVE_PROGRAM};
 use sge_textures::{SgeTexture, TextureRef};
 use sge_vectors::{Mat4, UVec2, Vec2, Vec3};
 use sge_window::{get_display, get_display_mut, get_window_state};
@@ -50,6 +50,16 @@ impl RenderTexture {
             },
             glium::uniforms::MagnifySamplerFilter::Linear,
         );
+    }
+
+    pub fn unresolve(&mut self) {
+        let uniforms = uniform! {
+            tex: self.color_texture.get().gl_texture.sampled()
+                .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest)
+        };
+
+        render_fullscreen_quad(&mut self.framebuffer(), UNRESOLVE_PROGRAM.get(), &uniforms)
+            .unwrap();
     }
 
     pub fn color_framebuffer(&self) -> SimpleFrameBuffer<'_> {
@@ -248,6 +258,8 @@ impl RenderPipeline {
 
                         std::mem::swap(a, b);
                     }
+
+                    a.unresolve();
                 }
             }
         }

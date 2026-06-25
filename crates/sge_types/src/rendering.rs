@@ -915,8 +915,7 @@ impl Sdf {
     }
 
     pub fn rect_tl(top_left: Vec2, size: Vec2) -> Self {
-        let center = top_left + size * 0.5;
-        default_instance(center.extend(0.0), size * 0.5, SdfShape::Rect)
+        Self::rect(top_left + size * 0.5, size)
     }
 
     pub fn square(center: Vec2, size: f32) -> Self {

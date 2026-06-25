@@ -37,6 +37,7 @@ pub const BLINN_PHONG_3D_PROGRAM: ProgramRef = ProgramRef(5);
 pub const COPY_PROGRAM: ProgramRef = ProgramRef(6);
 pub const METABALL_PROGRAM: ProgramRef = ProgramRef(7);
 pub const FLAT_PROGRAM: ProgramRef = ProgramRef(8);
+pub const UNRESOLVE_PROGRAM: ProgramRef = ProgramRef(9);
 
 pub struct SgeProgram {
     glium: Program,
@@ -136,6 +137,13 @@ pub fn init() -> Result<(), ProgramCreationError> {
         display,
         "../shaders/flat/vertex.glsl",
         "../shaders/flat/fragment.glsl"
+    )?;
+    storage.push(program);
+
+    let program = include_program_internal!(
+        display,
+        "../shaders/unresolve/vertex.glsl",
+        "../shaders/unresolve/fragment.glsl"
     )?;
     storage.push(program);
 

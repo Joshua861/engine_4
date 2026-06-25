@@ -37,7 +37,7 @@ pub mod image {
 
 pub mod physics {
     pub use sge_physics::{
-        Bounds, ColliderConfig, CollisionPoints, ObjectRef, PhysicsWorld, WorldRef,
+        Bounds, ColliderConfig, CollisionPoints, PhysicsObjectRef, PhysicsWorld, PhysicsWorldRef,
         player::PlayerBindBuilder, player::PlayerController,
     };
 }
@@ -278,6 +278,7 @@ pub mod gamepad {
 #[cfg(feature = "input")]
 pub mod input {
     pub use crate::api::is_about_to_wait_for_input;
+    pub use crate::api::{cursor_world, last_cursor_world};
     pub use sge_input::{
         Action, Button, Input, action_held, action_pressed, action_pressed_os, action_released,
         bind, button_held, button_pressed, button_released, close_requested, cursor, cursor_diff,
@@ -355,4 +356,8 @@ pub mod multiplayer {
 #[cfg(feature = "network")]
 pub mod net {
     pub use sge_exec::net::*;
+}
+
+pub mod scenes {
+    pub use sge_scenes::{Entity2D, World2D, WorldState2D};
 }

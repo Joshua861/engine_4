@@ -185,7 +185,7 @@ impl Player {
 #[derive(Clone, Copy)]
 struct PlayerRef {
     key: PlayerKey,
-    world: WorldRef,
+    world: PhysicsWorldRef,
 }
 
 impl PlayerRef {
@@ -271,7 +271,7 @@ impl PhysicsWorld {
         let p = &self.players[pk];
         let player_key = p.object;
         let collider_handle = self.objects[player_key].collider;
-        let world_ref = WorldRef(self.id);
+        let world_ref = PhysicsWorldRef(self.id);
 
         let contacts: Vec<(ObjectKey, CollisionPoints)> = self
             .narrow_phase
@@ -310,7 +310,7 @@ impl PhysicsWorld {
                 .entry(player_key)
                 .or_default()
                 .push(CollisionInfo {
-                    other: ObjectRef {
+                    other: PhysicsObjectRef {
                         world: world_ref,
                         key: other_key,
                     },
@@ -321,7 +321,7 @@ impl PhysicsWorld {
                 .entry(other_key)
                 .or_default()
                 .push(CollisionInfo {
-                    other: ObjectRef {
+                    other: PhysicsObjectRef {
                         world: world_ref,
                         key: player_key,
                     },

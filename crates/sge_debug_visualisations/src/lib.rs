@@ -21,7 +21,7 @@ pub fn draw_simple_debug_info() {
 
     let window = flat::FloatingWindow::custom(
         "Debug info",
-        Vec2::new(220.0, 182.0),
+        Vec2::new(183.0, 212.0),
         Vec2::splat(10.0),
         0xDEEB2,
         Text::nowrap(format!(

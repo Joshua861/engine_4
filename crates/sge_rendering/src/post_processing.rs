@@ -348,7 +348,7 @@ pub(crate) fn render_fullscreen_quad<T: Surface, U: glium::uniforms::Uniforms>(
     )?;
 
     let params = glium::DrawParameters {
-        blend: glium::Blend::alpha_blending(),
+        blend: glium::Blend::default(),
         dithering: get_dithering(),
         ..Default::default()
     };

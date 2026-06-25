@@ -1,6 +1,8 @@
 use std::any::Any;
 
 use sge_time::frames_since_input;
+#[cfg(feature = "input")]
+use sge_vectors::Vec2;
 
 use crate::{WAIT_FOR_EVENTS_EXTRA_FRAME_DRAWS, user_storage::get_user_storage};
 
@@ -34,4 +36,23 @@ pub fn storage_try_get_state_mut<T: Any>() -> Option<&'static mut T> {
 
 pub fn is_about_to_wait_for_input() -> bool {
     frames_since_input() >= WAIT_FOR_EVENTS_EXTRA_FRAME_DRAWS - 1
+}
+
+#[cfg(feature = "input")]
+pub fn cursor_world() -> Option<Vec2> {
+    use sge_camera::screen_to_world;
+    use sge_input::cursor;
+
+    let Some(pos) = cursor() else {
+        return None;
+    };
+    Some(screen_to_world(pos))
+}
+
+#[cfg(feature = "input")]
+pub fn last_cursor_world() -> Vec2 {
+    use sge_camera::screen_to_world;
+    use sge_input::last_cursor_pos;
+
+    screen_to_world(last_cursor_pos())
 }

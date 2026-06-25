@@ -86,3 +86,5 @@ pub use net::*;
 
 #[cfg(feature = "multiplayer")]
 pub use multiplayer::*;
+
+pub use scenes::*;

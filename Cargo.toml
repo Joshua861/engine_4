@@ -139,6 +139,7 @@ trig-const = { workspace = true }
 sge_exec = { version = "1.0.0", path = "crates/sge_exec" }
 sge_multiplayer = { version = "1.2.0", path = "crates/sge_multiplayer", optional = true }
 sge_collision.workspace = true
+sge_scenes = { version = "0.1.0", path = "crates/sge_scenes" }
 
 
 [profile.release]
@@ -233,5 +234,5 @@ members = [
     "crates/sge_vectors",
     "crates/sge_window",
     "crates/sge_multiplayer"
-, "crates/sge_collision"]
+, "crates/sge_collision", "crates/sge_scenes"]
 resolver = "3"

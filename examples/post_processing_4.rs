@@ -1,6 +1,6 @@
 use sge::prelude::*;
 
-#[main("Post processing 3")]
+#[main("Post processing 4")]
 fn main() -> anyhow::Result<()> {
     let mut orbit_controller = OrbitCameraController::new(Vec3::ZERO);
     let material = create_gouraud_material(Color::SLATE_200, Color::SLATE_600, Vec3::Y);

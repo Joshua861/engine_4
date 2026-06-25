@@ -33,7 +33,8 @@ impl FloatingWindow {
             .default_position(pos)
             .active_button_color(BG4.lighten(0.2))
             .default_size(size)
-            .closable(true)
+            .closable(false)
+            .movable(false)
             .build()
     }
 }

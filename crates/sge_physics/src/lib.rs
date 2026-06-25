@@ -318,7 +318,7 @@ fn draw_bounds(pos: Vec2, bounds: &Bounds, color: Color, thickness: f32, rendere
     }
 }
 
-gen_ref_type!(PhysicsWorld, WorldRef, worlds);
+gen_ref_type!(PhysicsWorld, PhysicsWorldRef, worlds);
 
 new_key_type! {
     pub struct ObjectKey;
@@ -354,7 +354,7 @@ pub struct PhysicsWorld {
 
 #[derive(Clone, Copy, Debug)]
 pub struct CollisionInfo {
-    pub other: ObjectRef,
+    pub other: PhysicsObjectRef,
     pub points: CollisionPoints,
     pub event: CollisionType,
 }
@@ -374,7 +374,7 @@ impl CollisionType {
 
 impl PhysicsWorld {
     #[allow(clippy::new_ret_no_self)]
-    pub fn new() -> WorldRef {
+    pub fn new() -> PhysicsWorldRef {
         Self {
             id: get_worlds_state().len(),
             gravity: 980.0,
@@ -397,8 +397,8 @@ impl PhysicsWorld {
         .create()
     }
 
-    fn get_ref(&self) -> WorldRef {
-        WorldRef(self.id)
+    fn get_ref(&self) -> PhysicsWorldRef {
+        PhysicsWorldRef(self.id)
     }
 
     pub fn update(&mut self) {
@@ -445,7 +445,7 @@ impl PhysicsWorld {
         }
         self.collisions.retain(|_, v| !v.is_empty());
 
-        let world_ref = WorldRef(self.id);
+        let world_ref = PhysicsWorldRef(self.id);
 
         while let Ok(event) = collision_recv.try_recv() {
             match event {
@@ -469,7 +469,7 @@ impl PhysicsWorld {
                         .entry(key1)
                         .or_default()
                         .push(CollisionInfo {
-                            other: ObjectRef {
+                            other: PhysicsObjectRef {
                                 world: world_ref,
                                 key: key2,
                             },
@@ -480,7 +480,7 @@ impl PhysicsWorld {
                         .entry(key2)
                         .or_default()
                         .push(CollisionInfo {
-                            other: ObjectRef {
+                            other: PhysicsObjectRef {
                                 world: world_ref,
                                 key: key1,
                             },
@@ -583,41 +583,45 @@ impl PhysicsWorld {
         key
     }
 
-    pub fn create_dynamic(&mut self, bounds: Bounds) -> ObjectRef {
+    pub fn create_dynamic(&mut self, bounds: Bounds) -> PhysicsObjectRef {
         self.create_dynamic_with(bounds, ColliderConfig::default())
     }
 
-    pub fn create_fixed(&mut self, bounds: Bounds) -> ObjectRef {
+    pub fn create_fixed(&mut self, bounds: Bounds) -> PhysicsObjectRef {
         self.create_fixed_with(bounds, ColliderConfig::default())
     }
 
-    pub fn create_kinematic(&mut self, bounds: Bounds) -> ObjectRef {
+    pub fn create_kinematic(&mut self, bounds: Bounds) -> PhysicsObjectRef {
         self.create_kinematic_with(bounds, ColliderConfig::default())
     }
 
-    pub fn create_dynamic_with(&mut self, bounds: Bounds, cfg: ColliderConfig) -> ObjectRef {
+    pub fn create_dynamic_with(&mut self, bounds: Bounds, cfg: ColliderConfig) -> PhysicsObjectRef {
         let rb = RigidBodyBuilder::dynamic().build();
         let key = self.insert_object(bounds, rb, cfg);
-        ObjectRef {
-            world: WorldRef(self.id),
+        PhysicsObjectRef {
+            world: PhysicsWorldRef(self.id),
             key,
         }
     }
 
-    pub fn create_fixed_with(&mut self, bounds: Bounds, cfg: ColliderConfig) -> ObjectRef {
+    pub fn create_fixed_with(&mut self, bounds: Bounds, cfg: ColliderConfig) -> PhysicsObjectRef {
         let rb = RigidBodyBuilder::fixed().build();
         let key = self.insert_object(bounds, rb, cfg);
-        ObjectRef {
-            world: WorldRef(self.id),
+        PhysicsObjectRef {
+            world: PhysicsWorldRef(self.id),
             key,
         }
     }
 
-    pub fn create_kinematic_with(&mut self, bounds: Bounds, cfg: ColliderConfig) -> ObjectRef {
+    pub fn create_kinematic_with(
+        &mut self,
+        bounds: Bounds,
+        cfg: ColliderConfig,
+    ) -> PhysicsObjectRef {
         let rb = RigidBodyBuilder::kinematic_position_based().build();
         let key = self.insert_object(bounds, rb, cfg);
-        ObjectRef {
-            world: WorldRef(self.id),
+        PhysicsObjectRef {
+            world: PhysicsWorldRef(self.id),
             key,
         }
     }
@@ -781,12 +785,12 @@ pub struct CollisionPoints {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct ObjectRef {
-    world: WorldRef,
-    key: ObjectKey,
+pub struct PhysicsObjectRef {
+    pub world: PhysicsWorldRef,
+    pub key: ObjectKey,
 }
 
-impl ObjectRef {
+impl PhysicsObjectRef {
     pub fn with_position(mut self, pos: Vec2) -> Self {
         self.set_position(pos);
         self
@@ -864,11 +868,11 @@ impl ObjectRef {
         !self.collisions().is_empty()
     }
 
-    pub fn is_colliding_with(&self, other: ObjectRef) -> bool {
+    pub fn is_colliding_with(&self, other: PhysicsObjectRef) -> bool {
         self.collisions().iter().any(|i| i.other == other)
     }
 
-    pub fn check_collision_with(&self, other: ObjectRef) -> Option<CollisionPoints> {
+    pub fn check_collision_with(&self, other: PhysicsObjectRef) -> Option<CollisionPoints> {
         self.collisions()
             .iter()
             .find(|i| i.other == other)
