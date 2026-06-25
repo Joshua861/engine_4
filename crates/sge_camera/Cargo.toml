@@ -17,3 +17,4 @@ sge_rng.workspace = true
 sge_time.workspace = true
 sge_utils.workspace = true
 sge_window.workspace = true
+sge_math.workspace = true

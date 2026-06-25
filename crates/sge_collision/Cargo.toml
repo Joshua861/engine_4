@@ -1,0 +1,12 @@
+[package]
+name = "sge_collision"
+version = "1.2.0"
+edition = "2024"
+
+[dependencies]
+glium.workspace = true
+sge_camera.workspace = true
+sge_input.workspace = true
+sge_types.workspace = true
+sge_vectors.workspace = true
+sge_window.workspace = true

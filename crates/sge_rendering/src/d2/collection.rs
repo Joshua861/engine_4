@@ -1,13 +1,13 @@
-use crate::api::{draw_scene, draw_scene_to, draw_scene_world};
+use crate::api::{draw_collection, draw_collection_to, draw_collection_world};
 
 use super::*;
 
 #[derive(Clone)]
-pub struct Scene2D {
+pub struct Collection2D {
     pub(crate) draws: Vec<DrawCommand>,
 }
 
-impl Scene2D {
+impl Collection2D {
     pub fn empty() -> Self {
         Self { draws: vec![] }
     }
@@ -19,19 +19,19 @@ impl Scene2D {
     pub fn renderer(&mut self) -> Renderer2D {
         Renderer2D {
             draws: &mut self.draws as *mut Vec<DrawCommand>,
-            ty: RendererType::Scene,
+            ty: RendererType::Collection,
         }
     }
 
     pub fn draw(&self) {
-        draw_scene(self);
+        draw_collection(self);
     }
 
     pub fn draw_world(&self) {
-        draw_scene_world(self);
+        draw_collection_world(self);
     }
 
     pub fn draw_to(&self, renderer: Renderer2D) {
-        draw_scene_to(self, renderer);
+        draw_collection_to(self, renderer);
     }
 }

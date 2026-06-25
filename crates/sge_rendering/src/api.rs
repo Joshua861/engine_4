@@ -1,8 +1,9 @@
 use glium::texture::TextureCreationError;
 use log::warn;
 use sge_camera::cameras_for_resolution;
+use sge_collision::Aabb2d;
 use sge_color::Color;
-use sge_math::{collision::Aabb2d, transform::Transform2D};
+use sge_math::transform::Transform2D;
 use sge_programs::{
     BLINN_PHONG_3D_PROGRAM, FLAT_3D_PROGRAM, GOURAUD_3D_PROGRAM, TEXTURED_3D_PROGRAM,
 };
@@ -12,7 +13,7 @@ use sge_vectors::{Vec2, Vec3, vec2};
 use sge_window::window_size;
 
 use crate::{
-    d2::{Renderer2D, Scene2D},
+    d2::{Collection2D, Renderer2D},
     dq2d, get_render_state,
     materials::{Material, MaterialRef},
     pipeline::{
@@ -189,16 +190,16 @@ pub fn draw_fullscreen_texture(texture: TextureRef) {
     draw_texture_scaled(texture, Vec2::ZERO, window_size());
 }
 
-pub fn draw_scene(scene: &Scene2D) {
-    dq2d().add_scene(scene);
+pub fn draw_collection(collection: &Collection2D) {
+    dq2d().add_collection(collection);
 }
 
-pub fn draw_scene_world(scene: &Scene2D) {
-    wdq2d().add_scene(scene);
+pub fn draw_collection_world(collection: &Collection2D) {
+    wdq2d().add_collection(collection);
 }
 
-pub fn draw_scene_to(scene: &Scene2D, mut renderer: Renderer2D) {
-    renderer.add_scene(scene);
+pub fn draw_collection_to(collection: &Collection2D, mut renderer: Renderer2D) {
+    renderer.add_collection(collection);
 }
 
 pub fn draw_nine_slice_to(

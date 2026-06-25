@@ -1,6 +1,6 @@
 use sge::prelude::*;
 
-#[main("Scenes")]
+#[main("Arrows")]
 async fn main() -> anyhow::Result<()> {
     let mut controller = PanningCameraController::new();
 

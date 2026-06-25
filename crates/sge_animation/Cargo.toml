@@ -15,3 +15,4 @@ sge_rendering.workspace = true
 sge_shapes.workspace = true
 sge_time.workspace = true
 sge_types.workspace = true
+sge_collision.workspace = true

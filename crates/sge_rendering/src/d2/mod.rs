@@ -15,11 +15,11 @@ use sge_window::get_display;
 
 use crate::scissor::current_scissor;
 
+pub use collection::*;
 pub use queue::*;
-pub use scene::*;
 
+mod collection;
 mod queue;
-mod scene;
 
 #[derive(Clone)]
 pub enum DrawCommand {
@@ -51,7 +51,7 @@ pub struct SpriteVertex {
 pub enum RendererType {
     Screen,
     World,
-    Scene,
+    Collection,
     Other,
 }
 
@@ -261,8 +261,8 @@ impl Renderer2D {
         batch.max_index += vertices.len() as u32;
     }
 
-    pub fn add_scene(&mut self, scene: &Scene2D) {
-        self.draws_mut().append(&mut scene.clone().draws)
+    pub fn add_collection(&mut self, collection: &Collection2D) {
+        self.draws_mut().append(&mut collection.clone().draws)
     }
     pub fn current_point_batch(&mut self) -> &mut PointBatch {
         let scissor = current_scissor();

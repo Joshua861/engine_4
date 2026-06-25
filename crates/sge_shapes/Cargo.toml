@@ -12,5 +12,5 @@ sge_vectors.workspace = true
 lyon.workspace = true
 paste.workspace = true
 sge_color.workspace = true
-sge_math.workspace = true
 sge_types.workspace = true
+sge_collision.workspace = true

@@ -2,9 +2,9 @@
 
 use std::f32::consts::TAU;
 
+use sge_collision::{self as collision, HasBounds2D, Polygon};
 use sge_color::Color;
 use sge_macros::draw_shape_variants;
-use sge_math::collision::{self, HasBounds2D, Polygon};
 use sge_math::curves::*;
 use sge_rendering::{
     d2::Renderer2D,

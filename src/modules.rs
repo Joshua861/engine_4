@@ -164,7 +164,7 @@ pub mod logging {
 }
 
 pub mod rendering {
-    pub use sge_rendering::d2::{Renderer2D, Scene2D};
+    pub use sge_rendering::d2::{Collection2D, Renderer2D};
     pub use sge_rendering::materials::{DEFAULT_MATERIAL, Material, MaterialRef, UniformData};
 
     pub use glium::{
@@ -177,7 +177,7 @@ pub mod rendering {
         uniforms::{MagnifySamplerFilter, MinifySamplerFilter},
     };
     pub use sge_rendering::api::{
-        clear_screen, dont_clear_screen, draw_scene, draw_scene_to, draw_scene_world,
+        clear_screen, dont_clear_screen, draw_collection, draw_collection_to, draw_collection_world,
     };
     pub use sge_rendering::pipeline::new_draw_queues;
     pub use sge_rendering::scissor::{
@@ -193,8 +193,8 @@ pub mod animation {
 
 pub mod math {
     pub use sge_api::area::AreaExt;
+    pub use sge_collision::{self as collision, Aabb2d, IntersectsWith};
     pub use sge_math::Vec2Ext;
-    pub use sge_math::collision::{self, Aabb2d, IntersectsWith};
     pub use sge_math::curves::*;
     pub use sge_math::transform::{Transform2D, Transform3D};
     pub use sge_math::usize_rect::USizeRect;

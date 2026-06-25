@@ -31,3 +31,4 @@ sge_time.workspace = true
 sge_types.workspace = true
 sge_window.workspace = true
 sge_image.workspace = true
+sge_collision.workspace = true

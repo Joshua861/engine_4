@@ -1,5 +1,6 @@
 use glium::winit::window::Window;
-use sge_vectors::{Mat4, Quat, Vec2, Vec3, Vec4Swizzles};
+use sge_math::ray::Ray3D;
+use sge_vectors::{Mat4, Quat, Vec2, Vec3, Vec4, Vec4Swizzles};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Camera3D {
@@ -72,6 +73,18 @@ impl Camera3D {
         );
 
         Some(screen)
+    }
+
+    pub fn screen_to_world(&mut self, screen_pos: Vec2) -> Ray3D {
+        let ndc_x = (screen_pos.x / self.window_size.x) * 2.0 - 1.0;
+        let ndc_y = 1.0 - (screen_pos.y / self.window_size.y) * 2.0;
+        let ndc = Vec4::new(ndc_x, ndc_y, -1.0, 1.0);
+
+        let inv_view_proj = self.view_proj().inverse();
+        let world_pos = inv_view_proj * ndc;
+        let world_pos = world_pos.xyz() / world_pos.w;
+
+        Ray3D::new(self.eye, world_pos - self.eye)
     }
 
     pub fn update_matrices(&mut self) {

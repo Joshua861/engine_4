@@ -18,9 +18,7 @@ use sge_error_union::ErrorUnion;
 use sge_exec::FrameFuture;
 #[cfg(feature = "input")]
 use sge_input::get_input;
-pub use sge_math::collision;
 use sge_rendering::{get_render_state, pipeline::RenderPipeline};
-pub use sge_shapes::d2 as shapes_2d;
 
 const WAIT_FOR_EVENTS_EXTRA_FRAME_DRAWS: usize = 60 * 5; // stops rendering after 300 frames of no input, when config.wait_for_events is true
 

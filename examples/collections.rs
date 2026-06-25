@@ -1,16 +1,16 @@
 use sge::prelude::*;
-use sge_rendering::d2::Scene2D;
+use sge_rendering::d2::Collection2D;
 
-#[main("Scenes")]
+#[main("Collections")]
 fn main() -> anyhow::Result<()> {
-    let scene = arrows();
+    let collection = arrows();
     let mut controller = PanningCameraController::new();
 
     loop {
         draw_fps();
         controller.update();
 
-        scene.draw_world();
+        collection.draw_world();
 
         if should_quit() {
             break;
@@ -22,9 +22,9 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn arrows() -> Scene2D {
-    let mut scene = Scene2D::empty();
-    let renderer = scene.renderer();
+fn arrows() -> Collection2D {
+    let mut collection = Collection2D::empty();
+    let renderer = collection.renderer();
 
     let thickness = 5.0;
     draw_circle_to(vec2(-50.0, -60.0), 10.0, Color::RED_400, renderer);
@@ -68,5 +68,5 @@ fn arrows() -> Scene2D {
         renderer,
     );
 
-    scene
+    collection
 }

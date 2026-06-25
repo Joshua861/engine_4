@@ -1,10 +1,8 @@
 use std::f32::consts::PI;
 
+use sge_collision::{self as collision, Aabb2d};
 use sge_color::Color;
-use sge_math::{
-    collision::{self, Aabb2d},
-    transform::{Transform2D, Transform3D},
-};
+use sge_math::transform::{Transform2D, Transform3D};
 use sge_rendering::shapes_3d::AABB3D;
 use sge_shapes::d2::{Circle, Rect};
 use sge_time::time;

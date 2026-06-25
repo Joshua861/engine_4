@@ -1,5 +1,5 @@
+use sge_collision::{Aabb2d, HasBounds2D};
 use sge_color::Color;
-use sge_math::collision::{Aabb2d, HasBounds2D};
 use sge_types::{ColorVertex2D, Sdf, SdfStroke};
 use sge_vectors::{Mat3, Vec2, vec2};
 use std::f32::consts::TAU;

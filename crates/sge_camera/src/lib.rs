@@ -1,6 +1,7 @@
 use d2::{Camera2D, projection};
 use d3::Camera3D;
 use sge_global::global;
+use sge_math::ray::Ray3D;
 use sge_vectors::{Mat4, Vec2, Vec3};
 
 pub mod d2;
@@ -118,4 +119,8 @@ pub fn screen_to_world_vec2(dist: Vec2) -> Vec2 {
 
 pub fn world_to_screen_3d(world_pos: Vec3) -> Option<Vec2> {
     get_camera_3d_mut().world_to_screen(world_pos)
+}
+
+pub fn screen_to_world_3d(screen_pos: Vec2) -> Ray3D {
+    get_camera_3d_mut().screen_to_world(screen_pos)
 }

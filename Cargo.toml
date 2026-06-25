@@ -81,6 +81,7 @@ sge_ui = { version = "1.1.4", path = "crates/sge_ui" }
 sge_utils = { version = "1.2.0", path = "crates/sge_utils" }
 sge_vectors = { path = "./crates/sge_vectors", version = "1.2.0" }
 sge_window = { version = "1.1.0", path = "crates/sge_window" }
+sge_collision = { version = "1.2.0", path = "crates/sge_collision" }
 slotmap = "1.1.1"
 syn = { version = "2.0.117", features = ["full"] }
 termcolor = "1.4.1"
@@ -137,6 +138,7 @@ sge_window = { workspace = true }
 trig-const = { workspace = true }
 sge_exec = { version = "1.0.0", path = "crates/sge_exec" }
 sge_multiplayer = { version = "1.2.0", path = "crates/sge_multiplayer", optional = true }
+sge_collision.workspace = true
 
 
 [profile.release]
@@ -231,5 +233,5 @@ members = [
     "crates/sge_vectors",
     "crates/sge_window",
     "crates/sge_multiplayer"
-]
+, "crates/sge_collision"]
 resolver = "3"
