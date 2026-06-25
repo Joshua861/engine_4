@@ -4,14 +4,10 @@ use sge_types::{ColorVertex2D, Sdf, SdfStroke};
 use sge_vectors::{Mat3, Vec2, vec2};
 use std::f32::consts::TAU;
 
-pub trait Shape2D: HasBounds2D {
+pub trait Shape2D {
     fn sdf(&self) -> Sdf;
 
     fn gen_mesh(&self, starting_index: u32) -> (Vec<u32>, Vec<ColorVertex2D>);
-
-    fn is_visible_in_world(&self) -> bool {
-        self.bounds().is_visible_in_world()
-    }
 }
 
 impl Shape2D for Sdf {

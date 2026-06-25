@@ -24,9 +24,7 @@ impl<T: Shape2DExt> Drawable for T {
     }
 
     fn draw_world(&self) {
-        if self.is_visible_in_world() {
-            self.draw_to(wdq2d())
-        }
+        self.draw_to(wdq2d())
     }
 }
 

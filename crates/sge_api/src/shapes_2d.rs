@@ -38,9 +38,7 @@ pub trait Shape2DExt: Shape2D + Sized {
 
     #[inline]
     fn draw_world(&self) {
-        if self.is_visible_in_world() {
-            self.draw_to(world_draw_queue_2d().renderer())
-        }
+        self.draw_to(world_draw_queue_2d().renderer())
     }
 
     #[inline]
@@ -61,9 +59,7 @@ pub trait Shape2DExt: Shape2D + Sized {
 
     #[inline]
     fn draw_outline_world(&self, thickness: f32, color: Color) {
-        if self.is_visible_in_world() {
-            self.draw_outline_to(world_draw_queue_2d().renderer(), thickness, color);
-        }
+        self.draw_outline_to(world_draw_queue_2d().renderer(), thickness, color);
     }
 
     #[inline]
@@ -73,9 +69,7 @@ pub trait Shape2DExt: Shape2D + Sized {
 
     #[inline]
     fn draw_with_outline_world(&self, thickness: f32, color: Color) {
-        if self.is_visible_in_world() {
-            self.draw_with_outline_to(world_draw_queue_2d().renderer(), thickness, color);
-        }
+        self.draw_with_outline_to(world_draw_queue_2d().renderer(), thickness, color);
     }
 }
 
@@ -191,9 +185,7 @@ draw_variants! {
         screen(renderer) { Circle::new(center, Vec2::splat(radius), color).draw_to(renderer); }
         world(renderer)  {
             let shape = Circle { center, radius: Vec2::splat(radius), color };
-            if shape.bounds().is_visible_in_world() {
                 Circle::new(center, Vec2::splat(radius), color).draw_to(renderer);
-            }
         }
     }
 }
@@ -203,9 +195,7 @@ draw_variants! {
         screen(renderer) { renderer.add_shape_sdf(&Circle::new(center, radius, color)); }
         world(renderer)  {
             let shape = Circle { center, radius, color };
-            if shape.bounds().is_visible_in_world() {
                 renderer.add_shape_sdf(&Circle::new(center, radius, color));
-            }
         }
     }
 }
@@ -217,9 +207,7 @@ draw_variants! {
         }
         world(renderer) {
             let shape = Circle { center, radius: Vec2::splat(radius), color: Color::TRANSPARENT };
-            if shape.bounds().is_visible_in_world() {
                 CircleWithOutline::new(center, Vec2::splat(radius), outline_color, thickness, Color::TRANSPARENT).draw_to(renderer);
-            }
         }
     }
 }
@@ -231,9 +219,7 @@ draw_variants! {
         }
         world(renderer) {
             let shape = Circle { center, radius: radius + Vec2::splat(thickness), color: outline_color };
-            if shape.bounds().is_visible_in_world() {
                 CircleWithOutline::new(center, radius, outline_color, thickness, Color::TRANSPARENT).draw_to(renderer);
-            }
         }
     }
 }
@@ -245,9 +231,7 @@ draw_variants! {
         }
         world(renderer) {
             let shape = Circle { center, radius: Vec2::splat(radius + thickness), color: fill };
-            if shape.bounds().is_visible_in_world() {
                 CircleWithOutline::new(center, Vec2::splat(radius), outline, thickness, fill).draw_to(renderer);
-            }
         }
     }
 }
@@ -259,9 +243,7 @@ draw_variants! {
         }
         world(renderer) {
             let shape = Circle { center, radius: radius + Vec2::splat(thickness), color: fill };
-            if shape.bounds().is_visible_in_world() {
                 CircleWithOutline::new(center, radius, outline, thickness, fill).draw_to(renderer);
-            }
         }
     }
 }
@@ -276,9 +258,7 @@ draw_variants! {
         }
         world(renderer) {
             let shape = Sector { center, radius: Vec2::splat(radius), fill_color: color, start_angle, end_angle, outline_color: Color::TRANSPARENT, outline_thickness: 0.0 };
-            if shape.bounds().is_visible_in_world() {
                 renderer.add_shape_sdf(&shape);
-            }
         }
     }
 }
@@ -294,9 +274,7 @@ draw_variants! {
         }
         world(renderer) {
             let shape = Sector { center, radius: Vec2::splat(radius), fill_color: Color::TRANSPARENT, start_angle, end_angle, outline_color, outline_thickness: thickness };
-            if shape.bounds().is_visible_in_world() {
                 renderer.add_shape_sdf(&shape);
-            }
         }
     }
 }
@@ -312,9 +290,7 @@ draw_variants! {
         }
         world(renderer) {
             let shape = Sector { center, radius: Vec2::splat(radius), fill_color, start_angle, end_angle, outline_color, outline_thickness: thickness };
-            if shape.bounds().is_visible_in_world() {
                 renderer.add_shape_sdf(&shape);
-            }
         }
     }
 }
@@ -329,9 +305,7 @@ draw_variants! {
         }
         world(renderer) {
             let shape = Sector { center, radius, fill_color: color, start_angle, end_angle, outline_color: Color::TRANSPARENT, outline_thickness: 0.0 };
-            if shape.bounds().is_visible_in_world() {
                 renderer.add_shape_sdf(&shape);
-            }
         }
     }
 }
@@ -347,9 +321,7 @@ draw_variants! {
         }
         world(renderer) {
             let shape = Sector { center, radius, fill_color: Color::TRANSPARENT, start_angle, end_angle, outline_color, outline_thickness: thickness };
-            if shape.bounds().is_visible_in_world() {
                 renderer.add_shape_sdf(&shape);
-            }
         }
     }
 }
@@ -365,9 +337,7 @@ draw_variants! {
         }
         world(renderer) {
             let shape = Sector { center, radius, fill_color, start_angle, end_angle, outline_color, outline_thickness: thickness };
-            if shape.bounds().is_visible_in_world() {
                 renderer.add_shape_sdf(&shape);
-            }
         }
     }
 }
@@ -379,9 +349,7 @@ draw_variants! {
         }
         world(renderer) {
             let line = Line2D::new(start, end, thickness, color).with_caps();
-            if line.is_visible_in_world() {
                 draw_to(&line, renderer);
-            }
         }
     }
 }
@@ -393,9 +361,7 @@ draw_variants! {
         }
         world(renderer) {
             let line = Line2D::new(start, end, thickness, color).with_half_caps();
-            if line.is_visible_in_world() {
                 draw_to(&line, renderer);
-            }
         }
     }
 }

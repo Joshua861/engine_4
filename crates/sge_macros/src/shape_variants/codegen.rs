@@ -145,24 +145,18 @@ fn emit_variant(entry: &ShapeEntry, spec: VariantSpec) -> TokenStream {
         DrawMode::Base => quote! {
             #rot_binding
             let __shape = { #ctor };
-            if __shape.is_visible_in_world() {
-                __shape.draw_to(world_draw_queue_2d().renderer());
-            }
+            __shape.draw_to(world_draw_queue_2d().renderer());
         },
         DrawMode::Outline => quote! {
             #rot_binding
             let color = Color::TRANSPARENT;
             let __shape = { #ctor };
-            if __shape.is_visible_in_world() {
-                __shape.draw_outline_to(world_draw_queue_2d().renderer(), thickness, outline_color);
-            }
+            __shape.draw_outline_to(world_draw_queue_2d().renderer(), thickness, outline_color);
         },
         DrawMode::WithOutline => quote! {
             #rot_binding
             let __shape = { #ctor };
-            if __shape.is_visible_in_world() {
-                __shape.draw_with_outline_to(world_draw_queue_2d().renderer(), thickness, outline_color);
-            }
+            __shape.draw_with_outline_to(world_draw_queue_2d().renderer(), thickness, outline_color);
         },
     };
 

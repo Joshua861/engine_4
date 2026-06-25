@@ -61,12 +61,6 @@ pub fn draw_texture_world(texture: TextureRef, position: Vec2, scale: f32) {
 
 pub fn draw_texture_scaled_world(texture: TextureRef, position: Vec2, scale: Vec2) {
     let bounds = Aabb2d::new(position - scale, position + scale);
-
-    if !bounds.is_visible_in_world() {
-        return;
-    }
-
-    draw_texture_scaled_to(texture, position, scale, wdq2d());
 }
 
 pub fn draw_texture_world_ex(
@@ -79,10 +73,6 @@ pub fn draw_texture_world_ex(
         transform.translation() - transform.scale(),
         transform.translation() + transform.scale(),
     );
-
-    if !bounds.is_visible_in_world() {
-        return;
-    }
 
     world_draw_queue_2d()
         .renderer()

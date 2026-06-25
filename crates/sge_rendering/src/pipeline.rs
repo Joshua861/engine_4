@@ -2,8 +2,8 @@ use crate::d3::DrawQueue3D;
 use crate::get_render_state;
 use crate::post_processing::{PostProcessingEffect, render_fullscreen_quad};
 use crate::{DrawQueues, d2::DrawQueue2D};
+use glium::Texture2d;
 use glium::framebuffer::{DepthRenderBuffer, RenderBuffer};
-use glium::{GlObject, Texture2d};
 use glium::{
     Surface,
     framebuffer::SimpleFrameBuffer,
