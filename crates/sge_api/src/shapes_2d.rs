@@ -2,7 +2,7 @@
 
 use std::f32::consts::TAU;
 
-use sge_collision::{self as collision, HasBounds2D, Polygon};
+use sge_collision::{self as collision, Polygon};
 use sge_color::Color;
 use sge_macros::draw_shape_variants;
 use sge_math::curves::*;
@@ -181,70 +181,39 @@ draw_shape_variants! {
 }
 
 draw_variants! {
-    fn circle(center: Vec2, radius: f32, color: Color) {
-        screen(renderer) { Circle::new(center, Vec2::splat(radius), color).draw_to(renderer); }
-        world(renderer)  {
-            let shape = Circle { center, radius: Vec2::splat(radius), color };
-                Circle::new(center, Vec2::splat(radius), color).draw_to(renderer);
-        }
+    fn circle(center: Vec2, radius: f32, color: Color) [renderer] {
+        Circle::new(center, Vec2::splat(radius), color).draw_to(renderer);
     }
 }
 
 draw_variants! {
-    fn ellipse(center: Vec2, radius: Vec2, color: Color) {
-        screen(renderer) { renderer.add_shape_sdf(&Circle::new(center, radius, color)); }
-        world(renderer)  {
-            let shape = Circle { center, radius, color };
-                renderer.add_shape_sdf(&Circle::new(center, radius, color));
-        }
+    fn ellipse(center: Vec2, radius: Vec2, color: Color) [renderer] {
+        let mut renderer = renderer;
+        renderer.add_shape_sdf(&Circle::new(center, radius, color));
     }
 }
 
 draw_variants! {
-    fn circle_outline(center: Vec2, radius: f32, outline_color: Color, thickness: f32) {
-        screen(renderer) {
-            CircleWithOutline::new(center, Vec2::splat(radius), outline_color, thickness, Color::TRANSPARENT).draw_to(renderer);
-        }
-        world(renderer) {
-            let shape = Circle { center, radius: Vec2::splat(radius), color: Color::TRANSPARENT };
-                CircleWithOutline::new(center, Vec2::splat(radius), outline_color, thickness, Color::TRANSPARENT).draw_to(renderer);
-        }
+    fn circle_outline(center: Vec2, radius: f32, outline_color: Color, thickness: f32) [renderer] {
+        CircleWithOutline::new(center, Vec2::splat(radius), outline_color, thickness, Color::TRANSPARENT).draw_to(renderer);
     }
 }
 
 draw_variants! {
-    fn ellipse_outline(center: Vec2, radius: Vec2, outline_color: Color, thickness: f32) {
-        screen(renderer) {
-            CircleWithOutline::new(center, radius, outline_color, thickness, Color::TRANSPARENT).draw_to(renderer);
-        }
-        world(renderer) {
-            let shape = Circle { center, radius: radius + Vec2::splat(thickness), color: outline_color };
-                CircleWithOutline::new(center, radius, outline_color, thickness, Color::TRANSPARENT).draw_to(renderer);
-        }
+    fn ellipse_outline(center: Vec2, radius: Vec2, outline_color: Color, thickness: f32) [renderer] {
+        CircleWithOutline::new(center, radius, outline_color, thickness, Color::TRANSPARENT).draw_to(renderer);
     }
 }
 
 draw_variants! {
-    fn circle_with_outline(center: Vec2, radius: f32, fill: Color, outline: Color, thickness: f32) {
-        screen(renderer) {
-            CircleWithOutline::new(center, Vec2::splat(radius), outline, thickness, fill).draw_to(renderer);
-        }
-        world(renderer) {
-            let shape = Circle { center, radius: Vec2::splat(radius + thickness), color: fill };
-                CircleWithOutline::new(center, Vec2::splat(radius), outline, thickness, fill).draw_to(renderer);
-        }
+    fn circle_with_outline(center: Vec2, radius: f32, fill: Color, outline: Color, thickness: f32) [renderer] {
+        CircleWithOutline::new(center, Vec2::splat(radius), outline, thickness, fill).draw_to(renderer);
     }
 }
 
 draw_variants! {
-    fn ellipse_with_outline(center: Vec2, radius: Vec2, fill: Color, outline: Color, thickness: f32) {
-        screen(renderer) {
-            CircleWithOutline::new(center, radius, outline, thickness, fill).draw_to(renderer);
-        }
-        world(renderer) {
-            let shape = Circle { center, radius: radius + Vec2::splat(thickness), color: fill };
-                CircleWithOutline::new(center, radius, outline, thickness, fill).draw_to(renderer);
-        }
+    fn ellipse_with_outline(center: Vec2, radius: Vec2, fill: Color, outline: Color, thickness: f32) [renderer] {
+        CircleWithOutline::new(center, radius, outline, thickness, fill).draw_to(renderer);
     }
 }
 

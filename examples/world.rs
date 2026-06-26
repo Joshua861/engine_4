@@ -187,6 +187,7 @@ impl Entity2D for Sensor {
 fn main() {
     let mut world = World2D::new(100.0);
     let mut controller = PanningCameraController::new();
+    controller.pan_button = Button::Mouse(MouseButton::Middle);
 
     get_camera_2d_mut().translate_by(BOUNDS_SIZE / 2.0);
 
