@@ -30,3 +30,20 @@ push_scissor(Area::new(vec2(window_center().x, 0.0), window_size()).to_rect());
 draw_circle(window_center(), 500.0, Color::WHITE);
 pop_scissor();
 ```
+
+## Culling
+
+By default, no culling will be applied to objects drawn offscreen (that are not
+visible), as this would incur a runtime cost for all objects drawn, that may not
+be desired. If you want to have objects drawn offscreen be culled for better
+performance, you should use the `World2D` struct, which lets you spawn anything
+that implements the `Entity2D` trait into the world, and have it only be drawn
+and/or updated when onscreen.
+
+
+See: [scene module](https://docs.rs/sge/latest/sge/prelude/scenes/index.html)
+
+See also:
+[`/examples/world.rs`](https://github.com/LilyRL/sge/blob/master/examples/world.rs)
+for an example on how to use the API, by rewriting the `physics.rs` example in a
+nicer way.

@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-2c276132.js";
+            window.path_to_searchindex_js = "searchindex-379a1107.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-28ec5dda.js"></script>
@@ -755,6 +755,18 @@ push_scissor(Area::new(vec2(window_center().x, 0.0), window_size()).to_rect());
 draw_circle(window_center(), 500.0, Color::WHITE);
 pop_scissor();
 <span class="boring">}</span></code></pre>
+<h2 id="culling"><a class="header" href="#culling">Culling</a></h2>
+<p>By default, no culling will be applied to objects drawn offscreen (that are not
+visible), as this would incur a runtime cost for all objects drawn, that may not
+be desired. If you want to have objects drawn offscreen be culled for better
+performance, you should use the <code>World2D</code> struct, which lets you spawn anything
+that implements the <code>Entity2D</code> trait into the world, and have it only be drawn
+and/or updated when onscreen.</p>
+<p>See: <a href="https://docs.rs/sge/latest/sge/prelude/scenes/index.html">scene module</a></p>
+<p>See also:
+<a href="https://github.com/LilyRL/sge/blob/master/examples/world.rs"><code>/examples/world.rs</code></a>
+for an example on how to use the API, by rewriting the <code>physics.rs</code> example in a
+nicer way.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="async"><a class="header" href="#async">Async</a></h1>
 <p>Using an <code>async</code> main function and <code>next_frame().await</code> allows SGE to run coroutines.</p>
