@@ -89,14 +89,11 @@ async fn main() -> anyhow::Result<()> {
 
     let mut debug_mode = false;
 
-    let mut camera_controller = PanningCameraController {
-        allow_panning: false,
-        ..Default::default()
-    };
-
+    let mut camera_controller = FollowCameraController::new();
     loop {
         ps.update();
-        camera_controller.update();
+        camera_controller.update(player.controller.position());
+        // camera_controller.debug_show_margins();
 
         if !debug_mode {
             clear_screen(Color::NEUTRAL_900);
@@ -144,17 +141,6 @@ async fn main() -> anyhow::Result<()> {
                 &land_particles,
                 player.controller.position() + vec2(0.0, PLAYER_RADIUS),
             );
-        }
-
-        {
-            let ppos = player.controller.position();
-            let cpos = get_camera_2d().translation();
-            let (normal, len) = (ppos - cpos).normalize_and_length();
-
-            if len > 300.0 {
-                let pos = -normal * 300.0 + ppos;
-                get_camera_2d_mut().set_translation(pos);
-            }
         }
 
         for i in 0..PREV_REPEAT {

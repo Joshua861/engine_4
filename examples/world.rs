@@ -6,6 +6,7 @@ const BOUNDS_SIZE: Vec2 = Vec2::new(1000.0, 1000.0);
 const BOUNDS_THICKNESS: f32 = 50.0;
 const FORCE_RADIUS: f32 = 250.0;
 const FORCE_STRENGTH: f32 = 100.0;
+const GRAVITY_STRENGTH: f32 = 1000.0;
 
 #[derive(Clone, Copy, PartialEq)]
 enum ShapeType {
@@ -96,11 +97,7 @@ impl Entity2D for ShapeEntity {
         self.pos
     }
     fn radius(&self) -> f32 {
-        if self.shape_type == ShapeType::Circle {
-            15.0
-        } else {
-            30.0
-        }
+        20.0
     }
 
     // increases performance dramatically by not alternating between drawing sdf shapes and vertex based shapes
@@ -127,7 +124,7 @@ impl Entity2D for Wall {
         self.pos
     }
     fn radius(&self) -> f32 {
-        self.size.x.max(self.size.y)
+        (self.size.x.max(self.size.y)) / 2.0
     }
 }
 
@@ -135,6 +132,7 @@ struct Ramp {
     pos: Vec2,
     pts: [Vec2; 3],
 }
+
 impl Entity2D for Ramp {
     fn update(&mut self, _: &mut WorldState2D) {}
     fn draw(&self) {
@@ -186,8 +184,9 @@ impl Entity2D for Sensor {
 #[main("Physics Showcase")]
 fn main() {
     let mut world = World2D::new(100.0);
+    world.physics.set_gravity(GRAVITY_STRENGTH);
     let mut controller = PanningCameraController::new();
-    controller.pan_button = Button::Mouse(MouseButton::Middle);
+    controller.set_pan_button(Button(MouseButton::Middle));
 
     get_camera_2d_mut().translate_by(BOUNDS_SIZE / 2.0);
 
@@ -265,7 +264,6 @@ fn main() {
         rb.set_velocity(velocity);
     }
 
-    let mut show_colliders = false;
     set_cursor_visible(false);
 
     loop {
@@ -313,8 +311,8 @@ fn main() {
             }
         }
 
-        if key_pressed(KeyCode::KeyD) {
-            show_colliders = !show_colliders;
+        if key_held(KeyCode::KeyD) {
+            world.debug_entities();
         }
 
         if should_quit() {

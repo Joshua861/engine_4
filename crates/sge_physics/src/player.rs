@@ -41,6 +41,8 @@ pub struct Player {
 
     just_jumped: bool,
     just_double_jumped: bool,
+
+    enable_input: bool,
 }
 
 impl Player {
@@ -242,6 +244,7 @@ impl PhysicsWorld {
             is_sliding_down_slope: false,
             just_jumped: false,
             just_double_jumped: false,
+            enable_input: true,
         };
 
         let key = self.players.insert(player);
@@ -335,29 +338,31 @@ impl PhysicsWorld {
         let p = &mut self.players[pk];
         let binds = p.binds;
 
-        let jump = button_pressed(binds.jump);
-        let left = button_held(binds.left);
-        let right = button_held(binds.right);
+        if p.enable_input {
+            let jump = button_pressed(binds.jump);
+            let left = button_held(binds.left);
+            let right = button_held(binds.right);
 
-        p.velocity.y -= self.gravity * dt;
-        p.velocity.x = (right as i32 - left as i32) as f32 * p.move_speed;
+            p.velocity.y -= self.gravity * dt;
+            p.velocity.x = (right as i32 - left as i32) as f32 * p.move_speed;
 
-        p.just_double_jumped = false;
-        p.just_jumped = false;
+            p.just_double_jumped = false;
+            p.just_jumped = false;
 
-        let in_coyote = (now - p.time_last_on_ground) <= p.coyote_time;
-        let can_jump = p.is_really_on_ground() || in_coyote;
+            let in_coyote = (now - p.time_last_on_ground) <= p.coyote_time;
+            let can_jump = p.is_really_on_ground() || in_coyote;
 
-        if jump {
-            if can_jump {
-                p.velocity.y = p.jump_velocity;
-                p.just_jumped = true;
-                p.time_last_on_ground = f32::NEG_INFINITY;
-                p.double_jumps_left = p.num_double_jumps;
-            } else if p.double_jumps_left > 0 {
-                p.velocity.y = p.double_jump_velocity();
-                p.double_jumps_left -= 1;
-                p.just_double_jumped = true;
+            if jump {
+                if can_jump {
+                    p.velocity.y = p.jump_velocity;
+                    p.just_jumped = true;
+                    p.time_last_on_ground = f32::NEG_INFINITY;
+                    p.double_jumps_left = p.num_double_jumps;
+                } else if p.double_jumps_left > 0 {
+                    p.velocity.y = p.double_jump_velocity();
+                    p.double_jumps_left -= 1;
+                    p.just_double_jumped = true;
+                }
             }
         }
 
@@ -442,6 +447,10 @@ impl PlayerController {
     pub fn with_position(mut self, pos: Vec2) -> Self {
         self.set_position(pos);
         self
+    }
+
+    pub fn enable_input(&mut self, enable: bool) {
+        self.value.enable_input = enable;
     }
 }
 

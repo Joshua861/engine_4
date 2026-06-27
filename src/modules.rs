@@ -75,6 +75,7 @@ pub mod camera {
         world_to_screen_3d,
     };
     pub use sge_camera_controllers::first_person::FirstPersonCameraController;
+    pub use sge_camera_controllers::follow::FollowCameraController;
     pub use sge_camera_controllers::orbit::OrbitCameraController;
     pub use sge_camera_controllers::pan::PanningCameraController;
     pub use sge_camera_controllers::shake::CameraShakeController;

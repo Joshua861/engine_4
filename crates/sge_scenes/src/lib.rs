@@ -118,7 +118,7 @@ pub struct World2D {
     grid: FxHashMap<(i32, i32), Vec<usize>>,
     cell_size: f32,
     free_list: Vec<usize>,
-    physics: PhysicsWorldRef,
+    pub physics: PhysicsWorldRef,
 }
 
 pub trait Entity2D {
@@ -136,6 +136,7 @@ pub trait Entity2D {
 
 struct SomeEntity2D {
     instance: Box<dyn Entity2D>,
+    id: usize,
     last_position: Vec2,
     last_radius: f32,
     pub rigidbody: Option<phys::PhysicsObjectRef>,
@@ -211,19 +212,33 @@ impl World2D {
         let mut visible_indices = Vec::new();
         let mut global_commands = Vec::new();
 
-        for x in min_cell_x..=max_cell_x {
-            for y in min_cell_y..=max_cell_y {
-                if let Some(entity_indices) = self.grid.get(&(x, y)) {
-                    let entity_indices = entity_indices.clone();
-                    for idx in entity_indices {
-                        if !updated_indices[idx] && self.entities[idx].is_some() {
-                            visible_indices.push(idx);
+        let width = max_cell_x - min_cell_x;
+        let height = max_cell_y - min_cell_y;
 
-                            self.update_entity(idx, &mut global_commands);
-                            updated_indices[idx] = true;
+        if width * height < 100_000 {
+            for x in min_cell_x..=max_cell_x {
+                for y in min_cell_y..=max_cell_y {
+                    if let Some(entity_indices) = self.grid.get(&(x, y)) {
+                        let entity_indices = entity_indices.clone();
+                        for idx in entity_indices {
+                            if !updated_indices[idx] && self.entities[idx].is_some() {
+                                visible_indices.push(idx);
+
+                                self.update_entity(idx, &mut global_commands);
+                                updated_indices[idx] = true;
+                            }
                         }
                     }
                 }
+            }
+        } else {
+            // too many tiles onscreen to loop through all of them each frame
+
+            let entities = unsafe { &*(&self.entities as *const Vec<Option<SomeEntity2D>>) };
+            for entity in entities.iter().flatten() {
+                visible_indices.push(entity.id);
+                self.update_entity(entity.id, &mut global_commands);
+                updated_indices[entity.id] = true;
             }
         }
 
@@ -356,17 +371,65 @@ impl World2D {
         let pos = entity.position(rigidbody.as_ref());
         let radius = entity.radius();
 
-        let entity = SomeEntity2D {
+        let mut entity = SomeEntity2D {
             instance: entity,
             last_position: pos,
             last_radius: radius,
             rigidbody,
+            id: 0,
         };
 
         if let Some(vacant_idx) = self.free_list.pop() {
+            entity.id = vacant_idx;
             self.entities[vacant_idx] = Some(entity);
         } else {
+            entity.id = self.entities.len();
             self.entities.push(Some(entity));
+        }
+    }
+
+    pub fn debug_entities(&self) {
+        use sge_api::shapes_2d::*;
+        use sge_color::Color;
+        use sge_vectors::vec2;
+
+        // brighten_screen(-1.0);
+
+        let (camera_min, camera_max) = get_camera_2d_mut().visible_bounds();
+        let (min_cell_x, min_cell_y) = self.to_grid_coord(camera_min);
+        let (max_cell_x, max_cell_y) = self.to_grid_coord(camera_max);
+
+        for x in min_cell_x..=max_cell_x {
+            for y in min_cell_y..=max_cell_y {
+                if let Some(entity_indices) = self.grid.get(&(x, y)) {
+                    if !entity_indices.is_empty() {
+                        draw_square_with_outline_world(
+                            vec2(x as f32 * self.cell_size, y as f32 * self.cell_size),
+                            self.cell_size,
+                            Color::GREEN_500.with_alpha(0.05),
+                            (self.cell_size / 20.0).max(2.0),
+                            Color::GREEN_500.with_alpha(0.1),
+                        );
+                    }
+                }
+            }
+        }
+
+        for entity in self.entities.iter().flatten() {
+            draw_circle_world(
+                entity.last_position,
+                entity.last_radius,
+                Color::BLUE_800.with_alpha(0.5),
+            );
+        }
+
+        for entity in self.entities.iter().flatten() {
+            draw_circle_outline_world(
+                entity.last_position,
+                entity.last_radius,
+                Color::BLUE_700,
+                (entity.last_radius / 50.0).max(2.0),
+            );
         }
     }
 }

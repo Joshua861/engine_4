@@ -1,7 +1,6 @@
 use glium::texture::TextureCreationError;
 use log::warn;
 use sge_camera::cameras_for_resolution;
-use sge_collision::Aabb2d;
 use sge_color::Color;
 use sge_math::transform::Transform2D;
 use sge_programs::{

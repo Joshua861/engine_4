@@ -49,6 +49,9 @@ The 2D camera supports the following camera controllers:
   customizable button (defaults to left click).
 - [`CameraShakeController`](https://docs.rs/sge/latest/sge/prelude/camera/struct.CameraShakeController.html):
   allows for easy shaking of the camera, by using `.add_trauma(amount: f32)`.
+- [`FollowCameraController`](https://docs.rs/sge/latest/sge/prelude/camera/struct.FollowCameraController.html):
+  follows a position in the world, whenever it leaves some area in the center of
+  the screen with configurable margins.
   
 ### 3D
 

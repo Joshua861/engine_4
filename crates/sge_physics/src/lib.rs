@@ -824,6 +824,7 @@ impl PhysicsObjectRef {
     pub fn add_force(&mut self, force: Vec2) {
         self.world.add_force(self.key, force);
     }
+
     pub fn get_mass(&self) -> f32 {
         self.world.get_mass(self.key)
     }

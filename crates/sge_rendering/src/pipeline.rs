@@ -93,6 +93,7 @@ pub struct RenderPipeline {
     pub camera_override: Option<Cameras>,
 }
 
+#[derive(Debug)]
 pub enum ClearColor {
     Clear(Color),
     DontClear,
@@ -247,6 +248,8 @@ impl RenderPipeline {
                     a.resolve();
                 }
                 RenderStep::PostProcessing(effects) => {
+                    a.resolve();
+
                     for effect in effects.0 {
                         effect
                             .apply(

@@ -5,7 +5,10 @@ edition = "2024"
 
 [dependencies]
 rustc-hash = "2.1.2"
+sge_api.workspace = true
 sge_camera.workspace = true
+sge_color.workspace = true
 sge_macros.workspace = true
 sge_physics.workspace = true
+sge_rendering.workspace = true
 sge_vectors.workspace = true
