@@ -11,6 +11,8 @@ use sge_color::Color;
 use sge_global::global;
 use sge_vectors::{Vec2, Vec3, Vec4};
 
+pub use rand as rand_rs;
+
 pub use const_random;
 
 pub struct RandomState {

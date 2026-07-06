@@ -153,26 +153,34 @@ impl World2D {
         }
     }
 
-    fn rebuild_spatial_index(&mut self) {
-        for cell in self.grid.values_mut() {
-            cell.clear();
+    fn entity_grid_bounds(&self, pos: Vec2, radius: f32) -> (i32, i32, i32, i32) {
+        let min_x = ((pos.x - radius) / self.cell_size).floor() as i32;
+        let min_y = ((pos.y - radius) / self.cell_size).floor() as i32;
+        let max_x = ((pos.x + radius) / self.cell_size).floor() as i32;
+        let max_y = ((pos.y + radius) / self.cell_size).floor() as i32;
+
+        (min_x, min_y, max_x, max_y)
+    }
+
+    fn add_entity_to_grid(&mut self, id: usize) {
+        let entity = self.entities[id].as_ref().unwrap();
+        let (min_x, min_y, max_x, max_y) =
+            self.entity_grid_bounds(entity.last_position, entity.last_radius);
+
+        for x in min_x..=max_x {
+            for y in min_y..=max_y {
+                self.grid.entry((x, y)).or_insert_with(Vec::new).push(id);
+            }
         }
+    }
 
-        for (idx, opt_obj) in self.entities.iter().enumerate() {
-            if let Some(obj) = opt_obj {
-                let (min_x, min_y) = self.to_grid_coord(Vec2::new(
-                    obj.last_position.x - obj.last_radius,
-                    obj.last_position.y - obj.last_radius,
-                ));
-                let (max_x, max_y) = self.to_grid_coord(Vec2::new(
-                    obj.last_position.x + obj.last_radius,
-                    obj.last_position.y + obj.last_radius,
-                ));
+    fn remove_entity_from_grid(&mut self, id: usize, pos: Vec2, radius: f32) {
+        let (min_x, min_y, max_x, max_y) = self.entity_grid_bounds(pos, radius);
 
-                for x in min_x..=max_x {
-                    for y in min_y..=max_y {
-                        self.grid.entry((x, y)).or_insert_with(Vec::new).push(idx);
-                    }
+        for x in min_x..=max_x {
+            for y in min_y..=max_y {
+                if let Some(cell) = self.grid.get_mut(&(x, y)) {
+                    cell.retain(|&i| i != id);
                 }
             }
         }
@@ -198,8 +206,18 @@ impl World2D {
         let mut state = WorldState2D::new(id, self.physics, obj.rigidbody);
         obj.instance.update(&mut state);
 
+        let old_pos = obj.last_position;
+        let old_radius = obj.last_radius;
+
         obj.last_position = obj.instance.position(obj.rigidbody.as_ref());
         obj.last_radius = obj.instance.radius();
+
+        let has_changed = old_pos != obj.last_position || old_radius != obj.last_radius;
+        if has_changed {
+            let id = obj.id;
+            self.remove_entity_from_grid(id, old_pos, old_radius);
+            self.add_entity_to_grid(id);
+        }
 
         commands.append(&mut state.command_buffer);
     }
@@ -271,8 +289,6 @@ impl World2D {
                 }
             }
         }
-
-        self.rebuild_spatial_index();
     }
 
     pub fn delete_entity(&mut self, idx: usize) {
@@ -280,6 +296,8 @@ impl World2D {
             let Some(entity) = self.entities[idx].take() else {
                 return;
             };
+
+            self.remove_entity_from_grid(entity.id, entity.last_position, entity.last_radius);
 
             if let Some(rigidbody) = entity.rigidbody {
                 self.physics.remove(rigidbody.key);
@@ -379,13 +397,17 @@ impl World2D {
             id: 0,
         };
 
-        if let Some(vacant_idx) = self.free_list.pop() {
+        let id = if let Some(vacant_idx) = self.free_list.pop() {
             entity.id = vacant_idx;
             self.entities[vacant_idx] = Some(entity);
+            vacant_idx
         } else {
             entity.id = self.entities.len();
             self.entities.push(Some(entity));
-        }
+            self.entities.len() - 1
+        };
+
+        self.add_entity_to_grid(id);
     }
 
     pub fn debug_entities(&self) {

@@ -94,7 +94,7 @@ pub mod time {
 pub mod rng {
     pub use sge_rng::{
         const_random::const_random, get_next_counter, get_random, id, maybe_rand_choice, rand,
-        rand_bool, rand_choice, rand_color, rand_f32, rand_range, rand_ratio, rand_usize,
+        rand_bool, rand_choice, rand_color, rand_f32, rand_range, rand_ratio, rand_rs, rand_usize,
         rand_vec2, rand_vec3, rand_vec4,
     };
 }

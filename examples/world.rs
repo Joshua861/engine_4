@@ -186,7 +186,7 @@ fn main() {
     let mut world = World2D::new(100.0);
     world.physics.set_gravity(GRAVITY_STRENGTH);
     let mut controller = PanningCameraController::new();
-    controller.set_pan_button(Button(MouseButton::Middle));
+    controller.set_pan_button(Button::Mouse(MouseButton::Middle));
 
     get_camera_2d_mut().translate_by(BOUNDS_SIZE / 2.0);
 
@@ -245,24 +245,6 @@ fn main() {
         .set_position(sensor_pos);
 
     let mut shape_counter = 0;
-    for _ in 0..5 {
-        let pos = Vec2::new(rand::<f32>() * (max.x - t * 4.0) + t * 2.0, t);
-        let velocity = Vec2::new(rand_f32() * 50.0, rand_f32() * 50.0);
-        let shape_type = ShapeType::from_index(shape_counter);
-        shape_counter += 1;
-
-        let mut rb = world.spawn_dynamic(
-            ShapeEntity {
-                shape_type,
-                pos,
-                rot: 0.0,
-                speed: 0.0,
-            },
-            shape_type.bounds(),
-        );
-        rb.set_position(pos);
-        rb.set_velocity(velocity);
-    }
 
     set_cursor_visible(false);
 
