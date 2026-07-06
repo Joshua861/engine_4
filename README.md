@@ -17,3 +17,16 @@ Automatically generated reference documentation for SGE can be found [here](http
 Most of the content is in the `prelude` module.
 
 There is an example for every feature in the engine, start with `simple.rs`.
+
+## Installation
+
+Add the following to your `Cargo.toml`.
+
+``` toml
+[dependencies]
+# stable
+sge = { version = "*" }
+# latest
+sge = { git = "https://github.com/LilyRL/sge" }
+```
+
