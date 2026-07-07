@@ -1,0 +1,11 @@
+[package]
+name = "paint"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+sge = { git = "https://github.com/LilyRL/sge", features = ["precise_cursor_movement"] }
+flate2 = { version = "1.1.5", features = ["zlib-rs"] }
+
+[profile.dev.package."*"]
+opt-level = 3
