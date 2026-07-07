@@ -1,4 +1,5 @@
 use flate2::{Compression, read::ZlibDecoder, write::ZlibEncoder};
+use sge::flate2;
 use std::io::{Read, Write};
 
 pub struct UndoCache {

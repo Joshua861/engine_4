@@ -2,6 +2,7 @@ pub use crate::{init, init_custom, next_frame, run_async};
 pub use sge_api::{Drawable, draw, draw_world};
 pub use sge_include_assets::sge_include_assets;
 pub use sge_macros::main;
+pub use flate2;
 
 pub use anyhow;
 pub use anyhow::Result as AResult;

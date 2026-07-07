@@ -13,6 +13,7 @@ categories = ["graphics", "gui"]
 
 [workspace.dependencies]
 anyhow = "1"
+flate2 = { version = "1.1.9", features = ["zlib-rs"] }
 bon = "3.8.1"
 const-random = "0.1.18"
 crossbeam-channel = "0.5.15"
@@ -92,6 +93,7 @@ walkdir = "2.5.0"
 winit = "0.30"
 
 [dependencies]
+flate2.workspace = true
 anyhow = { workspace = true }
 env_logger = { workspace = true }
 glium = { workspace = true }
@@ -190,6 +192,10 @@ network = ["sge_exec/network"]
 clipboard = ["sge_input/clipboard"]
 material_ui = ["sge_ui/material", "ui"]
 
+[[example]]
+name = "paint"
+path = "examples/paint/src/main.rs"
+
 [workspace]
 members = [
     ".",
@@ -233,6 +239,8 @@ members = [
     "crates/sge_utils",
     "crates/sge_vectors",
     "crates/sge_window",
-    "crates/sge_multiplayer"
-, "crates/sge_collision", "crates/sge_scenes"]
+    "crates/sge_multiplayer",
+    "crates/sge_collision",
+    "crates/sge_scenes",
+]
 resolver = "3"

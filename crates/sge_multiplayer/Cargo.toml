@@ -8,7 +8,7 @@ repository = "https://github.com/LilyRL/sge"
 license = "MIT"
 
 [dependencies]
-flate2 = { version = "1.1.9", features = ["zlib-rs"] }
+flate2.workspace = true
 rkyv.workspace = true
 sge_error_union.workspace = true
 sge_persistence.workspace = true
